@@ -20,7 +20,7 @@
 ////  yifive TAP Controller (TAPC)                                        ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     TAP Controller (TAPC)                                            ////
@@ -56,13 +56,13 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_DBG_EN
-`include "ycr1_tapc.svh"
-`include "ycr1_dm.svh"
+`ifdef YCR_DBG_EN
+`include "ycr_tapc.svh"
+`include "ycr_dm.svh"
 
-module ycr1_tapc (
+module ycr_tapc (
     // JTAG signals
     input   logic                                   tapc_trst_n,                    // Test Reset (TRSTn)
     input   logic                                   tapc_tck,                       // Test Clock (TCK)
@@ -77,7 +77,7 @@ module ycr1_tapc (
     // DMI/SCU scan-chains
     output  logic                                   tapc2tapcsync_scu_ch_sel_o,     // SCU Chain Select
     output  logic                                   tapc2tapcsync_dmi_ch_sel_o,     // DMI Chain Select
-    output  logic [YCR1_DBG_DMI_CH_ID_WIDTH-1:0]    tapc2tapcsync_ch_id_o,          // DMI/SCU Chain Identifier
+    output  logic [YCR_DBG_DMI_CH_ID_WIDTH-1:0]    tapc2tapcsync_ch_id_o,          // DMI/SCU Chain Identifier
     output  logic                                   tapc2tapcsync_ch_capture_o,     // DMI/SCU Chain Capture
     output  logic                                   tapc2tapcsync_ch_shift_o,       // DMI/SCU Chain Shift
     output  logic                                   tapc2tapcsync_ch_update_o,      // DMI/SCU Chain Update
@@ -94,8 +94,8 @@ logic                                       trst_n_int;       // Sync reset sign
 // TAPC FSM signals
 //------------------------------------------------------------------------------
 
-type_ycr1_tap_state_e                       tap_fsm_ff;       // TAP's current state
-type_ycr1_tap_state_e                       tap_fsm_next;     // TAP's next state
+type_ycr_tap_state_e                       tap_fsm_ff;       // TAP's current state
+type_ycr_tap_state_e                       tap_fsm_next;     // TAP's next state
 
 // Control signals
 logic                                       tap_fsm_reset;
@@ -116,10 +116,10 @@ logic                                       tap_fsm_dr_update_next;
 // TAPC Instruction Registers signals
 //------------------------------------------------------------------------------
 
-logic [YCR1_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_shift_ff;   // Instruction Shift Register
-logic [YCR1_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_shift_next; // Instruction Shift Register next value
-logic [YCR1_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_ff;         // Instruction Register
-logic [YCR1_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_next;       // Instruction Register next value
+logic [YCR_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_shift_ff;   // Instruction Shift Register
+logic [YCR_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_shift_next; // Instruction Shift Register next value
+logic [YCR_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_ff;         // Instruction Register
+logic [YCR_TAP_INSTRUCTION_WIDTH-1:0]      tap_ir_next;       // Instruction Register next value
 
 // TAPC Data Registers signals
 //------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ end
 
 always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     if (~tapc_trst_n) begin
-        tap_fsm_ff <= YCR1_TAP_STATE_RESET;
+        tap_fsm_ff <= YCR_TAP_STATE_RESET;
     end else begin
         tap_fsm_ff <= tap_fsm_next;
     end
@@ -175,34 +175,34 @@ end
 
 always_comb begin
     case (tap_fsm_ff)
-        YCR1_TAP_STATE_RESET      : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_RESET        : YCR1_TAP_STATE_IDLE;
-        YCR1_TAP_STATE_IDLE       : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_SEL_SCAN  : YCR1_TAP_STATE_IDLE;
-        YCR1_TAP_STATE_DR_SEL_SCAN: tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_IR_SEL_SCAN  : YCR1_TAP_STATE_DR_CAPTURE;
-        YCR1_TAP_STATE_DR_CAPTURE : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_EXIT1     : YCR1_TAP_STATE_DR_SHIFT;
-        YCR1_TAP_STATE_DR_SHIFT   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_EXIT1     : YCR1_TAP_STATE_DR_SHIFT;
-        YCR1_TAP_STATE_DR_EXIT1   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_UPDATE    : YCR1_TAP_STATE_DR_PAUSE;
-        YCR1_TAP_STATE_DR_PAUSE   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_EXIT2     : YCR1_TAP_STATE_DR_PAUSE;
-        YCR1_TAP_STATE_DR_EXIT2   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_UPDATE    : YCR1_TAP_STATE_DR_SHIFT;
-        YCR1_TAP_STATE_DR_UPDATE  : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_SEL_SCAN  : YCR1_TAP_STATE_IDLE;
-        YCR1_TAP_STATE_IR_SEL_SCAN: tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_RESET        : YCR1_TAP_STATE_IR_CAPTURE;
-        YCR1_TAP_STATE_IR_CAPTURE : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_IR_EXIT1     : YCR1_TAP_STATE_IR_SHIFT;
-        YCR1_TAP_STATE_IR_SHIFT   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_IR_EXIT1     : YCR1_TAP_STATE_IR_SHIFT;
-        YCR1_TAP_STATE_IR_EXIT1   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_IR_UPDATE    : YCR1_TAP_STATE_IR_PAUSE;
-        YCR1_TAP_STATE_IR_PAUSE   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_IR_EXIT2     : YCR1_TAP_STATE_IR_PAUSE;
-        YCR1_TAP_STATE_IR_EXIT2   : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_IR_UPDATE    : YCR1_TAP_STATE_IR_SHIFT;
-        YCR1_TAP_STATE_IR_UPDATE  : tap_fsm_next = tapc_tms ? YCR1_TAP_STATE_DR_SEL_SCAN  : YCR1_TAP_STATE_IDLE;
-`ifdef YCR1_XPROP_EN
-        default                   : tap_fsm_next = YCR1_TAP_STATE_XXX;
-`else // YCR1_XPROP_EN
+        YCR_TAP_STATE_RESET      : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_RESET        : YCR_TAP_STATE_IDLE;
+        YCR_TAP_STATE_IDLE       : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_SEL_SCAN  : YCR_TAP_STATE_IDLE;
+        YCR_TAP_STATE_DR_SEL_SCAN: tap_fsm_next = tapc_tms ? YCR_TAP_STATE_IR_SEL_SCAN  : YCR_TAP_STATE_DR_CAPTURE;
+        YCR_TAP_STATE_DR_CAPTURE : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_EXIT1     : YCR_TAP_STATE_DR_SHIFT;
+        YCR_TAP_STATE_DR_SHIFT   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_EXIT1     : YCR_TAP_STATE_DR_SHIFT;
+        YCR_TAP_STATE_DR_EXIT1   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_UPDATE    : YCR_TAP_STATE_DR_PAUSE;
+        YCR_TAP_STATE_DR_PAUSE   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_EXIT2     : YCR_TAP_STATE_DR_PAUSE;
+        YCR_TAP_STATE_DR_EXIT2   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_UPDATE    : YCR_TAP_STATE_DR_SHIFT;
+        YCR_TAP_STATE_DR_UPDATE  : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_SEL_SCAN  : YCR_TAP_STATE_IDLE;
+        YCR_TAP_STATE_IR_SEL_SCAN: tap_fsm_next = tapc_tms ? YCR_TAP_STATE_RESET        : YCR_TAP_STATE_IR_CAPTURE;
+        YCR_TAP_STATE_IR_CAPTURE : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_IR_EXIT1     : YCR_TAP_STATE_IR_SHIFT;
+        YCR_TAP_STATE_IR_SHIFT   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_IR_EXIT1     : YCR_TAP_STATE_IR_SHIFT;
+        YCR_TAP_STATE_IR_EXIT1   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_IR_UPDATE    : YCR_TAP_STATE_IR_PAUSE;
+        YCR_TAP_STATE_IR_PAUSE   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_IR_EXIT2     : YCR_TAP_STATE_IR_PAUSE;
+        YCR_TAP_STATE_IR_EXIT2   : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_IR_UPDATE    : YCR_TAP_STATE_IR_SHIFT;
+        YCR_TAP_STATE_IR_UPDATE  : tap_fsm_next = tapc_tms ? YCR_TAP_STATE_DR_SEL_SCAN  : YCR_TAP_STATE_IDLE;
+`ifdef YCR_XPROP_EN
+        default                   : tap_fsm_next = YCR_TAP_STATE_XXX;
+`else // YCR_XPROP_EN
         default                   : tap_fsm_next = tap_fsm_ff;
-`endif // YCR1_XPROP_EN
+`endif // YCR_XPROP_EN
     endcase
 end
 
-assign tap_fsm_reset   = (tap_fsm_ff == YCR1_TAP_STATE_RESET);
-assign tap_fsm_ir_upd  = (tap_fsm_ff == YCR1_TAP_STATE_IR_UPDATE);
-assign tap_fsm_ir_cap  = (tap_fsm_ff == YCR1_TAP_STATE_IR_CAPTURE);
-assign tap_fsm_ir_shft = (tap_fsm_ff == YCR1_TAP_STATE_IR_SHIFT);
+assign tap_fsm_reset   = (tap_fsm_ff == YCR_TAP_STATE_RESET);
+assign tap_fsm_ir_upd  = (tap_fsm_ff == YCR_TAP_STATE_IR_UPDATE);
+assign tap_fsm_ir_cap  = (tap_fsm_ff == YCR_TAP_STATE_IR_CAPTURE);
+assign tap_fsm_ir_shft = (tap_fsm_ff == YCR_TAP_STATE_IR_SHIFT);
 
 //------------------------------------------------------------------------------
 // TAPC Instruction Registers
@@ -230,9 +230,9 @@ assign tap_ir_shift_next = tap_fsm_ir_cap  ? {{($bits(tap_ir_shift_ff)-1){1'b0}}
 
 always_ff @(negedge tapc_tck, negedge tapc_trst_n) begin
     if (~tapc_trst_n) begin
-        tap_ir_ff <= YCR1_TAP_INSTR_IDCODE;
+        tap_ir_ff <= YCR_TAP_INSTR_IDCODE;
     end else if (~trst_n_int) begin
-        tap_ir_ff <= YCR1_TAP_INSTR_IDCODE;
+        tap_ir_ff <= YCR_TAP_INSTR_IDCODE;
     end else begin
         tap_ir_ff <= tap_ir_next;
     end
@@ -254,7 +254,7 @@ always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     end
 end
 
-assign tap_fsm_ir_shift_next = (tap_fsm_next == YCR1_TAP_STATE_IR_SHIFT);
+assign tap_fsm_ir_shift_next = (tap_fsm_next == YCR_TAP_STATE_IR_SHIFT);
 
 always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     if (~tapc_trst_n) begin
@@ -266,7 +266,7 @@ always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     end
 end
 
-assign tap_fsm_dr_capture_next = (tap_fsm_next == YCR1_TAP_STATE_DR_CAPTURE);
+assign tap_fsm_dr_capture_next = (tap_fsm_next == YCR_TAP_STATE_DR_CAPTURE);
 
 always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     if (~tapc_trst_n) begin
@@ -278,7 +278,7 @@ always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     end
 end
 
-assign tap_fsm_dr_shift_next = (tap_fsm_next == YCR1_TAP_STATE_DR_SHIFT);
+assign tap_fsm_dr_shift_next = (tap_fsm_next == YCR_TAP_STATE_DR_SHIFT);
 
 always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     if (~tapc_trst_n) begin
@@ -290,7 +290,7 @@ always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
     end
 end
 
-assign tap_fsm_dr_update_next = (tap_fsm_next == YCR1_TAP_STATE_DR_UPDATE);
+assign tap_fsm_dr_update_next = (tap_fsm_next == YCR_TAP_STATE_DR_UPDATE);
 
 //------------------------------------------------------------------------------
 // TAPC DRs/DMI/SCU scan-chains
@@ -311,12 +311,12 @@ always_comb begin
     tapc2tapcsync_scu_ch_sel_o  = 1'b0;
     tapc2tapcsync_dmi_ch_sel_o  = 1'b0;
     case (tap_ir_ff)
-        YCR1_TAP_INSTR_DTMCS     : tapc2tapcsync_dmi_ch_sel_o = 1'b1;
-        YCR1_TAP_INSTR_DMI_ACCESS: tapc2tapcsync_dmi_ch_sel_o = 1'b1;
-        YCR1_TAP_INSTR_IDCODE    : dr_idcode_sel              = 1'b1;
-        YCR1_TAP_INSTR_BYPASS    : dr_bypass_sel              = 1'b1;
-        YCR1_TAP_INSTR_BLD_ID    : dr_bld_id_sel              = 1'b1;
-        YCR1_TAP_INSTR_SCU_ACCESS: tapc2tapcsync_scu_ch_sel_o = 1'b1;
+        YCR_TAP_INSTR_DTMCS     : tapc2tapcsync_dmi_ch_sel_o = 1'b1;
+        YCR_TAP_INSTR_DMI_ACCESS: tapc2tapcsync_dmi_ch_sel_o = 1'b1;
+        YCR_TAP_INSTR_IDCODE    : dr_idcode_sel              = 1'b1;
+        YCR_TAP_INSTR_BYPASS    : dr_bypass_sel              = 1'b1;
+        YCR_TAP_INSTR_BLD_ID    : dr_bld_id_sel              = 1'b1;
+        YCR_TAP_INSTR_SCU_ACCESS: tapc2tapcsync_scu_ch_sel_o = 1'b1;
         default                  : dr_bypass_sel              = 1'b1;
     endcase
 end
@@ -327,8 +327,8 @@ end
 always_comb begin
     tapc2tapcsync_ch_id_o = '0;
     case (tap_ir_ff)
-        YCR1_TAP_INSTR_DTMCS     : tapc2tapcsync_ch_id_o = 'd1;
-        YCR1_TAP_INSTR_DMI_ACCESS: tapc2tapcsync_ch_id_o = 'd2;
+        YCR_TAP_INSTR_DTMCS     : tapc2tapcsync_ch_id_o = 'd1;
+        YCR_TAP_INSTR_DMI_ACCESS: tapc2tapcsync_ch_id_o = 'd2;
         default                  : tapc2tapcsync_ch_id_o = '0;
     endcase
 end
@@ -339,12 +339,12 @@ end
 always_comb begin
     dr_out = 1'b0;
     case (tap_ir_ff)
-        YCR1_TAP_INSTR_DTMCS     : dr_out = tapcsync2tapc_ch_tdo_i;
-        YCR1_TAP_INSTR_DMI_ACCESS: dr_out = tapcsync2tapc_ch_tdo_i;
-        YCR1_TAP_INSTR_IDCODE    : dr_out = dr_idcode_tdo;
-        YCR1_TAP_INSTR_BYPASS    : dr_out = dr_bypass_tdo;
-        YCR1_TAP_INSTR_BLD_ID    : dr_out = dr_bld_id_tdo;
-        YCR1_TAP_INSTR_SCU_ACCESS: dr_out = tapcsync2tapc_ch_tdo_i;
+        YCR_TAP_INSTR_DTMCS     : dr_out = tapcsync2tapc_ch_tdo_i;
+        YCR_TAP_INSTR_DMI_ACCESS: dr_out = tapcsync2tapc_ch_tdo_i;
+        YCR_TAP_INSTR_IDCODE    : dr_out = dr_idcode_tdo;
+        YCR_TAP_INSTR_BYPASS    : dr_out = dr_bypass_tdo;
+        YCR_TAP_INSTR_BLD_ID    : dr_out = dr_bld_id_tdo;
+        YCR_TAP_INSTR_SCU_ACCESS: dr_out = tapcsync2tapc_ch_tdo_i;
         default                  : dr_out = dr_bypass_tdo;
     endcase
 end
@@ -402,9 +402,9 @@ assign tapc_tdo    = tdo_out_ff;
 //------------------------------------------------------------------------------
 // 1-bit mandatory IEEE 1149.1 compliant register
 
-ycr1_tapc_shift_reg  #(
-    .YCR1_WIDTH       (YCR1_TAP_DR_BYPASS_WIDTH),
-    .YCR1_RESET_VALUE (YCR1_TAP_DR_BYPASS_WIDTH'(0))
+ycr_tapc_shift_reg  #(
+    .YCR_WIDTH       (YCR_TAP_DR_BYPASS_WIDTH),
+    .YCR_RESET_VALUE (YCR_TAP_DR_BYPASS_WIDTH'(0))
 ) i_bypass_reg        (
     .clk              (tapc_tck             ),
     .rst_n            (tapc_trst_n          ),
@@ -422,9 +422,9 @@ ycr1_tapc_shift_reg  #(
 //------------------------------------------------------------------------------
 // Holds the Device ID value (mandatory IEEE 1149.1 compliant register)
 
-ycr1_tapc_shift_reg  #(
-    .YCR1_WIDTH       (YCR1_TAP_DR_IDCODE_WIDTH),
-    .YCR1_RESET_VALUE (YCR1_TAP_DR_IDCODE_WIDTH'(0))
+ycr_tapc_shift_reg  #(
+    .YCR_WIDTH       (YCR_TAP_DR_IDCODE_WIDTH),
+    .YCR_RESET_VALUE (YCR_TAP_DR_IDCODE_WIDTH'(0))
 ) i_tap_idcode_reg    (
     .clk              (tapc_tck              ),
     .rst_n            (tapc_trst_n           ),
@@ -442,9 +442,9 @@ ycr1_tapc_shift_reg  #(
 //------------------------------------------------------------------------------
 // Holds the BUILD ID value
 
-ycr1_tapc_shift_reg  #(
-    .YCR1_WIDTH       (YCR1_TAP_DR_BLD_ID_WIDTH),
-    .YCR1_RESET_VALUE (YCR1_TAP_DR_BLD_ID_WIDTH'(0))
+ycr_tapc_shift_reg  #(
+    .YCR_WIDTH       (YCR_TAP_DR_BLD_ID_WIDTH),
+    .YCR_RESET_VALUE (YCR_TAP_DR_BLD_ID_WIDTH'(0))
 ) i_tap_dr_bld_id_reg (
     .clk              (tapc_tck             ),
     .rst_n            (tapc_trst_n          ),
@@ -453,7 +453,7 @@ ycr1_tapc_shift_reg  #(
     .fsm_dr_capture   (tap_fsm_dr_capture_ff),
     .fsm_dr_shift     (tap_fsm_dr_shift_ff  ),
     .din_serial       (tapc_tdi             ),
-    .din_parallel     (YCR1_TAP_BLD_ID_VALUE),
+    .din_parallel     (YCR_TAP_BLD_ID_VALUE),
     .dout_serial      (dr_bld_id_tdo        ),
     .dout_parallel    (                     )
 );
@@ -467,24 +467,24 @@ assign tapc2tapcsync_ch_capture_o = tap_fsm_dr_capture_ff;
 assign tapc2tapcsync_ch_shift_o   = tap_fsm_dr_shift_ff;
 assign tapc2tapcsync_ch_update_o  = tap_fsm_dr_update_ff;
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
 
 // X checks
-YCR1_SVA_TAPC_XCHECK : assert property (
+YCR_SVA_TAPC_XCHECK : assert property (
     @(posedge tapc_tck) disable iff (~tapc_trst_n)
     !$isunknown({tapc_tms, tapc_tdi})
 ) else $error("TAPC error: unknown values");
 
-YCR1_SVA_TAPC_XCHECK_NEGCLK : assert property (
-    @(negedge tapc_tck) disable iff (tap_fsm_ff != YCR1_TAP_STATE_DR_SHIFT)
+YCR_SVA_TAPC_XCHECK_NEGCLK : assert property (
+    @(negedge tapc_tck) disable iff (tap_fsm_ff != YCR_TAP_STATE_DR_SHIFT)
     !$isunknown({tapcsync2tapc_ch_tdo_i})
 ) else $error("TAPC @negedge error: unknown values");
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_tapc
+endmodule : ycr_tapc
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN

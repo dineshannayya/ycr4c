@@ -20,7 +20,7 @@
 ////  yifive TAPC clock domain crossing synchronizer                      ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     TAPC clock domain crossing synchronizer                          ////
@@ -38,13 +38,13 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_DBG_EN
-`include "ycr1_tapc.svh"
-`include "ycr1_dm.svh"
+`ifdef YCR_DBG_EN
+`include "ycr_tapc.svh"
+`include "ycr_dm.svh"
 
-module ycr1_tapc_synchronizer (
+module ycr_tapc_synchronizer (
     // System common signals
     input   logic                                   pwrup_rst_n,                // Power-Up Reset
     input   logic                                   dm_rst_n,                   // Debug Module Reset
@@ -61,8 +61,8 @@ module ycr1_tapc_synchronizer (
     input  logic                                    tapc2tapcsync_dmi_ch_sel_i, // DMI Chain Select input  (TCK domain)
     output logic                                    tapcsync2dmi_ch_sel_o,      // DMI Chain Select output (SysCLK domain)
 
-    input  logic [YCR1_DBG_DMI_CH_ID_WIDTH-1:0]     tapc2tapcsync_ch_id_i,      // DMI/SCU Chain Identifier input  (TCK domain)
-    output logic [YCR1_DBG_DMI_CH_ID_WIDTH-1:0]     tapcsync2core_ch_id_o,      // DMI/SCU Chain Identifier output (SysCLK domain)
+    input  logic [YCR_DBG_DMI_CH_ID_WIDTH-1:0]     tapc2tapcsync_ch_id_i,      // DMI/SCU Chain Identifier input  (TCK domain)
+    output logic [YCR_DBG_DMI_CH_ID_WIDTH-1:0]     tapcsync2core_ch_id_o,      // DMI/SCU Chain Identifier output (SysCLK domain)
 
     input  logic                                    tapc2tapcsync_ch_capture_i, // DMI/SCU Chain Capture input  (TCK domain)
     output logic                                    tapcsync2core_ch_capture_o, // DMI/SCU Chain Capture output (SysCLK domain)
@@ -213,6 +213,6 @@ end
 
 assign tapc2tapcsync_ch_tdo_i = tapcsync2core_ch_tdo_o;
 
-endmodule : ycr1_tapc_synchronizer
+endmodule : ycr_tapc_synchronizer
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN

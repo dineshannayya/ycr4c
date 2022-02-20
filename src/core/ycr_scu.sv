@@ -20,7 +20,7 @@
 ////  yifive System Control Unit (SCU)                                    ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     System Control Unit (SCU)                                        ////
@@ -59,12 +59,12 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_scu.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_scu.svh"
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 
-module ycr1_scu (
+module ycr_scu (
     // Global signals
     input  logic        pwrup_rst_n,                  // Power-Up Reset
     input  logic        rst_n,                        // Regular Reset
@@ -107,7 +107,7 @@ module ycr1_scu (
 //------------------------------------------------------------------------------
 // Local Parameters
 //======================================================================================================================
-localparam int unsigned YCR1_SCU_RST_SYNC_STAGES_NUM        = 2;
+localparam int unsigned YCR_SCU_RST_SYNC_STAGES_NUM        = 2;
 
 //------------------------------------------------------------------------------
 // Local Signals
@@ -124,36 +124,36 @@ logic                                       tapc_dr_upd_req;
 
 // TAPC shift register signals
 logic                                       tapc_shift_upd;
-type_ycr1_scu_sysctrl_dr_s                  tapc_shift_ff;
-type_ycr1_scu_sysctrl_dr_s                  tapc_shift_next;
+type_ycr_scu_sysctrl_dr_s                  tapc_shift_ff;
+type_ycr_scu_sysctrl_dr_s                  tapc_shift_next;
 
 // TAPC shadow register signals
-type_ycr1_scu_sysctrl_dr_s                  tapc_shadow_ff;
+type_ycr_scu_sysctrl_dr_s                  tapc_shadow_ff;
 
 // SCU CSR write/read i/f
 //------------------------------------------------------------------------------
 
-logic [YCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]  scu_csr_wdata;
-logic [YCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]  scu_csr_rdata;
+logic [YCR_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]  scu_csr_wdata;
+logic [YCR_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]  scu_csr_rdata;
 
 // SCU CSRs signals
 //------------------------------------------------------------------------------
 
 // Control register
-type_ycr1_scu_sysctrl_control_reg_s         scu_control_ff;
+type_ycr_scu_sysctrl_control_reg_s         scu_control_ff;
 logic                                       scu_control_wr_req;
 
 // Mode register
-type_ycr1_scu_sysctrl_mode_reg_s            scu_mode_ff;
+type_ycr_scu_sysctrl_mode_reg_s            scu_mode_ff;
 logic                                       scu_mode_wr_req;
 
 // Status register
-type_ycr1_scu_sysctrl_status_reg_s          scu_status_ff;
-type_ycr1_scu_sysctrl_status_reg_s          scu_status_ff_dly;
-type_ycr1_scu_sysctrl_status_reg_s          scu_status_ff_posedge;
+type_ycr_scu_sysctrl_status_reg_s          scu_status_ff;
+type_ycr_scu_sysctrl_status_reg_s          scu_status_ff_dly;
+type_ycr_scu_sysctrl_status_reg_s          scu_status_ff_posedge;
 
 // Sticky Status register
-type_ycr1_scu_sysctrl_status_reg_s          scu_sticky_sts_ff;
+type_ycr_scu_sysctrl_status_reg_s          scu_sticky_sts_ff;
 logic                                       scu_sticky_sts_wr_req;
 
 // Reset logic signals
@@ -220,7 +220,7 @@ always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
 end
 
 assign tapc_shift_next = tapc_dr_cap_req  ? tapc_shadow_ff
-                       : tapc_dr_shft_req ? {tapcsync2scu_ch_tdi_i, tapc_shift_ff[YCR1_SCU_DR_SYSCTRL_WIDTH-1:1]}// cp.5
+                       : tapc_dr_shft_req ? {tapcsync2scu_ch_tdi_i, tapc_shift_ff[YCR_SCU_DR_SYSCTRL_WIDTH-1:1]}// cp.5
                                           : tapc_shift_ff;
 
 // TAPC shadow register
@@ -251,11 +251,11 @@ always_comb begin
     scu_mode_wr_req       = 1'b0;
     scu_sticky_sts_wr_req = 1'b0;
 
-    if (tapc_dr_upd_req && (tapc_shift_ff.op != YCR1_SCU_SYSCTRL_OP_READ)) begin
+    if (tapc_dr_upd_req && (tapc_shift_ff.op != YCR_SCU_SYSCTRL_OP_READ)) begin
         case (tapc_shift_ff.addr)
-            YCR1_SCU_SYSCTRL_ADDR_CONTROL: scu_control_wr_req    = 1'b1;
-            YCR1_SCU_SYSCTRL_ADDR_MODE   : scu_mode_wr_req       = 1'b1;
-            YCR1_SCU_SYSCTRL_ADDR_STICKY : scu_sticky_sts_wr_req = (tapc_shift_ff.op == YCR1_SCU_SYSCTRL_OP_CLRBITS);
+            YCR_SCU_SYSCTRL_ADDR_CONTROL: scu_control_wr_req    = 1'b1;
+            YCR_SCU_SYSCTRL_ADDR_MODE   : scu_mode_wr_req       = 1'b1;
+            YCR_SCU_SYSCTRL_ADDR_STICKY : scu_sticky_sts_wr_req = (tapc_shift_ff.op == YCR_SCU_SYSCTRL_OP_CLRBITS);
             default                      : begin end
         endcase
     end
@@ -267,10 +267,10 @@ always_comb begin
 
     if (tapc_dr_upd_req) begin
         case (tapc_shift_ff.op)
-            YCR1_SCU_SYSCTRL_OP_WRITE  : scu_csr_wdata = tapc_shift_ff.data;
-            YCR1_SCU_SYSCTRL_OP_READ   : scu_csr_wdata = scu_csr_rdata;
-            YCR1_SCU_SYSCTRL_OP_SETBITS: scu_csr_wdata = scu_csr_rdata |   tapc_shift_ff.data;
-            YCR1_SCU_SYSCTRL_OP_CLRBITS: scu_csr_wdata = scu_csr_rdata & (~tapc_shift_ff.data);
+            YCR_SCU_SYSCTRL_OP_WRITE  : scu_csr_wdata = tapc_shift_ff.data;
+            YCR_SCU_SYSCTRL_OP_READ   : scu_csr_wdata = scu_csr_rdata;
+            YCR_SCU_SYSCTRL_OP_SETBITS: scu_csr_wdata = scu_csr_rdata |   tapc_shift_ff.data;
+            YCR_SCU_SYSCTRL_OP_CLRBITS: scu_csr_wdata = scu_csr_rdata & (~tapc_shift_ff.data);
             default                    : begin end
         endcase
     end
@@ -285,10 +285,10 @@ always_comb begin
 
     if (tapc_dr_upd_req) begin
         case (tapc_shift_ff.addr)
-            YCR1_SCU_SYSCTRL_ADDR_CONTROL: scu_csr_rdata = scu_control_ff;
-            YCR1_SCU_SYSCTRL_ADDR_MODE   : scu_csr_rdata = scu_mode_ff;
-            YCR1_SCU_SYSCTRL_ADDR_STATUS : scu_csr_rdata = scu_status_ff;
-            YCR1_SCU_SYSCTRL_ADDR_STICKY : scu_csr_rdata = scu_sticky_sts_ff;
+            YCR_SCU_SYSCTRL_ADDR_CONTROL: scu_csr_rdata = scu_control_ff;
+            YCR_SCU_SYSCTRL_ADDR_MODE   : scu_csr_rdata = scu_mode_ff;
+            YCR_SCU_SYSCTRL_ADDR_STATUS : scu_csr_rdata = scu_status_ff;
+            YCR_SCU_SYSCTRL_ADDR_STICKY : scu_csr_rdata = scu_sticky_sts_ff;
             default                      : scu_csr_rdata = 'x;
         endcase
     end
@@ -357,7 +357,7 @@ always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
         scu_sticky_sts_ff <= '0;
     end else begin
-        for (i = 0; i < YCR1_SCU_SYSCTRL_STATUS_REG_WIDTH ; i=i+1) begin // cp.4
+        for (i = 0; i < YCR_SCU_SYSCTRL_STATUS_REG_WIDTH ; i=i+1) begin // cp.4
             if (scu_status_ff_posedge[i]) begin
                 scu_sticky_sts_ff[i] <= 1'b1;
             end else if (scu_sticky_sts_wr_req) begin
@@ -390,7 +390,7 @@ assign core_reset_n = ~scu_control_ff.core_reset;
 // System/Cluster Reset: sys_rst_n_o
 //------------------------------------------------------------------------------
 
-ycr1_reset_qlfy_adapter_cell_sync   i_sys_rstn_qlfy_adapter_cell_sync (
+ycr_reset_qlfy_adapter_cell_sync   i_sys_rstn_qlfy_adapter_cell_sync (
     .rst_n                          (pwrup_rst_n_sync),
     .clk                            (clk             ),
     .test_rst_n                     (test_rst_n      ),
@@ -403,8 +403,8 @@ ycr1_reset_qlfy_adapter_cell_sync   i_sys_rstn_qlfy_adapter_cell_sync (
 
 assign sys_rst_n_in = sys_reset_n & ndm_rst_n_i & rst_n_sync;
 
-ycr1_data_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_SCU_RST_SYNC_STAGES_NUM)
+ycr_data_sync_cell #(
+    .STAGES_AMOUNT       (YCR_SCU_RST_SYNC_STAGES_NUM)
 ) i_sys_rstn_status_sync (
     .rst_n               (pwrup_rst_n_sync     ),
     .clk                 (clk                  ),
@@ -420,7 +420,7 @@ assign sys_rdc_qlfy_o = sys_rst_n_qlfy;
 // Core Reset: core_rst_n_o
 //------------------------------------------------------------------------------
 
-ycr1_reset_qlfy_adapter_cell_sync   i_core_rstn_qlfy_adapter_cell_sync (
+ycr_reset_qlfy_adapter_cell_sync   i_core_rstn_qlfy_adapter_cell_sync (
     .rst_n                          (pwrup_rst_n_sync  ),
     .clk                            (clk               ),
     .test_rst_n                     (test_rst_n        ),
@@ -433,8 +433,8 @@ ycr1_reset_qlfy_adapter_cell_sync   i_core_rstn_qlfy_adapter_cell_sync (
 
 assign core_rst_n_in_sync   = sys_rst_n_in & hart_rst_n_i & core_reset_n & cpu_rst_n_sync;
 
-ycr1_data_sync_cell #(
-    .STAGES_AMOUNT        (YCR1_SCU_RST_SYNC_STAGES_NUM)
+ycr_data_sync_cell #(
+    .STAGES_AMOUNT        (YCR_SCU_RST_SYNC_STAGES_NUM)
 ) i_core_rstn_status_sync (
     .rst_n                (pwrup_rst_n_sync      ),
     .clk                  (clk                   ),
@@ -455,7 +455,7 @@ assign core2dm_rdc_qlfy_o  = core_rst_n_qlfy;
 // Hart Debug Unit Reset: hdu_rst_n_o
 //------------------------------------------------------------------------------
 
-ycr1_reset_qlfy_adapter_cell_sync   i_hdu_rstn_qlfy_adapter_cell_sync (
+ycr_reset_qlfy_adapter_cell_sync   i_hdu_rstn_qlfy_adapter_cell_sync (
     .rst_n                          (pwrup_rst_n_sync ),
     .clk                            (clk              ),
     .test_rst_n                     (test_rst_n       ),
@@ -468,8 +468,8 @@ ycr1_reset_qlfy_adapter_cell_sync   i_hdu_rstn_qlfy_adapter_cell_sync (
 
 assign hdu_rst_n_in_sync = scu_mode_ff.hdu_rst_bhv | core_rst_n_in_sync;
 
-ycr1_data_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_SCU_RST_SYNC_STAGES_NUM)
+ycr_data_sync_cell #(
+    .STAGES_AMOUNT       (YCR_SCU_RST_SYNC_STAGES_NUM)
 ) i_hdu_rstn_status_sync (
     .rst_n               (pwrup_rst_n_sync     ),
     .clk                 (clk                  ),
@@ -484,7 +484,7 @@ assign hdu2dm_rdc_qlfy_o = hdu_rst_n_qlfy;
 // Debug Module Reset: dm_rst_n_o
 //------------------------------------------------------------------------------
 
-ycr1_reset_buf_cell i_dm_rstn_buf_cell (
+ycr_reset_buf_cell i_dm_rstn_buf_cell (
     .rst_n              (pwrup_rst_n_sync),
     .clk                (clk             ),
     .test_mode          (test_mode       ),
@@ -496,7 +496,7 @@ ycr1_reset_buf_cell i_dm_rstn_buf_cell (
 
 assign dm_rst_n_in  = ~scu_mode_ff.dm_rst_bhv | sys_reset_n;
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //--------------------------------------------------------------------
 // Assertions
 //--------------------------------------------------------------------
@@ -504,47 +504,47 @@ assign dm_rst_n_in  = ~scu_mode_ff.dm_rst_bhv | sys_reset_n;
 `ifndef VERILATOR
 // Preventing some assertions to be raised at 0 sim time or in the first cycle
 initial begin
-$assertoff(0, ycr1_scu);
+$assertoff(0, ycr_scu);
 repeat (2) @(posedge clk);
-$asserton(0, ycr1_scu);
+$asserton(0, ycr_scu);
 end
 `endif // VERILATOR
 
 // X checks
-YCR1_SVA_SCU_RESETS_XCHECK : assert property (
+YCR_SVA_SCU_RESETS_XCHECK : assert property (
     @(negedge clk)
     !$isunknown({pwrup_rst_n, rst_n, cpu_rst_n, ndm_rst_n_i, hart_rst_n_i})
 ) else $error("SCU resets error: unknown values of input resets");
 
 `ifndef VERILATOR
 // Qualifiers checks
-YCR1_SVA_SCU_SYS2SOC_QLFY_CHECK : assert property (
+YCR_SVA_SCU_SYS2SOC_QLFY_CHECK : assert property (
     @(negedge clk) disable iff (~pwrup_rst_n)
     $fell(sys_rst_n_o) |-> $fell($past(sys_rdc_qlfy_o))
 ) else $error("SCU sys2soc qlfy error: qlfy wasn't raised prior to reset");
 
-YCR1_SVA_SCU_CORE2SOC_QLFY_CHECK : assert property (
+YCR_SVA_SCU_CORE2SOC_QLFY_CHECK : assert property (
     @(negedge clk) disable iff (~pwrup_rst_n)
     $fell(core_rst_n_o) |-> $fell($past(core_rdc_qlfy_o))
 ) else $error("SCU core2soc qlfy error: qlfy wasn't raised prior to reset");
 
-YCR1_SVA_SCU_CORE2HDU_QLFY_CHECK : assert property (
+YCR_SVA_SCU_CORE2HDU_QLFY_CHECK : assert property (
     @(negedge clk) disable iff (~pwrup_rst_n)
     $fell(core_rst_n_o) |-> $fell($past(core2hdu_rdc_qlfy_o))
 ) else $error("SCU core2hdu qlfy error: qlfy wasn't raised prior to reset");
 
-YCR1_SVA_SCU_CORE2DM_QLFY_CHECK : assert property (
+YCR_SVA_SCU_CORE2DM_QLFY_CHECK : assert property (
     @(negedge clk) disable iff (~pwrup_rst_n)
     $fell(core_rst_n_o) |-> $fell($past(core2dm_rdc_qlfy_o))
 ) else $error("SCU core2dm qlfy error: qlfy wasn't raised prior to reset");
 
-YCR1_SVA_SCU_HDU2DM_QLFY_CHECK : assert property (
+YCR_SVA_SCU_HDU2DM_QLFY_CHECK : assert property (
     @(negedge clk) disable iff (~pwrup_rst_n)
     $fell(hdu_rst_n_o) |-> $fell($past(hdu2dm_rdc_qlfy_o))
 ) else $error("SCU hdu2dm qlfy error: qlfy wasn't raised prior to reset");
 `endif // VERILATOR
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_scu
-`endif // YCR1_DBG_EN
+endmodule : ycr_scu
+`endif // YCR_DBG_EN
 

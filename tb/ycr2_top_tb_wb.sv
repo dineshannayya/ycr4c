@@ -1,24 +1,24 @@
-/// @file       <ycr1_top_tb_ahb.sv>
-/// @brief      YCR1 top testbench Wishbone
+/// @file       <ycr_top_tb_ahb.sv>
+/// @brief      YCR top testbench Wishbone
 ///
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_ahb.svh"
-`ifdef YCR1_IPIC_EN
-`include "ycr1_ipic.svh"
-`endif // YCR1_IPIC_EN
+`include "ycr_arch_description.svh"
+`include "ycr_ahb.svh"
+`ifdef YCR_IPIC_EN
+`include "ycr_ipic.svh"
+`endif // YCR_IPIC_EN
 
 `include "uprj_netlists.v"
-`include "ycr1_memory_tb_wb.sv"
-`include "ycr1_dmem_tb_wb.sv"
+`include "ycr_memory_tb_wb.sv"
+`include "ycr_dmem_tb_wb.sv"
 `include "sky130_sram_2kbyte_1rw1r_32x512_8.v"
 
-localparam [31:0]      YCR1_SIM_EXIT_ADDR      = 32'h0000_00F8;
-localparam [31:0]      YCR1_SIM_PRINT_ADDR     = 32'hF000_0000;
-localparam [31:0]      YCR1_SIM_EXT_IRQ_ADDR   = 32'hF000_0100;
-localparam [31:0]      YCR1_SIM_SOFT_IRQ_ADDR  = 32'hF000_0200;
+localparam [31:0]      YCR_SIM_EXIT_ADDR      = 32'h0000_00F8;
+localparam [31:0]      YCR_SIM_PRINT_ADDR     = 32'hF000_0000;
+localparam [31:0]      YCR_SIM_EXT_IRQ_ADDR   = 32'hF000_0100;
+localparam [31:0]      YCR_SIM_SOFT_IRQ_ADDR  = 32'hF000_0200;
 
-module ycr1_top_tb_wb (
+module ycr2_top_tb_wb (
 `ifdef VERILATOR
     input logic clk
 `endif // VERILATOR
@@ -27,7 +27,7 @@ module ycr1_top_tb_wb (
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam                          YCR1_MEM_SIZE       = 1024*1024;
+localparam                          YCR_MEM_SIZE       = 1024*1024;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -37,44 +37,44 @@ logic                                   rst_n;
 logic                                   clk         = 1'b0;
 `endif // VERILATOR
 logic                                   rtc_clk     = 1'b0;
-`ifdef YCR1_IPIC_EN
-logic [YCR1_IRQ_LINES_NUM-1:0]          irq_lines;
-`else // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+logic [YCR_IRQ_LINES_NUM-1:0]          irq_lines;
+`else // YCR_IPIC_EN
 logic                                   ext_irq;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 logic                                   soft_irq;
 logic [31:0]                            fuse_mhartid;
 integer                                 imem_req_ack_stall;
 integer                                 dmem_req_ack_stall;
 
 logic                                   test_mode   = 1'b0;
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 logic                                   trst_n;
 logic                                   tck;
 logic                                   tms;
 logic                                   tdi;
 logic                                   tdo;
 logic                                   tdo_en;
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 logic                                   wb_rst_n;       // Wish bone reset
 logic                                   wb_clk = 1'b0;  // wish bone clock
 // Instruction Memory Interface
 logic                                   wbd_imem_stb_o; // strobe/request
-logic   [YCR1_WB_WIDTH-1:0]             wbd_imem_adr_o; // address
+logic   [YCR_WB_WIDTH-1:0]             wbd_imem_adr_o; // address
 logic                                   wbd_imem_we_o;  // write
-logic   [YCR1_WB_WIDTH-1:0]             wbd_imem_dat_o; // data output
+logic   [YCR_WB_WIDTH-1:0]             wbd_imem_dat_o; // data output
 logic   [3:0]                           wbd_imem_sel_o; // byte enable
-logic   [YCR1_WB_WIDTH-1:0]             wbd_imem_dat_i; // data input
+logic   [YCR_WB_WIDTH-1:0]             wbd_imem_dat_i; // data input
 logic                                   wbd_imem_ack_i; // acknowlegement
 logic                                   wbd_imem_err_i;  // error
 
 // Data Memory Interface
 logic                                   wbd_dmem_stb_o; // strobe/request
-logic   [YCR1_WB_WIDTH-1:0]             wbd_dmem_adr_o; // address
+logic   [YCR_WB_WIDTH-1:0]             wbd_dmem_adr_o; // address
 logic                                   wbd_dmem_we_o;  // write
-logic   [YCR1_WB_WIDTH-1:0]             wbd_dmem_dat_o; // data output
+logic   [YCR_WB_WIDTH-1:0]             wbd_dmem_dat_o; // data output
 logic   [3:0]                           wbd_dmem_sel_o; // byte enable
-logic   [YCR1_WB_WIDTH-1:0]             wbd_dmem_dat_i; // data input
+logic   [YCR_WB_WIDTH-1:0]             wbd_dmem_dat_i; // data input
 logic                                   wbd_dmem_ack_i; // acknowlegement
 logic                                   wbd_dmem_err_i; // error
 
@@ -122,17 +122,17 @@ wire  [8:0]                             sram0_addr1   ; // Address
 wire  [31:0]                            sram0_dout1   ; // Read Data
 `endif
 
-`ifdef YCR1_ICACHE_EN
+`ifdef YCR_ICACHE_EN
    // Wishbone ICACHE I/F
    logic                             wb_icache_stb_o; // strobe/request
-   logic   [YCR1_WB_WIDTH-1:0]       wb_icache_adr_o; // address
+   logic   [YCR_WB_WIDTH-1:0]       wb_icache_adr_o; // address
    logic                             wb_icache_we_o;  // write
-   logic   [YCR1_WB_WIDTH-1:0]       wb_icache_dat_o; // data output
+   logic   [YCR_WB_WIDTH-1:0]       wb_icache_dat_o; // data output
    logic   [3:0]                     wb_icache_sel_o; // byte enable
    logic   [9:0]                     wb_icache_bl_o;  // Burst Length
    logic                             wb_icache_bry_o; // Burst Length
 
-   logic   [YCR1_WB_WIDTH-1:0]       wb_icache_dat_i; // data input
+   logic   [YCR_WB_WIDTH-1:0]       wb_icache_dat_i; // data input
    logic                             wb_icache_ack_i; // acknowlegement
    logic                             wb_icache_lack_i;// last acknowlegement
    logic                             wb_icache_err_i;  // error
@@ -154,17 +154,17 @@ wire  [31:0]                            sram0_dout1   ; // Read Data
 
 `endif
 
-`ifdef YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
    // Wishbone ICACHE I/F
    logic                             wb_dcache_stb_o; // strobe/request
-   logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_adr_o; // address
+   logic   [YCR_WB_WIDTH-1:0]       wb_dcache_adr_o; // address
    logic                             wb_dcache_we_o;  // write
-   logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_dat_o; // data output
+   logic   [YCR_WB_WIDTH-1:0]       wb_dcache_dat_o; // data output
    logic   [3:0]                     wb_dcache_sel_o; // byte enable
    logic   [9:0]                     wb_dcache_bl_o;  // Burst Length
    logic                             wb_dcache_bry_o; // Burst Ready
 
-   logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_dat_i; // data input
+   logic   [YCR_WB_WIDTH-1:0]       wb_dcache_dat_i; // data input
    logic                             wb_dcache_ack_i; // acknowlegement
    logic                             wb_dcache_lack_i;// last acknowlegement
    logic                             wb_dcache_err_i;  // error
@@ -319,7 +319,7 @@ always_ff @(posedge clk) begin
 end
 
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 initial begin
     trst_n  = 1'b0;
     tck     = 1'b0;
@@ -330,7 +330,7 @@ initial begin
     #500ns trst_n   = 1'b0;
     #100ns tms      = 1'b1;
 end
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 
 always @reinit_event
@@ -361,19 +361,19 @@ end
 // Run tests
 //-------------------------------------------------------------------------------
 
-`include "ycr1_top_tb_runtests.sv"
+`include "ycr_top_tb_runtests.sv"
 //-------------------------------------------------------------------------------
 // Core instance
 //-------------------------------------------------------------------------------
-ycr1_top_wb i_top (
+ycr2_top_wb i_top (
     // Reset
     .pwrup_rst_n            (rst_n                  ),
     .rst_n                  (rst_n                  ),
     .cpu_rst_n              (rst_n                  ),
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     .sys_rst_n_o            (                       ),
     .sys_rdc_qlfy_o         (                       ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Clock
     .core_clk               (clk                    ),
@@ -382,9 +382,9 @@ ycr1_top_wb i_top (
 
     // Fuses
     .fuse_mhartid           (fuse_mhartid           ),
-`ifdef YCR1_DBG_EN
-    .fuse_idcode            (`YCR1_TAP_IDCODE       ),
-`endif // YCR1_DBG_EN
+`ifdef YCR_DBG_EN
+    .fuse_idcode            (`YCR_TAP_IDCODE       ),
+`endif // YCR_DBG_EN
 
 `ifndef SCR1_TCM_MEM
     // SRAM-0 PORT-0
@@ -404,18 +404,18 @@ ycr1_top_wb i_top (
 `endif
 
     // IRQ
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     .irq_lines              (irq_lines              ),
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
     .ext_irq                (ext_irq                ),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     .soft_irq               (soft_irq               ),
 
     // DFT
     //.test_mode              (1'b0                   ),
     //.test_rst_n             (1'b1                   ),
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // JTAG
     .trst_n                 (trst_n                 ),
     .tck                    (tck                    ),
@@ -423,11 +423,11 @@ ycr1_top_wb i_top (
     .tdi                    (tdi                    ),
     .tdo                    (tdo                    ),
     .tdo_en                 (tdo_en                 ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     .wb_rst_n               (rst_n                  ),
     .wb_clk                 (clk                    ),
-   `ifdef YCR1_ICACHE_EN
+   `ifdef YCR_ICACHE_EN
    // Wishbone ICACHE I/F
     .wb_icache_stb_o                    (wb_icache_stb_o  ), // strobe/request
     .wb_icache_adr_o                    (wb_icache_adr_o  ), // address
@@ -457,7 +457,7 @@ ycr1_top_wb i_top (
 
    `endif
 
-   `ifdef YCR1_DCACHE_EN
+   `ifdef YCR_DCACHE_EN
    // Wishbone DCACHE I/F
     .wb_dcache_stb_o                    (wb_dcache_stb_o  ), // strobe/request
     .wb_dcache_adr_o                    (wb_dcache_adr_o  ), // address
@@ -533,7 +533,7 @@ sky130_sram_2kbyte_1rw1r_32x512_8 u_tsram0_2kb(
 `endif
 
 
-`ifdef YCR1_ICACHE_EN
+`ifdef YCR_ICACHE_EN
 sky130_sram_2kbyte_1rw1r_32x512_8 u_icache_2kb(
 `ifdef USE_POWER_PINS
     .vccd1 (vccd1),// User area 1 1.8V supply
@@ -555,7 +555,7 @@ sky130_sram_2kbyte_1rw1r_32x512_8 u_icache_2kb(
   );
 `endif
 
-`ifdef YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
 sky130_sram_2kbyte_1rw1r_32x512_8 u_dcache_2kb(
 `ifdef USE_POWER_PINS
     .vccd1 (vccd1),// User area 1 1.8V supply
@@ -580,22 +580,22 @@ sky130_sram_2kbyte_1rw1r_32x512_8 u_dcache_2kb(
 //-------------------------------------------------------------------------------
 // Memory instance
 //-------------------------------------------------------------------------------
-ycr1_memory_tb_wb #(
-    .YCR1_MEM_POWER_SIZE    ($clog2(YCR1_MEM_SIZE))
+ycr_memory_tb_wb #(
+    .YCR_MEM_POWER_SIZE    ($clog2(YCR_MEM_SIZE))
 ) i_imem_tb (
     // Control
     .rst_n                  (rst_n                  ),
     .clk                    (clk                    ),
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     .irq_lines              (irq_lines              ),
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
     .ext_irq                (ext_irq                ),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     .soft_irq               (soft_irq               ),
     .imem_req_ack_stall_in  (imem_req_ack_stall     ),
     .dmem_req_ack_stall_in  (dmem_req_ack_stall     ),
 
-   `ifdef YCR1_ICACHE_EN
+   `ifdef YCR_ICACHE_EN
 
     .wbd_imem_stb_i         (wb_icache_stb_o       ),
     .wbd_imem_adr_i         (wb_icache_adr_o       ),
@@ -640,9 +640,9 @@ ycr1_memory_tb_wb #(
 
 
 // dcache application memory
-`ifdef YCR1_DCACHE_EN
-ycr1_dmem_tb_wb #(
-    .YCR1_MEM_POWER_SIZE    ($clog2(YCR1_MEM_SIZE))
+`ifdef YCR_DCACHE_EN
+ycr_dmem_tb_wb #(
+    .YCR_MEM_POWER_SIZE    ($clog2(YCR_MEM_SIZE))
 ) i_dmem_tb (
     // Control
     .rst_n                  (rst_n                 ),
@@ -686,13 +686,13 @@ end
 initial
 begin
    $dumpfile("simx.vcd");
-   $dumpvars(0,ycr1_top_tb_wb);
-   //$dumpvars(0,ycr1_top_tb_wb.i_top);
-   //$dumpvars(0,ycr1_top_tb_wb.i_top.i_core_top.i_pipe_top.i_pipe_mprf);
+   $dumpvars(0,ycr2_top_tb_wb);
+   //$dumpvars(0,ycr2_top_tb_wb.i_top);
+   //$dumpvars(0,ycr2_top_tb_wb.i_top.i_core_top.i_pipe_top.i_pipe_mprf);
 end
 `endif
 
 
 
-endmodule : ycr1_top_tb_wb
+endmodule : ycr2_top_tb_wb
 

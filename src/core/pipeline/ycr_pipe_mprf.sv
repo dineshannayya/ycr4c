@@ -20,7 +20,7 @@
 ////  yifive Multi Port Register File (MPRF)                              ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Multi Port Register File (MPRF)                                  ////
@@ -41,26 +41,26 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_arch_types.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_arch_types.svh"
 
-module ycr1_pipe_mprf (
+module ycr_pipe_mprf (
     // Common
-`ifdef YCR1_MPRF_RST_EN
+`ifdef YCR_MPRF_RST_EN
     input   logic                               rst_n,                      // MPRF reset
-`endif // YCR1_MPRF_RST_EN
+`endif // YCR_MPRF_RST_EN
     input   logic                               clk,                        // MPRF clock
 
     // EXU <-> MPRF interface
-    input   logic [`YCR1_MPRF_AWIDTH-1:0]       exu2mprf_rs1_addr_i,        // MPRF rs1 read address
-    output  logic [`YCR1_XLEN-1:0]              mprf2exu_rs1_data_o,        // MPRF rs1 read data
-    input   logic [`YCR1_MPRF_AWIDTH-1:0]       exu2mprf_rs2_addr_i,        // MPRF rs2 read address
-    output  logic [`YCR1_XLEN-1:0]              mprf2exu_rs2_data_o,        // MPRF rs2 read data
+    input   logic [`YCR_MPRF_AWIDTH-1:0]       exu2mprf_rs1_addr_i,        // MPRF rs1 read address
+    output  logic [`YCR_XLEN-1:0]              mprf2exu_rs1_data_o,        // MPRF rs1 read data
+    input   logic [`YCR_MPRF_AWIDTH-1:0]       exu2mprf_rs2_addr_i,        // MPRF rs2 read address
+    output  logic [`YCR_XLEN-1:0]              mprf2exu_rs2_data_o,        // MPRF rs2 read data
     input   logic                               exu2mprf_w_req_i,           // MPRF write request
-    input   logic [`YCR1_MPRF_AWIDTH-1:0]       exu2mprf_rd_addr_i,         // MPRF rd write address
-    input   logic [`YCR1_XLEN-1:0]              exu2mprf_rd_data_i,         // MPRF rd write data
+    input   logic [`YCR_MPRF_AWIDTH-1:0]       exu2mprf_rd_addr_i,         // MPRF rd write address
+    input   logic [`YCR_XLEN-1:0]              exu2mprf_rd_data_i,         // MPRF rd write data
 
-    output  logic [`YCR1_XLEN-1:0]              func_return_val    // Debug Purpose
+    output  logic [`YCR_XLEN-1:0]              func_return_val    // Debug Purpose
 );
 
 //-------------------------------------------------------------------------------
@@ -82,15 +82,15 @@ logic                        rs1_new_data_req_ff;
 logic                        rs2_new_data_req_ff;
 logic                        read_new_data_req;
 
-logic    [`YCR1_XLEN-1:0]    rd_data_ff;
+logic    [`YCR_XLEN-1:0]    rd_data_ff;
 
-logic    [`YCR1_XLEN-1:0]    rs1_data_ff;
-logic    [`YCR1_XLEN-1:0]    rs2_data_ff;
+logic    [`YCR_XLEN-1:0]    rs1_data_ff;
+logic    [`YCR_XLEN-1:0]    rs2_data_ff;
 
 
 `endif
 
-`ifdef  YCR1_MPRF_RAM
+`ifdef  YCR_MPRF_RAM
 logic                        rs1_addr_vd_ff;
 logic                        rs2_addr_vd_ff;
 
@@ -100,25 +100,25 @@ logic                        rs1_new_data_req_ff;
 logic                        rs2_new_data_req_ff;
 logic                        read_new_data_req;
 
-logic    [`YCR1_XLEN-1:0]    rd_data_ff;
+logic    [`YCR_XLEN-1:0]    rd_data_ff;
 
-logic    [`YCR1_XLEN-1:0]    rs1_data_ff;
-logic    [`YCR1_XLEN-1:0]    rs2_data_ff;
+logic    [`YCR_XLEN-1:0]    rs1_data_ff;
+logic    [`YCR_XLEN-1:0]    rs2_data_ff;
 
 // when using RAM, 2 memories are needed because 3 simultaneous independent
 // write/read operations can occur
- `ifdef YCR1_TRGT_FPGA_INTEL_MAX10
-(* ramstyle = "M9K" *)      logic   [`YCR1_XLEN-1:0]    mprf_int   [1:`YCR1_MPRF_SIZE-1];
-(* ramstyle = "M9K" *)      logic   [`YCR1_XLEN-1:0]    mprf_int2  [1:`YCR1_MPRF_SIZE-1];
- `elsif YCR1_TRGT_FPGA_INTEL_ARRIAV
-(* ramstyle = "M10K" *)     logic   [`YCR1_XLEN-1:0]    mprf_int   [1:`YCR1_MPRF_SIZE-1];
-(* ramstyle = "M10K" *)     logic   [`YCR1_XLEN-1:0]    mprf_int2  [1:`YCR1_MPRF_SIZE-1];
+ `ifdef YCR_TRGT_FPGA_INTEL_MAX10
+(* ramstyle = "M9K" *)      logic   [`YCR_XLEN-1:0]    mprf_int   [1:`YCR_MPRF_SIZE-1];
+(* ramstyle = "M9K" *)      logic   [`YCR_XLEN-1:0]    mprf_int2  [1:`YCR_MPRF_SIZE-1];
+ `elsif YCR_TRGT_FPGA_INTEL_ARRIAV
+(* ramstyle = "M10K" *)     logic   [`YCR_XLEN-1:0]    mprf_int   [1:`YCR_MPRF_SIZE-1];
+(* ramstyle = "M10K" *)     logic   [`YCR_XLEN-1:0]    mprf_int2  [1:`YCR_MPRF_SIZE-1];
  `else
-logic   [`YCR1_XLEN-1:0]    mprf_int   [1:`YCR1_MPRF_SIZE-1];
-logic   [`YCR1_XLEN-1:0]    mprf_int2  [1:`YCR1_MPRF_SIZE-1];
+logic   [`YCR_XLEN-1:0]    mprf_int   [1:`YCR_MPRF_SIZE-1];
+logic   [`YCR_XLEN-1:0]    mprf_int2  [1:`YCR_MPRF_SIZE-1];
  `endif
 `else  // distributed logic implementation
-logic [`YCR1_XLEN-1:0]      mprf_int [1:`YCR1_MPRF_SIZE-1];
+logic [`YCR_XLEN-1:0]      mprf_int [1:`YCR_MPRF_SIZE-1];
 `endif
 
 // Location[0] hold the function return value
@@ -135,7 +135,7 @@ assign  rs2_addr_vd  =   |exu2mprf_rs2_addr_i;
 assign  wr_req_vd  =   exu2mprf_w_req_i & |exu2mprf_rd_addr_i;
 
 // RAM implementation specific control signals
-`ifdef YCR1_MPRF_RAM
+`ifdef YCR_MPRF_RAM
 assign  rs1_new_data_req    =   wr_req_vd & ( exu2mprf_rs1_addr_i == exu2mprf_rd_addr_i );
 assign  rs2_new_data_req    =   wr_req_vd & ( exu2mprf_rs2_addr_i == exu2mprf_rd_addr_i );
 assign  read_new_data_req   =   rs1_new_data_req | rs2_new_data_req;
@@ -146,9 +146,9 @@ always_ff @( posedge clk ) begin
     rs1_new_data_req_ff     <=  rs1_new_data_req;
     rs2_new_data_req_ff     <=  rs2_new_data_req;
 end
-`endif // YCR1_MPRF_RAM
+`endif // YCR_MPRF_RAM
 
-`ifdef  YCR1_MPRF_RAM
+`ifdef  YCR_MPRF_RAM
 //-------------------------------------------------------------------------------
 // RAM implementation
 //-------------------------------------------------------------------------------
@@ -230,7 +230,7 @@ end
 `endif
 
 // write operation
- `ifdef YCR1_MPRF_RST_EN
+ `ifdef YCR_MPRF_RST_EN
 always_ff @( posedge clk, negedge rst_n ) begin
     if ( ~rst_n ) begin
         mprf_int <= '{default: '0};
@@ -238,26 +238,26 @@ always_ff @( posedge clk, negedge rst_n ) begin
         mprf_int[exu2mprf_rd_addr_i] <= exu2mprf_rd_data_i;
     end
 end
- `else // ~YCR1_MPRF_RST_EN
+ `else // ~YCR_MPRF_RST_EN
 always_ff @( posedge clk ) begin
     if ( wr_req_vd ) begin
         mprf_int[exu2mprf_rd_addr_i] <= exu2mprf_rd_data_i;
     end
 end
- `endif // ~YCR1_MPRF_RST_EN
+ `endif // ~YCR_MPRF_RST_EN
 `endif
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
-`ifdef YCR1_MPRF_RST_EN
-YCR1_SVA_MPRF_WRITEX : assert property (
+`ifdef YCR_MPRF_RST_EN
+YCR_SVA_MPRF_WRITEX : assert property (
     @(negedge clk) disable iff (~rst_n)
-    exu2mprf_w_req_i |-> !$isunknown({exu2mprf_rd_addr_i, (|exu2mprf_rd_addr_i ? exu2mprf_rd_data_i : `YCR1_XLEN'd0)})
+    exu2mprf_w_req_i |-> !$isunknown({exu2mprf_rd_addr_i, (|exu2mprf_rd_addr_i ? exu2mprf_rd_data_i : `YCR_XLEN'd0)})
     ) else $error("MPRF error: unknown values");
-`endif // YCR1_MPRF_RST_EN
+`endif // YCR_MPRF_RST_EN
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_pipe_mprf
+endmodule : ycr_pipe_mprf

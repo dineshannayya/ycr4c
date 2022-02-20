@@ -20,7 +20,7 @@
 ////  yifive interface block                                              ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Holds interface block and timer & reset sync logic               ////
@@ -38,18 +38,18 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_memif.svh"
-`include "ycr1_wb.svh"
-`ifdef YCR1_IPIC_EN
-`include "ycr1_ipic.svh"
-`endif // YCR1_IPIC_EN
+`include "ycr_arch_description.svh"
+`include "ycr_memif.svh"
+`include "ycr_wb.svh"
+`ifdef YCR_IPIC_EN
+`include "ycr_ipic.svh"
+`endif // YCR_IPIC_EN
 
-`ifdef YCR1_TCM_EN
- `define YCR1_IMEM_ROUTER_EN
-`endif // YCR1_TCM_EN
+`ifdef YCR_TCM_EN
+ `define YCR_IMEM_ROUTER_EN
+`endif // YCR_TCM_EN
 
-module ycr1_intf (
+module ycr_intf (
     // Control
     input   logic                           pwrup_rst_n,            // Power-Up Reset
     input   logic                           rst_n,                  // Regular Reset signal
@@ -58,12 +58,12 @@ module ycr1_intf (
     input   logic                           rtc_clk,                // Real-time clock
     output  logic [63:0]                    riscv_debug,
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // -- JTAG I/F
     input   logic                           trst_n,
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
-`ifndef YCR1_TCM_MEM
+`ifndef YCR_TCM_MEM
     // SRAM-0 PORT-0
     output  logic                           sram0_clk0,
     output  logic                           sram0_csb0,
@@ -85,35 +85,35 @@ module ycr1_intf (
     input   logic                           wb_clk,         // wish bone clock
     // Instruction Memory Interface
     //output  logic                           wbd_imem_stb_o, // strobe/request
-    //output  logic   [YCR1_WB_WIDTH-1:0]     wbd_imem_adr_o, // address
+    //output  logic   [YCR_WB_WIDTH-1:0]     wbd_imem_adr_o, // address
     //output  logic                           wbd_imem_we_o,  // write
-    //output  logic   [YCR1_WB_WIDTH-1:0]     wbd_imem_dat_o, // data output
+    //output  logic   [YCR_WB_WIDTH-1:0]     wbd_imem_dat_o, // data output
     //output  logic   [3:0]                   wbd_imem_sel_o, // byte enable
-    //input   logic   [YCR1_WB_WIDTH-1:0]     wbd_imem_dat_i, // data input
+    //input   logic   [YCR_WB_WIDTH-1:0]     wbd_imem_dat_i, // data input
     //input   logic                           wbd_imem_ack_i, // acknowlegement
     //input   logic                           wbd_imem_err_i,  // error
 
     // Data Memory Interface
     output  logic                           wbd_dmem_stb_o, // strobe/request
-    output  logic   [YCR1_WB_WIDTH-1:0]     wbd_dmem_adr_o, // address
+    output  logic   [YCR_WB_WIDTH-1:0]     wbd_dmem_adr_o, // address
     output  logic                           wbd_dmem_we_o,  // write
-    output  logic   [YCR1_WB_WIDTH-1:0]     wbd_dmem_dat_o, // data output
+    output  logic   [YCR_WB_WIDTH-1:0]     wbd_dmem_dat_o, // data output
     output  logic   [3:0]                   wbd_dmem_sel_o, // byte enable
-    input   logic   [YCR1_WB_WIDTH-1:0]     wbd_dmem_dat_i, // data input
+    input   logic   [YCR_WB_WIDTH-1:0]     wbd_dmem_dat_i, // data input
     input   logic                           wbd_dmem_ack_i, // acknowlegement
     input   logic                           wbd_dmem_err_i, // error
 
-   `ifdef YCR1_ICACHE_EN
+   `ifdef YCR_ICACHE_EN
    // Wishbone ICACHE I/F
    output logic                             wb_icache_cyc_o, // strobe/request
    output logic                             wb_icache_stb_o, // strobe/request
-   output logic   [YCR1_WB_WIDTH-1:0]       wb_icache_adr_o, // address
+   output logic   [YCR_WB_WIDTH-1:0]       wb_icache_adr_o, // address
    output logic                             wb_icache_we_o,  // write
    output logic   [3:0]                     wb_icache_sel_o, // byte enable
    output logic   [9:0]                     wb_icache_bl_o,  // Burst Length
    output logic                             wb_icache_bry_o, // Burst Ready 
 
-   input logic   [YCR1_WB_WIDTH-1:0]        wb_icache_dat_i, // data input
+   input logic   [YCR_WB_WIDTH-1:0]        wb_icache_dat_i, // data input
    input logic                              wb_icache_ack_i, // acknowlegement
    input logic                              wb_icache_lack_i,// last acknowlegement
    input logic                              wb_icache_err_i,  // error
@@ -134,18 +134,18 @@ module ycr1_intf (
    input  logic  [31:0]                     icache_mem_dout1, // Read Data
    `endif
 
-   `ifdef YCR1_DCACHE_EN
+   `ifdef YCR_DCACHE_EN
    // Wishbone ICACHE I/F
    output logic                             wb_dcache_cyc_o, // strobe/request
    output logic                             wb_dcache_stb_o, // strobe/request
-   output logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_adr_o, // address
+   output logic   [YCR_WB_WIDTH-1:0]       wb_dcache_adr_o, // address
    output logic                             wb_dcache_we_o,  // write
-   output logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_dat_o, // data output
+   output logic   [YCR_WB_WIDTH-1:0]       wb_dcache_dat_o, // data output
    output logic   [3:0]                     wb_dcache_sel_o, // byte enable
    output logic   [9:0]                     wb_dcache_bl_o,  // Burst Length
    output logic                             wb_dcache_bry_o, // Burst Ready
 
-   input logic   [YCR1_WB_WIDTH-1:0]        wb_dcache_dat_i, // data input
+   input logic   [YCR_WB_WIDTH-1:0]        wb_dcache_dat_i, // data input
    input logic                              wb_dcache_ack_i, // acknowlegement
    input logic                              wb_dcache_lack_i,// last acknowlegement
    input logic                              wb_dcache_err_i,  // error
@@ -175,7 +175,7 @@ module ycr1_intf (
     output   logic                          test_rst_n,                 // DFT Test Reset
     input    logic                          core_rst_n_local,               // Core reset
     input    logic   [48:0]                 core_debug  ,
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // Debug Interface
     output   logic                          tapc_trst_n,                // Test Reset (TRSTn)
 `endif
@@ -186,9 +186,9 @@ module ycr1_intf (
     output   logic                          core_imem_req_ack,        // IMEM request acknowledge
     input    logic                          core_imem_req,            // IMEM request
     input    logic                          core_imem_cmd,            // IMEM command
-    input    logic [`YCR1_IMEM_AWIDTH-1:0]  core_imem_addr,           // IMEM address
-    input    logic [`YCR1_IMEM_BSIZE-1:0]   core_imem_bl,           // IMEM burst size
-    output   logic [`YCR1_IMEM_DWIDTH-1:0]  core_imem_rdata,          // IMEM read data
+    input    logic [`YCR_IMEM_AWIDTH-1:0]  core_imem_addr,           // IMEM address
+    input    logic [`YCR_IMEM_BSIZE-1:0]   core_imem_bl,           // IMEM burst size
+    output   logic [`YCR_IMEM_DWIDTH-1:0]  core_imem_rdata,          // IMEM read data
     output   logic [1:0]                    core_imem_resp,           // IMEM response
 
     // Data Memory Interface
@@ -196,16 +196,16 @@ module ycr1_intf (
     input    logic                          core_dmem_req,            // DMEM request
     input    logic                          core_dmem_cmd,            // DMEM command
     input    logic[1:0]                     core_dmem_width,          // DMEM data width
-    input    logic [`YCR1_DMEM_AWIDTH-1:0]  core_dmem_addr,           // DMEM address
-    input    logic [`YCR1_DMEM_DWIDTH-1:0]  core_dmem_wdata,          // DMEM write data
-    output   logic [`YCR1_DMEM_DWIDTH-1:0]  core_dmem_rdata,          // DMEM read data
+    input    logic [`YCR_DMEM_AWIDTH-1:0]  core_dmem_addr,           // DMEM address
+    input    logic [`YCR_DMEM_DWIDTH-1:0]  core_dmem_wdata,          // DMEM write data
+    output   logic [`YCR_DMEM_DWIDTH-1:0]  core_dmem_rdata,          // DMEM read data
     output   logic [1:0]                    core_dmem_resp            // DMEM response
 
 );
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam int unsigned YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM            = 2;
+localparam int unsigned YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM            = 2;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -215,9 +215,9 @@ localparam int unsigned YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM            = 2;
 logic                                               wb_imem_req_ack;
 logic                                               wb_imem_req;
 logic                                               wb_imem_cmd;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       wb_imem_addr;
-logic [`YCR1_IMEM_BSIZE-1:0]                        wb_imem_bl;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       wb_imem_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       wb_imem_addr;
+logic [`YCR_IMEM_BSIZE-1:0]                        wb_imem_bl;
+logic [`YCR_IMEM_DWIDTH-1:0]                       wb_imem_rdata;
 logic [1:0]                                         wb_imem_resp;
 
 // Data memory interface from router to WB bridge
@@ -225,18 +225,18 @@ logic                                               wb_dmem_req_ack;
 logic                                               wb_dmem_req;
 logic                                               wb_dmem_cmd;
 logic [1:0]                                         wb_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       wb_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       wb_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       wb_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       wb_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       wb_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       wb_dmem_rdata;
 logic [1:0]                                         wb_dmem_resp;
 
-`ifdef YCR1_TCM_EN
+`ifdef YCR_TCM_EN
 // Instruction memory interface from router to TCM
 logic                                               tcm_imem_req_ack;
 logic                                               tcm_imem_req;
 logic                                               tcm_imem_cmd;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       tcm_imem_addr;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       tcm_imem_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       tcm_imem_addr;
+logic [`YCR_IMEM_DWIDTH-1:0]                       tcm_imem_rdata;
 logic [1:0]                                         tcm_imem_resp;
 
 // Data memory interface from router to TCM
@@ -244,30 +244,30 @@ logic                                               tcm_dmem_req_ack;
 logic                                               tcm_dmem_req;
 logic                                               tcm_dmem_cmd;
 logic [1:0]                                         tcm_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       tcm_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       tcm_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       tcm_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       tcm_dmem_rdata;
 logic [1:0]                                         tcm_dmem_resp;
-`endif // YCR1_TCM_EN
+`endif // YCR_TCM_EN
 
 // Data memory interface from router to memory-mapped timer
 logic                                               timer_dmem_req_ack;
 logic                                               timer_dmem_req;
 logic                                               timer_dmem_cmd;
 logic [1:0]                                         timer_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       timer_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       timer_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       timer_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       timer_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       timer_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       timer_dmem_rdata;
 logic [1:0]                                         timer_dmem_resp;
 
-`ifdef YCR1_ICACHE_EN
+`ifdef YCR_ICACHE_EN
 // Instruction memory interface from router to icache
 logic                                               icache_imem_req_ack;
 logic                                               icache_imem_req;
 logic                                               icache_imem_cmd;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       icache_imem_addr;
-logic [`YCR1_IMEM_BSIZE-1:0]                        icache_imem_bl;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       icache_imem_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       icache_imem_addr;
+logic [`YCR_IMEM_BSIZE-1:0]                        icache_imem_bl;
+logic [`YCR_IMEM_DWIDTH-1:0]                       icache_imem_rdata;
 logic [1:0]                                         icache_imem_resp;
 
 // Data memory interface from router to icache
@@ -275,9 +275,9 @@ logic                                               icache_dmem_req_ack;
 logic                                               icache_dmem_req;
 logic                                               icache_dmem_cmd;
 logic [1:0]                                         icache_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       icache_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       icache_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       icache_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       icache_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       icache_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       icache_dmem_rdata;
 logic [1:0]                                         icache_dmem_resp;
 
 // instruction/Data memory interface towards icache
@@ -285,21 +285,21 @@ logic                                               icache_req_ack;
 logic                                               icache_req;
 logic                                               icache_cmd;
 logic [1:0]                                         icache_width;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       icache_addr;
-logic [`YCR1_IMEM_BSIZE-1:0]                        icache_bl;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       icache_wdata;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       icache_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       icache_addr;
+logic [`YCR_IMEM_BSIZE-1:0]                        icache_bl;
+logic [`YCR_IMEM_DWIDTH-1:0]                       icache_wdata;
+logic [`YCR_IMEM_DWIDTH-1:0]                       icache_rdata;
 logic [1:0]                                         icache_resp;
 
-`endif // YCR1_ICACHE_EN
+`endif // YCR_ICACHE_EN
 
-`ifdef YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
 // Instruction memory interface from router to dcache
 logic                                               dcache_imem_req_ack;
 logic                                               dcache_imem_req;
 logic                                               dcache_imem_cmd;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       dcache_imem_addr;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       dcache_imem_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       dcache_imem_addr;
+logic [`YCR_IMEM_DWIDTH-1:0]                       dcache_imem_rdata;
 logic [1:0]                                         dcache_imem_resp;
 
 // Data memory interface from router to icache
@@ -307,9 +307,9 @@ logic                                               dcache_dmem_req_ack;
 logic                                               dcache_dmem_req;
 logic                                               dcache_dmem_cmd;
 logic [1:0]                                         dcache_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       dcache_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       dcache_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       dcache_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       dcache_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       dcache_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       dcache_dmem_rdata;
 logic [1:0]                                         dcache_dmem_resp;
 
 // instruction/Data memory interface towards icache
@@ -317,43 +317,43 @@ logic                                               dcache_req_ack;
 logic                                               dcache_req;
 logic                                               dcache_cmd;
 logic [1:0]                                         dcache_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       dcache_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       dcache_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       dcache_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       dcache_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       dcache_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       dcache_rdata;
 logic [1:0]                                         dcache_resp;
 
-`endif // YCR1_ICACHE_EN
+`endif // YCR_ICACHE_EN
 
-`ifdef YCR1_ICACHE_EN
+`ifdef YCR_ICACHE_EN
    // Wishbone ICACHE I/F
    logic                             wb_icache_cclk_stb_o; // strobe/request
-   logic   [YCR1_WB_WIDTH-1:0]       wb_icache_cclk_adr_o; // address
+   logic   [YCR_WB_WIDTH-1:0]       wb_icache_cclk_adr_o; // address
    logic                             wb_icache_cclk_we_o;  // write
-   logic   [YCR1_WB_WIDTH-1:0]       wb_icache_cclk_dat_o; // data output
+   logic   [YCR_WB_WIDTH-1:0]       wb_icache_cclk_dat_o; // data output
    logic   [3:0]                     wb_icache_cclk_sel_o; // byte enable
    logic   [9:0]                     wb_icache_cclk_bl_o;  // Burst Length
 
-   logic   [YCR1_WB_WIDTH-1:0]       wb_icache_cclk_dat_i; // data input
+   logic   [YCR_WB_WIDTH-1:0]       wb_icache_cclk_dat_i; // data input
    logic                             wb_icache_cclk_ack_i; // acknowlegement
    logic                             wb_icache_cclk_lack_i;// last acknowlegement
    logic                             wb_icache_cclk_err_i; // error
 `endif
 
-`ifdef YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
    // Wishbone ICACHE I/F
    logic                             wb_dcache_cclk_stb_o; // strobe/request
-   logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_cclk_adr_o; // address
+   logic   [YCR_WB_WIDTH-1:0]       wb_dcache_cclk_adr_o; // address
    logic                             wb_dcache_cclk_we_o;  // write
-   logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_cclk_dat_o; // data output
+   logic   [YCR_WB_WIDTH-1:0]       wb_dcache_cclk_dat_o; // data output
    logic   [3:0]                     wb_dcache_cclk_sel_o; // byte enable
    logic   [9:0]                     wb_dcache_cclk_bl_o;  // Burst Length
 
-   logic   [YCR1_WB_WIDTH-1:0]       wb_dcache_cclk_dat_i; // data input
+   logic   [YCR_WB_WIDTH-1:0]       wb_dcache_cclk_dat_i; // data input
    logic                             wb_dcache_cclk_ack_i; // acknowlegement
    logic                             wb_dcache_cclk_lack_i;// last acknowlegement
    logic                             wb_dcache_cclk_err_i; // error
 `endif
-`ifndef YCR1_TCM_MEM
+`ifndef YCR_TCM_MEM
     // SRAM-1 PORT-0
     logic                           sram1_clk0;
     logic                           sram1_csb0;
@@ -392,8 +392,8 @@ wire cfg_dcache_force_flush   = riscv_glbl_cfg[3];
 // Reset logic
 //-------------------------------------------------------------------------------
 // Power-Up Reset synchronizer
-ycr1_reset_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+ycr_reset_sync_cell #(
+    .STAGES_AMOUNT       (YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
 ) i_pwrup_rstn_reset_sync (
     .rst_n          (pwrup_rst_n     ),
     .clk            (core_clk        ),
@@ -404,8 +404,8 @@ ycr1_reset_sync_cell #(
 );
 
 // Regular Reset synchronizer
-ycr1_reset_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+ycr_reset_sync_cell #(
+    .STAGES_AMOUNT       (YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
 ) i_rstn_reset_sync (
     .rst_n          (pwrup_rst_n     ),
     .clk            (core_clk        ),
@@ -416,8 +416,8 @@ ycr1_reset_sync_cell #(
 );
 
 // CPU Reset synchronizer
-ycr1_reset_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+ycr_reset_sync_cell #(
+    .STAGES_AMOUNT       (YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
 ) i_cpu_rstn_reset_sync (
     .rst_n          (pwrup_rst_n     ),
     .clk            (core_clk        ),
@@ -427,27 +427,27 @@ ycr1_reset_sync_cell #(
     .rst_n_out      (cpu_rst_n_sync  )
 );
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 // TAPC Reset
-ycr1_reset_and2_cell i_tapc_rstn_and2_cell (
+ycr_reset_and2_cell i_tapc_rstn_and2_cell (
     .rst_n_in       ({trst_n, pwrup_rst_n}),
     .test_rst_n     (test_rst_n      ),
     .test_mode      (test_mode       ),
     .rst_n_out      (tapc_trst_n     )
 );
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_TCM_EN
+`ifdef YCR_TCM_EN
 //-------------------------------------------------------------------------------
 // TCM instance
 //-------------------------------------------------------------------------------
-ycr1_tcm #(
-    .YCR1_TCM_SIZE  (`YCR1_DMEM_AWIDTH'(~YCR1_TCM_ADDR_MASK + 1'b1))
+ycr_tcm #(
+    .YCR_TCM_SIZE  (`YCR_DMEM_AWIDTH'(~YCR_TCM_ADDR_MASK + 1'b1))
 ) i_tcm (
     .clk            (core_clk        ),
     .rst_n          (core_rst_n_local),
 
-`ifndef YCR1_TCM_MEM
+`ifndef YCR_TCM_MEM
     // SRAM-0 PORT-0
     .sram0_clk0      (sram0_clk0),
     .sram0_csb0      (sram0_csb0),
@@ -498,13 +498,13 @@ ycr1_tcm #(
     .dmem_rdata     (tcm_dmem_rdata  ),
     .dmem_resp      (tcm_dmem_resp   )
 );
-`endif // YCR1_TCM_EN
+`endif // YCR_TCM_EN
 
 
 //-------------------------------------------------------------------------------
 // Memory-mapped timer instance
 //-------------------------------------------------------------------------------
-ycr1_timer i_timer (
+ycr_timer i_timer (
     // Common
     .rst_n          (core_rst_n_local  ),
     .clk            (core_clk          ),
@@ -528,34 +528,34 @@ ycr1_timer i_timer (
 );
 
 
-`ifdef YCR1_IMEM_ROUTER_EN
+`ifdef YCR_IMEM_ROUTER_EN
 //-------------------------------------------------------------------------------
 // Instruction memory router
 //-------------------------------------------------------------------------------
-ycr1_imem_router #(
- `ifdef YCR1_ICACHE_EN
-    .YCR1_PORT1_ADDR_MASK     (YCR1_ICACHE_ADDR_MASK),
-    .YCR1_PORT1_ADDR_PATTERN  (YCR1_ICACHE_ADDR_PATTERN),
-`else // YCR1_ICACHE_EN
-    .YCR1_PORT1_ADDR_MASK       (32'h00000000),
-    .YCR1_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
-`endif // YCR1_ICAHCE_EN
+ycr_imem_router #(
+ `ifdef YCR_ICACHE_EN
+    .YCR_PORT1_ADDR_MASK     (YCR_ICACHE_ADDR_MASK),
+    .YCR_PORT1_ADDR_PATTERN  (YCR_ICACHE_ADDR_PATTERN),
+`else // YCR_ICACHE_EN
+    .YCR_PORT1_ADDR_MASK       (32'h00000000),
+    .YCR_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_ICAHCE_EN
  
-`ifdef YCR1_DCACHE_EN
-    .YCR1_PORT2_ADDR_MASK     (YCR1_DCACHE_ADDR_MASK),
-    .YCR1_PORT2_ADDR_PATTERN  (YCR1_DCACHE_ADDR_PATTERN),
-`else // YCR1_DCACHE_EN
-    .YCR1_PORT2_ADDR_MASK       (32'h00000000),
-    .YCR1_PORT2_ADDR_PATTERN    (32'hFFFFFFFF),
-`endif // YCR1_DCAHCE_EN
+`ifdef YCR_DCACHE_EN
+    .YCR_PORT2_ADDR_MASK     (YCR_DCACHE_ADDR_MASK),
+    .YCR_PORT2_ADDR_PATTERN  (YCR_DCACHE_ADDR_PATTERN),
+`else // YCR_DCACHE_EN
+    .YCR_PORT2_ADDR_MASK       (32'h00000000),
+    .YCR_PORT2_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_DCAHCE_EN
 
- `ifdef YCR1_TCM_EN
-    .YCR1_PORT3_ADDR_MASK     (YCR1_TCM_ADDR_MASK),
-    .YCR1_PORT3_ADDR_PATTERN  (YCR1_TCM_ADDR_PATTERN)
-`else // YCR1_TCM_EN
-    .YCR1_PORT3_ADDR_MASK       (32'h00000000),
-    .YCR1_PORT3_ADDR_PATTERN    (32'hFFFFFFFF)
-`endif // YCR1_TCM_EN
+ `ifdef YCR_TCM_EN
+    .YCR_PORT3_ADDR_MASK     (YCR_TCM_ADDR_MASK),
+    .YCR_PORT3_ADDR_PATTERN  (YCR_TCM_ADDR_PATTERN)
+`else // YCR_TCM_EN
+    .YCR_PORT3_ADDR_MASK       (32'h00000000),
+    .YCR_PORT3_ADDR_PATTERN    (32'hFFFFFFFF)
+`endif // YCR_TCM_EN
 ) i_imem_router (
     .rst_n          (core_rst_n_local    ),
     .clk            (core_clk            ),
@@ -577,7 +577,7 @@ ycr1_imem_router #(
     .port0_rdata    (wb_imem_rdata       ),
     .port0_resp     (wb_imem_resp        ),
 
- `ifdef YCR1_ICACHE_EN
+ `ifdef YCR_ICACHE_EN
     // Interface to icache
     .port1_req_ack  (icache_imem_req_ack ),
     .port1_req      (icache_imem_req     ),
@@ -586,17 +586,17 @@ ycr1_imem_router #(
     .port1_bl       (icache_imem_bl      ),
     .port1_rdata    (icache_imem_rdata   ),
     .port1_resp     (icache_imem_resp    ),
-`else // YCR1_ICACHE_EN
+`else // YCR_ICACHE_EN
     .port1_req_ack  (1'b0),
     .port1_req      (                    ),
     .port1_cmd      (                    ),
     .port1_addr     (                    ),
     .port1_bl       (                    ),
     .port1_rdata    (32'h0               ),
-    .port1_resp     (YCR1_MEM_RESP_RDY_ER),
-`endif // YCR1_ICACHE_EN
+    .port1_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_ICACHE_EN
  
-`ifdef YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
     // Interface to dcache
     .port2_req_ack  (dcache_imem_req_ack ),
     .port2_req      (dcache_imem_req     ),
@@ -604,16 +604,16 @@ ycr1_imem_router #(
     .port2_addr     (dcache_imem_addr    ),
     .port2_rdata    (dcache_imem_rdata   ),
     .port2_resp     (dcache_imem_resp    ),
-`else // YCR1_ICACHE_EN
+`else // YCR_ICACHE_EN
     .port2_req_ack  (1'b0),
     .port2_req      (                    ),
     .port2_cmd      (                    ),
     .port2_addr     (                    ),
     .port2_rdata    (32'h0               ),
-    .port2_resp     (YCR1_MEM_RESP_RDY_ER),
-`endif // YCR1_ICACHE_EN
+    .port2_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_ICACHE_EN
 
- `ifdef YCR1_TCM_EN
+ `ifdef YCR_TCM_EN
     // Interface to TCM
     .port3_req_ack  (tcm_imem_req_ack ),
     .port3_req      (tcm_imem_req     ),
@@ -621,17 +621,17 @@ ycr1_imem_router #(
     .port3_addr     (tcm_imem_addr    ),
     .port3_rdata    (tcm_imem_rdata   ),
     .port3_resp     (tcm_imem_resp    )
-`else // YCR1_TCM_EN
+`else // YCR_TCM_EN
     .port3_req_ack  (1'b0),
     .port3_req      (                    ),
     .port3_cmd      (                    ),
     .port3_addr     (                    ),
     .port3_rdata    (32'h0               ),
-    .port3_resp     (YCR1_MEM_RESP_RDY_ER)
-`endif // YCR1_TCM_EN
+    .port3_resp     (YCR_MEM_RESP_RDY_ER)
+`endif // YCR_TCM_EN
 );
 
-`else // YCR1_IMEM_ROUTER_EN
+`else // YCR_IMEM_ROUTER_EN
 
 assign wb_imem_req          = core_imem_req;
 assign wb_imem_cmd          = core_imem_cmd;
@@ -641,39 +641,39 @@ assign core_imem_req_ack    = wb_imem_req_ack;
 assign core_imem_resp       = wb_imem_resp;
 assign core_imem_rdata      = wb_imem_rdata;
 
-`endif // YCR1_IMEM_ROUTER_EN
+`endif // YCR_IMEM_ROUTER_EN
 
 //-------------------------------------------------------------------------------
 // Data memory router
 //-------------------------------------------------------------------------------
-ycr1_dmem_router #(
+ycr_dmem_router #(
 
-`ifdef YCR1_ICACHE_EN
-    .YCR1_PORT1_ADDR_MASK       (YCR1_ICACHE_ADDR_MASK),
-    .YCR1_PORT1_ADDR_PATTERN    (YCR1_ICACHE_ADDR_PATTERN),
-`else // YCR1_ICACHE_EN
-    .YCR1_PORT1_ADDR_MASK       (32'h00000000),
-    .YCR1_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
-`endif // YCR1_ICACHE_EN
+`ifdef YCR_ICACHE_EN
+    .YCR_PORT1_ADDR_MASK       (YCR_ICACHE_ADDR_MASK),
+    .YCR_PORT1_ADDR_PATTERN    (YCR_ICACHE_ADDR_PATTERN),
+`else // YCR_ICACHE_EN
+    .YCR_PORT1_ADDR_MASK       (32'h00000000),
+    .YCR_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_ICACHE_EN
 
-`ifdef YCR1_DCACHE_EN
-    .YCR1_PORT2_ADDR_MASK       (YCR1_DCACHE_ADDR_MASK),
-    .YCR1_PORT2_ADDR_PATTERN    (YCR1_DCACHE_ADDR_PATTERN),
-`else // YCR1_DCACHE_EN
-    .YCR1_PORT2_ADDR_MASK       (32'h00000000),
-    .YCR1_PORT2_ADDR_PATTERN    (32'hFFFFFFFF),
-`endif // YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
+    .YCR_PORT2_ADDR_MASK       (YCR_DCACHE_ADDR_MASK),
+    .YCR_PORT2_ADDR_PATTERN    (YCR_DCACHE_ADDR_PATTERN),
+`else // YCR_DCACHE_EN
+    .YCR_PORT2_ADDR_MASK       (32'h00000000),
+    .YCR_PORT2_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_DCACHE_EN
 
-`ifdef YCR1_TCM_EN
-    .YCR1_PORT3_ADDR_MASK       (YCR1_TCM_ADDR_MASK),
-    .YCR1_PORT3_ADDR_PATTERN    (YCR1_TCM_ADDR_PATTERN),
-`else // YCR1_TCM_EN
-    .YCR1_PORT3_ADDR_MASK       (32'h00000000),
-    .YCR1_PORT3_ADDR_PATTERN    (32'hFFFFFFFF),
-`endif // YCR1_TCM_EN
+`ifdef YCR_TCM_EN
+    .YCR_PORT3_ADDR_MASK       (YCR_TCM_ADDR_MASK),
+    .YCR_PORT3_ADDR_PATTERN    (YCR_TCM_ADDR_PATTERN),
+`else // YCR_TCM_EN
+    .YCR_PORT3_ADDR_MASK       (32'h00000000),
+    .YCR_PORT3_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_TCM_EN
 
-    .YCR1_PORT4_ADDR_MASK       (YCR1_TIMER_ADDR_MASK),
-    .YCR1_PORT4_ADDR_PATTERN    (YCR1_TIMER_ADDR_PATTERN)
+    .YCR_PORT4_ADDR_MASK       (YCR_TIMER_ADDR_MASK),
+    .YCR_PORT4_ADDR_PATTERN    (YCR_TIMER_ADDR_PATTERN)
 
 ) i_dmem_router (
     .rst_n          (core_rst_n_local    ),
@@ -688,7 +688,7 @@ ycr1_dmem_router #(
     .dmem_rdata     (core_dmem_rdata     ),
     .dmem_resp      (core_dmem_resp      ),
 
-`ifdef YCR1_ICACHE_EN
+`ifdef YCR_ICACHE_EN
     // Interface to TCM
     .port1_req_ack  (icache_dmem_req_ack    ),
     .port1_req      (icache_dmem_req        ),
@@ -698,7 +698,7 @@ ycr1_dmem_router #(
     .port1_wdata    (icache_dmem_wdata      ),
     .port1_rdata    (icache_dmem_rdata      ),
     .port1_resp     (icache_dmem_resp       ),
-`else // YCR1_ICACHE_EN
+`else // YCR_ICACHE_EN
     .port1_req_ack  (1'b0),
     .port1_req      (                    ),
     .port1_cmd      (                    ),
@@ -706,10 +706,10 @@ ycr1_dmem_router #(
     .port1_addr     (                    ),
     .port1_wdata    (                    ),
     .port1_rdata    (32'h0               ),
-    .port1_resp     (YCR1_MEM_RESP_RDY_ER),
-`endif // YCR1_ICACHE_EN
+    .port1_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_ICACHE_EN
 
-`ifdef YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
     // Interface to TCM
     .port2_req_ack  (dcache_dmem_req_ack    ),
     .port2_req      (dcache_dmem_req        ),
@@ -719,7 +719,7 @@ ycr1_dmem_router #(
     .port2_wdata    (dcache_dmem_wdata      ),
     .port2_rdata    (dcache_dmem_rdata      ),
     .port2_resp     (dcache_dmem_resp       ),
-`else // YCR1_ICACHE_EN
+`else // YCR_ICACHE_EN
     .port2_req_ack  (1'b0),
     .port2_req      (                    ),
     .port2_cmd      (                    ),
@@ -727,10 +727,10 @@ ycr1_dmem_router #(
     .port2_addr     (                    ),
     .port2_wdata    (                    ),
     .port2_rdata    (32'h0               ),
-    .port2_resp     (YCR1_MEM_RESP_RDY_ER),
-`endif // YCR1_ICACHE_EN
+    .port2_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_ICACHE_EN
 
-`ifdef YCR1_TCM_EN
+`ifdef YCR_TCM_EN
     // Interface to TCM
     .port3_req_ack  (tcm_dmem_req_ack    ),
     .port3_req      (tcm_dmem_req        ),
@@ -740,7 +740,7 @@ ycr1_dmem_router #(
     .port3_wdata    (tcm_dmem_wdata      ),
     .port3_rdata    (tcm_dmem_rdata      ),
     .port3_resp     (tcm_dmem_resp       ),
-`else // YCR1_TCM_EN
+`else // YCR_TCM_EN
     .port3_req_ack  (1'b0),
     .port3_req      (                    ),
     .port3_cmd      (                    ),
@@ -748,8 +748,8 @@ ycr1_dmem_router #(
     .port3_addr     (                    ),
     .port3_wdata    (                    ),
     .port3_rdata    (32'h0               ),
-    .port3_resp     (YCR1_MEM_RESP_RDY_ER),
-`endif // YCR1_TCM_EN
+    .port3_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_TCM_EN
 
     // Interface to memory-mapped timer
     .port4_req_ack  (timer_dmem_req_ack  ),
@@ -773,10 +773,10 @@ ycr1_dmem_router #(
 );
 
 
-`ifdef YCR1_ICACHE_EN
+`ifdef YCR_ICACHE_EN
 
 // icache request selection betweem imem and dmem
-ycr1_icache_router u_icache_router(
+ycr_icache_router u_icache_router(
     // Control signals
     .rst_n           (core_rst_n_local   ),
     .clk             (core_clk           ),
@@ -787,7 +787,7 @@ ycr1_icache_router u_icache_router(
     .imem_cmd        (icache_imem_cmd    ),
     .imem_addr       (icache_imem_addr   ),
     .imem_bl         (icache_imem_bl     ),
-    .imem_width      (YCR1_MEM_WIDTH_WORD),
+    .imem_width      (YCR_MEM_WIDTH_WORD),
     .imem_rdata      (icache_imem_rdata  ),
     .imem_resp       (icache_imem_resp   ),
 
@@ -814,7 +814,7 @@ ycr1_icache_router u_icache_router(
 
 
 // Icache top
-icache_top  #(.MEM_BL(`YCR1_IMEM_BSIZE) )u_icache (
+icache_top  #(.MEM_BL(`YCR_IMEM_BSIZE) )u_icache (
 	.mclk                         (core_clk),	   //Clock input 
 	.rst_n                        (core_rst_n_local),  //Active Low Asynchronous Reset Signal Input
 
@@ -862,7 +862,7 @@ icache_top  #(.MEM_BL(`YCR1_IMEM_BSIZE) )u_icache (
 );
 
 // Async Wishbone clock domain translation
-ycr1_async_wbb u_async_icache(
+ycr_async_wbb u_async_icache(
 
     // Master Port
        .wbm_rst_n       (core_rst_n_local ),  // Regular Reset signal
@@ -901,10 +901,10 @@ ycr1_async_wbb u_async_icache(
 
 `endif
 
-`ifdef YCR1_DCACHE_EN
+`ifdef YCR_DCACHE_EN
 
 // dcache request selection betweem imem and dmem
-ycr1_dcache_router u_dcache_router(
+ycr_dcache_router u_dcache_router(
     // Control signals
     .rst_n           (core_rst_n_local   ),
     .clk             (core_clk           ),
@@ -914,7 +914,7 @@ ycr1_dcache_router u_dcache_router(
     .imem_req        (dcache_imem_req    ),
     .imem_cmd        (dcache_imem_cmd    ),
     .imem_addr       (dcache_imem_addr   ),
-    .imem_width      (YCR1_MEM_WIDTH_WORD),
+    .imem_width      (YCR_MEM_WIDTH_WORD),
     .imem_wdata      ('h0                ),
     .imem_rdata      (dcache_imem_rdata  ),
     .imem_resp       (dcache_imem_resp   ),
@@ -993,7 +993,7 @@ dcache_top  u_dcache (
 );
 
 // Async Wishbone clock domain translation
-ycr1_async_wbb u_async_dcache(
+ycr_async_wbb u_async_dcache(
 
     // Master Port
        .wbm_rst_n       (core_rst_n_local ),  // Regular Reset signal
@@ -1035,7 +1035,7 @@ ycr1_async_wbb u_async_dcache(
 //-------------------------------------------------------------------------------
 // Instruction memory WB bridge
 //-------------------------------------------------------------------------------
-ycr1_imem_wb i_imem_wb (
+ycr_imem_wb i_imem_wb (
     .core_rst_n     (core_rst_n_local   ),
     .core_clk       (core_clk           ),
     // Interface to imem router
@@ -1061,7 +1061,7 @@ ycr1_imem_wb i_imem_wb (
 //-------------------------------------------------------------------------------
 // Data memory WB bridge
 //-------------------------------------------------------------------------------
-ycr1_dmem_wb i_dmem_wb (
+ycr_dmem_wb i_dmem_wb (
     .core_rst_n     (core_rst_n_local   ),
     .core_clk       (core_clk           ),
     // Interface to dmem router
@@ -1113,4 +1113,4 @@ ycr1_dmem_wb i_dmem_wb (
   assign sram1_dout0 = 'h0;
 `endif
 
-endmodule : ycr1_intf
+endmodule : ycr_intf

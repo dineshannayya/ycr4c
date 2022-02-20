@@ -20,7 +20,7 @@
 ////  yifive Integer Arithmetic Logic Unit (IALU)                         ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Integer Arithmetic Logic Unit (IALU)                             ////
@@ -52,49 +52,49 @@
 ////            opentool(iverilog/yosys) related cleanup                  ////
 ////     v2:    18th July 2021, Dinesh A                                  ////
 ////         A. For Timing Reason, Input and Output are registered        ////
-////            Added YCR1_GOLDEN define to preserve the Previous Logic   ////
+////            Added YCR_GOLDEN define to preserve the Previous Logic   ////
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_riscv_isa_decoding.svh"
-`include "ycr1_search_ms1.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_riscv_isa_decoding.svh"
+`include "ycr_search_ms1.svh"
 
 
-module ycr1_pipe_ialu (
-`ifdef YCR1_RVM_EXT
+module ycr_pipe_ialu (
+`ifdef YCR_RVM_EXT
     // Common
     input   logic                           clk,                        // IALU clock
     input   logic                           rst_n,                      // IALU reset
     input   logic                           exu2ialu_rvm_cmd_vd_i,      // MUL/DIV command valid
     output  logic                           ialu2exu_rvm_res_rdy_o,     // MUL/DIV result ready
-`endif // YCR1_RVM_EXT
+`endif // YCR_RVM_EXT
 
     // Main adder
-    input   logic [`YCR1_XLEN-1:0]          exu2ialu_main_op1_i,        // main ALU 1st operand
-    input   logic [`YCR1_XLEN-1:0]          exu2ialu_main_op2_i,        // main ALU 2nd operand
-    input   type_ycr1_ialu_cmd_sel_e        exu2ialu_cmd_i,             // IALU command
-    output  logic [`YCR1_XLEN-1:0]          ialu2exu_main_res_o,        // main ALU result
+    input   logic [`YCR_XLEN-1:0]          exu2ialu_main_op1_i,        // main ALU 1st operand
+    input   logic [`YCR_XLEN-1:0]          exu2ialu_main_op2_i,        // main ALU 2nd operand
+    input   type_ycr_ialu_cmd_sel_e        exu2ialu_cmd_i,             // IALU command
+    output  logic [`YCR_XLEN-1:0]          ialu2exu_main_res_o,        // main ALU result
     output  logic                           ialu2exu_cmp_res_o,         // IALU comparison result
 
     // Address adder
-    input   logic [`YCR1_XLEN-1:0]          exu2ialu_addr_op1_i,        // Address adder 1st operand
-    input   logic [`YCR1_XLEN-1:0]          exu2ialu_addr_op2_i,        // Address adder 2nd operand
-    output  logic [`YCR1_XLEN-1:0]          ialu2exu_addr_res_o         // Address adder result
+    input   logic [`YCR_XLEN-1:0]          exu2ialu_addr_op1_i,        // Address adder 1st operand
+    input   logic [`YCR_XLEN-1:0]          exu2ialu_addr_op2_i,        // Address adder 2nd operand
+    output  logic [`YCR_XLEN-1:0]          ialu2exu_addr_res_o         // Address adder result
 );
 
 //-------------------------------------------------------------------------------
 // Local parameters declaration
 //-------------------------------------------------------------------------------
 
-`ifdef YCR1_RVM_EXT
-localparam YCR1_MUL_WIDTH     = `YCR1_XLEN;
-localparam YCR1_MUL_RES_WIDTH = 2 * `YCR1_XLEN;
-localparam YCR1_MDU_SUM_WIDTH = `YCR1_XLEN + 1;
+`ifdef YCR_RVM_EXT
+localparam YCR_MUL_WIDTH     = `YCR_XLEN;
+localparam YCR_MUL_RES_WIDTH = 2 * `YCR_XLEN;
+localparam YCR_MDU_SUM_WIDTH = `YCR_XLEN + 1;
 
-localparam YCR1_DIV_WIDTH     = 1;
-localparam YCR1_DIV_CNT_INIT  = 32'b1 << (`YCR1_XLEN/YCR1_DIV_WIDTH - 2);
-`endif // YCR1_RVM_EXT
+localparam YCR_DIV_WIDTH     = 1;
+localparam YCR_DIV_CNT_INIT  = 32'b1 << (`YCR_XLEN/YCR_DIV_WIDTH - 2);
+`endif // YCR_RVM_EXT
 
 //-------------------------------------------------------------------------------
 // Local types declaration
@@ -105,29 +105,29 @@ typedef struct packed {
     logic       s;      // Sign
     logic       o;      // Overflow
     logic       c;      // Carry
-} type_ycr1_ialu_flags_s;
+} type_ycr_ialu_flags_s;
 
- `ifdef YCR1_RVM_EXT
+ `ifdef YCR_RVM_EXT
 //typedef enum logic [1:0] {
-parameter    YCR1_IALU_MDU_FSM_IDLE  = 2'b00;
-parameter    YCR1_IALU_MDU_FSM_ITER  = 2'b01;
-parameter    YCR1_IALU_MDU_FSM_CORR  = 2'b10;
-//} type_ycr1_ialu_fsm_state;
+parameter    YCR_IALU_MDU_FSM_IDLE  = 2'b00;
+parameter    YCR_IALU_MDU_FSM_ITER  = 2'b01;
+parameter    YCR_IALU_MDU_FSM_CORR  = 2'b10;
+//} type_ycr_ialu_fsm_state;
 
 //typedef enum logic [1:0] {
-parameter   YCR1_IALU_MDU_NONE       = 2'b00;
-parameter   YCR1_IALU_MDU_MUL        = 2'b01;
-parameter   YCR1_IALU_MDU_DIV        = 2'b10;
-//} type_ycr1_ialu_mdu_cmd;
- `endif // YCR1_RVM_EXT
+parameter   YCR_IALU_MDU_NONE       = 2'b00;
+parameter   YCR_IALU_MDU_MUL        = 2'b01;
+parameter   YCR_IALU_MDU_DIV        = 2'b10;
+//} type_ycr_ialu_mdu_cmd;
+ `endif // YCR_RVM_EXT
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
 //-------------------------------------------------------------------------------
 
 // Main adder signals
-logic        [`YCR1_XLEN:0]                 main_sum_res;       // Main adder result
-type_ycr1_ialu_flags_s                      main_sum_flags;     // Main adder flags
+logic        [`YCR_XLEN:0]                 main_sum_res;       // Main adder result
+type_ycr_ialu_flags_s                      main_sum_flags;     // Main adder flags
 logic                                       main_sum_pos_ovflw; // Main adder positive overflow
 logic                                       main_sum_neg_ovflw; // Main adder negative overflow
 logic                                       main_ops_diff_sgn;  // Main adder operands have different signs
@@ -135,13 +135,13 @@ logic                                       main_ops_non_zero;  // Both main add
 
 // Shifter signals
 logic                                       ialu_cmd_shft;      // IALU command is shift
-logic signed [`YCR1_XLEN-1:0]               shft_op1;           // SHIFT operand 1
+logic signed [`YCR_XLEN-1:0]               shft_op1;           // SHIFT operand 1
 logic        [4:0]                          shft_op2;           // SHIFT operand 2
 logic        [1:0]                          shft_cmd;           // SHIFT command: 00 - logical left, 10 - logical right, 11 - arithmetical right
-logic        [`YCR1_XLEN-1:0]               shft_res;           // SHIFT result
+logic        [`YCR_XLEN-1:0]               shft_res;           // SHIFT result
 
 // MUL/DIV signals
-`ifdef YCR1_RVM_EXT
+`ifdef YCR_RVM_EXT
 
 // MDU command signals
 logic                                       mdu_cmd_mul;        // MDU command is MUL(HSU)
@@ -156,38 +156,38 @@ logic                                       mul_op1_is_sgn;     // First MUL ope
 logic                                       mul_op2_is_sgn;     // Second MUL operand is signed
 logic                                       mul_op1_sgn;        // First MUL operand is negative
 logic                                       mul_op2_sgn;        // Second MUL operand is negative
-logic signed [`YCR1_XLEN:0]                 mul_op1;            // MUL operand 1
-logic signed [YCR1_MUL_WIDTH:0]             mul_op2;            // MUL operand 1
-logic signed [YCR1_MUL_RES_WIDTH-1:0]       mul_res;            // MUL result
+logic signed [`YCR_XLEN:0]                 mul_op1;            // MUL operand 1
+logic signed [YCR_MUL_WIDTH:0]             mul_op2;            // MUL operand 1
+logic signed [YCR_MUL_RES_WIDTH-1:0]       mul_res;            // MUL result
 
 // Divisor signals
-logic signed [`YCR1_XLEN:0]                 div_op1;            // DIV operand 1
-logic signed [YCR1_MUL_WIDTH:0]             div_op2;            // DIV operand 2
+logic signed [`YCR_XLEN:0]                 div_op1;            // DIV operand 1
+logic signed [YCR_MUL_WIDTH:0]             div_op2;            // DIV operand 2
 logic                                       div_ops_are_sgn;
 logic                                       div_op1_is_neg;
 logic                                       div_op2_is_neg;
-logic        [`YCR1_XLEN-1:0]               div_res_rem;
-logic        [`YCR1_XLEN-1:0]               div_res_quo;
+logic        [`YCR_XLEN-1:0]               div_res_rem;
+logic        [`YCR_XLEN-1:0]               div_res_quo;
 
 
-`endif // YCR1_RVM_EXT
+`endif // YCR_RVM_EXT
 
 
 //-------------------------------------------------------
 // Adding Input Register to break Timing Path 
 // ------------------------------------------------------
-logic [`YCR1_XLEN-1:0]          exu2ialu_main_op1_ff;        // main ALU 1st operand
-logic [`YCR1_XLEN-1:0]          exu2ialu_main_op2_ff;        // main ALU 2nd operand
-type_ycr1_ialu_cmd_sel_e        exu2ialu_cmd_ff;             // IALU command
+logic [`YCR_XLEN-1:0]          exu2ialu_main_op1_ff;        // main ALU 1st operand
+logic [`YCR_XLEN-1:0]          exu2ialu_main_op2_ff;        // main ALU 2nd operand
+type_ycr_ialu_cmd_sel_e        exu2ialu_cmd_ff;             // IALU command
 logic                           exu2ialu_rvm_cmd_vd_ff;      // MUL/DIV command valid
-logic [`YCR1_XLEN-1:0]          ialu2exu_main_res_i;        // main ALU result
+logic [`YCR_XLEN-1:0]          ialu2exu_main_res_i;        // main ALU result
 logic                           ialu2exu_cmp_res_i;         // IALU comparison result
 logic                           ialu2exu_rvm_res_rdy_i;     // MUL/DIV result ready
 logic                           ialu_rdy        ;           // ialu ready
 logic                           ialu_data_pdone ;           // ialu data process done
 
 
-`ifdef YCR1_GOLDEN
+`ifdef YCR_GOLDEN
 assign	exu2ialu_main_op1_ff = exu2ialu_main_op1_i;
 assign  exu2ialu_main_op2_ff = exu2ialu_main_op2_i;
 assign  exu2ialu_cmd_ff      = exu2ialu_cmd_i;
@@ -203,7 +203,7 @@ always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
 	exu2ialu_main_op1_ff <= '0;
         exu2ialu_main_op2_ff <= '0;
-        exu2ialu_cmd_ff      <= YCR1_IALU_CMD_NONE;
+        exu2ialu_cmd_ff      <= YCR_IALU_CMD_NONE;
 	exu2ialu_rvm_cmd_vd_ff <= '0;
     end else begin
 	exu2ialu_main_op1_ff <= exu2ialu_main_op1_i;
@@ -261,21 +261,21 @@ end
 // Carry out (MSB of main_sum_res) is evaluated correctly because the result
 // width equals to the maximum width of both the right-hand and left-hand side variables
 always_comb begin
-    main_sum_res = (exu2ialu_cmd_ff != YCR1_IALU_CMD_ADD)
+    main_sum_res = (exu2ialu_cmd_ff != YCR_IALU_CMD_ADD)
                  ? (exu2ialu_main_op1_ff - exu2ialu_main_op2_ff)   // Subtraction and comparison
                  : (exu2ialu_main_op1_ff + exu2ialu_main_op2_ff);  // Addition
 
-    main_sum_pos_ovflw = ~exu2ialu_main_op1_ff[`YCR1_XLEN-1]
-                       &  exu2ialu_main_op2_ff[`YCR1_XLEN-1]
-                       &  main_sum_res[`YCR1_XLEN-1];
-    main_sum_neg_ovflw =  exu2ialu_main_op1_ff[`YCR1_XLEN-1]
-                       & ~exu2ialu_main_op2_ff[`YCR1_XLEN-1]
-                       & ~main_sum_res[`YCR1_XLEN-1];
+    main_sum_pos_ovflw = ~exu2ialu_main_op1_ff[`YCR_XLEN-1]
+                       &  exu2ialu_main_op2_ff[`YCR_XLEN-1]
+                       &  main_sum_res[`YCR_XLEN-1];
+    main_sum_neg_ovflw =  exu2ialu_main_op1_ff[`YCR_XLEN-1]
+                       & ~exu2ialu_main_op2_ff[`YCR_XLEN-1]
+                       & ~main_sum_res[`YCR_XLEN-1];
 
     // FLAGS1 - flags for comparison (result of subtraction)
-    main_sum_flags.c = main_sum_res[`YCR1_XLEN];
-    main_sum_flags.z = ~|main_sum_res[`YCR1_XLEN-1:0];
-    main_sum_flags.s = main_sum_res[`YCR1_XLEN-1];
+    main_sum_flags.c = main_sum_res[`YCR_XLEN];
+    main_sum_flags.z = ~|main_sum_res[`YCR_XLEN-1:0];
+    main_sum_flags.s = main_sum_res[`YCR_XLEN-1];
     main_sum_flags.o = main_sum_pos_ovflw | main_sum_neg_ovflw;
 end
 
@@ -303,12 +303,12 @@ assign ialu2exu_addr_res_o = exu2ialu_addr_op1_i + exu2ialu_addr_op2_i;
  // - Arithmetic right shift  (SRAI/SRA)
 //
 
-assign ialu_cmd_shft = (exu2ialu_cmd_ff == YCR1_IALU_CMD_SLL)
-                     | (exu2ialu_cmd_ff == YCR1_IALU_CMD_SRL)
-                     | (exu2ialu_cmd_ff == YCR1_IALU_CMD_SRA);
+assign ialu_cmd_shft = (exu2ialu_cmd_ff == YCR_IALU_CMD_SLL)
+                     | (exu2ialu_cmd_ff == YCR_IALU_CMD_SRL)
+                     | (exu2ialu_cmd_ff == YCR_IALU_CMD_SRA);
 assign shft_cmd      = ialu_cmd_shft
-                     ? {(exu2ialu_cmd_ff != YCR1_IALU_CMD_SLL),
-                        (exu2ialu_cmd_ff == YCR1_IALU_CMD_SRA)}
+                     ? {(exu2ialu_cmd_ff != YCR_IALU_CMD_SLL),
+                        (exu2ialu_cmd_ff == YCR_IALU_CMD_SRA)}
                      : 2'b00;
 
 always_comb begin
@@ -321,7 +321,7 @@ always_comb begin
     endcase
 end
 
-`ifdef YCR1_RVM_EXT
+`ifdef YCR_RVM_EXT
 //-------------------------------------------------------------------------------
 // MUL/DIV logic
 //-------------------------------------------------------------------------------
@@ -340,19 +340,19 @@ end
 // MUL/DIV FSM Control logic
 //-------------------------------------------------------------------------------
 
-assign mdu_cmd_div = ((exu2ialu_cmd_ff == YCR1_IALU_CMD_DIV)
-                   | (exu2ialu_cmd_ff == YCR1_IALU_CMD_DIVU)
-                   | (exu2ialu_cmd_ff == YCR1_IALU_CMD_REM)
-                   | (exu2ialu_cmd_ff == YCR1_IALU_CMD_REMU)) & exu2ialu_rvm_cmd_vd_ff;
-assign mdu_cmd_mul = ((exu2ialu_cmd_ff == YCR1_IALU_CMD_MUL)
-                   | (exu2ialu_cmd_ff == YCR1_IALU_CMD_MULH)
-                   | (exu2ialu_cmd_ff == YCR1_IALU_CMD_MULHU)
-                   | (exu2ialu_cmd_ff == YCR1_IALU_CMD_MULHSU)) & exu2ialu_rvm_cmd_vd_ff;
+assign mdu_cmd_div = ((exu2ialu_cmd_ff == YCR_IALU_CMD_DIV)
+                   | (exu2ialu_cmd_ff == YCR_IALU_CMD_DIVU)
+                   | (exu2ialu_cmd_ff == YCR_IALU_CMD_REM)
+                   | (exu2ialu_cmd_ff == YCR_IALU_CMD_REMU)) & exu2ialu_rvm_cmd_vd_ff;
+assign mdu_cmd_mul = ((exu2ialu_cmd_ff == YCR_IALU_CMD_MUL)
+                   | (exu2ialu_cmd_ff == YCR_IALU_CMD_MULH)
+                   | (exu2ialu_cmd_ff == YCR_IALU_CMD_MULHU)
+                   | (exu2ialu_cmd_ff == YCR_IALU_CMD_MULHSU)) & exu2ialu_rvm_cmd_vd_ff;
 
 
 assign main_ops_non_zero = |exu2ialu_main_op1_ff & |exu2ialu_main_op2_ff;
-assign main_ops_diff_sgn = exu2ialu_main_op1_ff[`YCR1_XLEN-1]
-                         ^ exu2ialu_main_op2_ff[`YCR1_XLEN-1];
+assign main_ops_diff_sgn = exu2ialu_main_op1_ff[`YCR_XLEN-1]
+                         ^ exu2ialu_main_op2_ff[`YCR_XLEN-1];
 
 
 
@@ -374,40 +374,40 @@ assign div_cmd_rem = div_cmd[1];
  //
 //
 
-assign mul_cmd  = {((exu2ialu_cmd_ff == YCR1_IALU_CMD_MULHU) | (exu2ialu_cmd_ff == YCR1_IALU_CMD_MULHSU)),
-                   ((exu2ialu_cmd_ff == YCR1_IALU_CMD_MULHU) | (exu2ialu_cmd_ff == YCR1_IALU_CMD_MULH))};
+assign mul_cmd  = {((exu2ialu_cmd_ff == YCR_IALU_CMD_MULHU) | (exu2ialu_cmd_ff == YCR_IALU_CMD_MULHSU)),
+                   ((exu2ialu_cmd_ff == YCR_IALU_CMD_MULHU) | (exu2ialu_cmd_ff == YCR_IALU_CMD_MULH))};
 
 assign mul_cmd_hi     = |mul_cmd;
 assign mul_op1_is_sgn = ~&mul_cmd;
 assign mul_op2_is_sgn = ~mul_cmd[1];
-assign mul_op1_sgn    = mul_op1_is_sgn & exu2ialu_main_op1_ff[`YCR1_XLEN-1];
-assign mul_op2_sgn    = mul_op2_is_sgn & exu2ialu_main_op2_ff[`YCR1_XLEN-1];
+assign mul_op1_sgn    = mul_op1_is_sgn & exu2ialu_main_op1_ff[`YCR_XLEN-1];
+assign mul_op2_sgn    = mul_op2_is_sgn & exu2ialu_main_op2_ff[`YCR_XLEN-1];
 
-`ifdef YCR1_FAST_MUL
+`ifdef YCR_FAST_MUL
 assign mul_op1 = mdu_cmd_mul ? $signed({mul_op1_sgn, exu2ialu_main_op1_ff}) : '0;
 assign mul_op2 = mdu_cmd_mul ? $signed({mul_op2_sgn, exu2ialu_main_op2_ff}) : '0;
 assign mul_res = mdu_cmd_mul ? mul_op1 * mul_op2                           : 'sb0;
-`else // ~YCR1_FAST_MUL
+`else // ~YCR_FAST_MUL
 
 assign mul_op1 = mdu_cmd_mul ? $signed({mul_op1_sgn, exu2ialu_main_op1_ff}) : '0;
 assign mul_op2 = mdu_cmd_mul ? $signed({mul_op2_sgn, exu2ialu_main_op2_ff}) : '0;
 
 logic mul_rdy;
 
-ycr1_pipe_mul u_mul(
+ycr_pipe_mul u_mul(
 	.clk          (clk), 
 	.rstn         (rst_n), 
 	.data_valid   (mdu_cmd_mul),   // input valid
 	.Din1         (mul_op1),       // first operand
 	.Din2         (mul_op2),       // second operand
-	.des_hig      (mul_res[YCR1_MUL_RES_WIDTH-1:`YCR1_XLEN]),    // first result
-	.des_low      (mul_res[`YCR1_XLEN-1:0]),    // second result
+	.des_hig      (mul_res[YCR_MUL_RES_WIDTH-1:`YCR_XLEN]),    // first result
+	.des_low      (mul_res[`YCR_XLEN-1:0]),    // second result
 	.mul_rdy_o    (mul_rdy),      // Multiply result ready
 	.data_done    (ialu_data_pdone)    // data_process_done
     );
 
 
-`endif // ~YCR1_FAST_MUL
+`endif // ~YCR_FAST_MUL
 
 
 
@@ -415,19 +415,19 @@ ycr1_pipe_mul u_mul(
 // Divider logic
 //-------------------------------------------------------------------------------
 
-assign div_cmd  = {((exu2ialu_cmd_ff == YCR1_IALU_CMD_REM)   | (exu2ialu_cmd_ff == YCR1_IALU_CMD_REMU)),
-                   ((exu2ialu_cmd_ff == YCR1_IALU_CMD_REMU)  | (exu2ialu_cmd_ff == YCR1_IALU_CMD_DIVU))};
+assign div_cmd  = {((exu2ialu_cmd_ff == YCR_IALU_CMD_REM)   | (exu2ialu_cmd_ff == YCR_IALU_CMD_REMU)),
+                   ((exu2ialu_cmd_ff == YCR_IALU_CMD_REMU)  | (exu2ialu_cmd_ff == YCR_IALU_CMD_DIVU))};
 
 assign div_ops_are_sgn = ~div_cmd[0];
-assign div_op1_is_neg  = div_ops_are_sgn & exu2ialu_main_op1_ff[`YCR1_XLEN-1];
-assign div_op2_is_neg  = div_ops_are_sgn & exu2ialu_main_op2_ff[`YCR1_XLEN-1];
+assign div_op1_is_neg  = div_ops_are_sgn & exu2ialu_main_op1_ff[`YCR_XLEN-1];
+assign div_op2_is_neg  = div_ops_are_sgn & exu2ialu_main_op2_ff[`YCR_XLEN-1];
 
 assign div_op1 = mdu_cmd_div ? $signed({div_op1_is_neg, exu2ialu_main_op1_ff}) : '0;
 assign div_op2 = mdu_cmd_div ? $signed({div_op2_is_neg, exu2ialu_main_op2_ff}) : '0;
 
 logic div_rdy;
 
-ycr1_pipe_div u_div(
+ycr_pipe_div u_div(
 	.clk          (clk), 
 	.rstn         (rst_n), 
 	.data_valid   (mdu_cmd_div),   // input valid
@@ -440,7 +440,7 @@ ycr1_pipe_div u_div(
     );
 
 
-`endif // YCR1_RVM_EXT
+`endif // YCR_RVM_EXT
 
 //-------------------------------------------------------------------------------
 // Operation result forming
@@ -452,102 +452,102 @@ always_comb begin
     ialu2exu_rvm_res_rdy_i = 1'b0;
 
     case (exu2ialu_cmd_ff)
-        YCR1_IALU_CMD_AND : begin
+        YCR_IALU_CMD_AND : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
             ialu2exu_main_res_i = exu2ialu_main_op1_ff & exu2ialu_main_op2_ff;
         end
-        YCR1_IALU_CMD_OR : begin
+        YCR_IALU_CMD_OR : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
             ialu2exu_main_res_i = exu2ialu_main_op1_ff | exu2ialu_main_op2_ff;
         end
-        YCR1_IALU_CMD_XOR : begin
+        YCR_IALU_CMD_XOR : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
             ialu2exu_main_res_i = exu2ialu_main_op1_ff ^ exu2ialu_main_op2_ff;
         end
-        YCR1_IALU_CMD_ADD : begin
+        YCR_IALU_CMD_ADD : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = main_sum_res[`YCR1_XLEN-1:0];
+            ialu2exu_main_res_i = main_sum_res[`YCR_XLEN-1:0];
         end
-        YCR1_IALU_CMD_SUB : begin
+        YCR_IALU_CMD_SUB : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = main_sum_res[`YCR1_XLEN-1:0];
+            ialu2exu_main_res_i = main_sum_res[`YCR_XLEN-1:0];
         end
-        YCR1_IALU_CMD_SUB_LT : begin
+        YCR_IALU_CMD_SUB_LT : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = `YCR1_XLEN'(main_sum_flags.s ^ main_sum_flags.o);
+            ialu2exu_main_res_i = `YCR_XLEN'(main_sum_flags.s ^ main_sum_flags.o);
             ialu2exu_cmp_res_i  = main_sum_flags.s ^ main_sum_flags.o;
         end
-        YCR1_IALU_CMD_SUB_LTU : begin
+        YCR_IALU_CMD_SUB_LTU : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = `YCR1_XLEN'(main_sum_flags.c);
+            ialu2exu_main_res_i = `YCR_XLEN'(main_sum_flags.c);
             ialu2exu_cmp_res_i  = main_sum_flags.c;
         end
-        YCR1_IALU_CMD_SUB_EQ : begin
+        YCR_IALU_CMD_SUB_EQ : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = `YCR1_XLEN'(main_sum_flags.z);
+            ialu2exu_main_res_i = `YCR_XLEN'(main_sum_flags.z);
             ialu2exu_cmp_res_i  = main_sum_flags.z;
         end
-        YCR1_IALU_CMD_SUB_NE : begin
+        YCR_IALU_CMD_SUB_NE : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = `YCR1_XLEN'(~main_sum_flags.z);
+            ialu2exu_main_res_i = `YCR_XLEN'(~main_sum_flags.z);
             ialu2exu_cmp_res_i  = ~main_sum_flags.z;
         end
-        YCR1_IALU_CMD_SUB_GE : begin
+        YCR_IALU_CMD_SUB_GE : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = `YCR1_XLEN'(~(main_sum_flags.s ^ main_sum_flags.o));
+            ialu2exu_main_res_i = `YCR_XLEN'(~(main_sum_flags.s ^ main_sum_flags.o));
             ialu2exu_cmp_res_i  = ~(main_sum_flags.s ^ main_sum_flags.o);
         end
-        YCR1_IALU_CMD_SUB_GEU : begin
+        YCR_IALU_CMD_SUB_GEU : begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
-            ialu2exu_main_res_i = `YCR1_XLEN'(~main_sum_flags.c);
+            ialu2exu_main_res_i = `YCR_XLEN'(~main_sum_flags.c);
             ialu2exu_cmp_res_i  = ~main_sum_flags.c;
         end
-        YCR1_IALU_CMD_SLL,
-        YCR1_IALU_CMD_SRL,
-        YCR1_IALU_CMD_SRA: begin
+        YCR_IALU_CMD_SLL,
+        YCR_IALU_CMD_SRL,
+        YCR_IALU_CMD_SRA: begin
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
             ialu2exu_main_res_i = shft_res;
         end
-`ifdef YCR1_RVM_EXT
-        YCR1_IALU_CMD_MUL,
-        YCR1_IALU_CMD_MULHU,
-        YCR1_IALU_CMD_MULHSU,
-        YCR1_IALU_CMD_MULH : begin
- `ifdef YCR1_FAST_MUL
+`ifdef YCR_RVM_EXT
+        YCR_IALU_CMD_MUL,
+        YCR_IALU_CMD_MULHU,
+        YCR_IALU_CMD_MULHSU,
+        YCR_IALU_CMD_MULH : begin
+ `ifdef YCR_FAST_MUL
             ialu2exu_rvm_res_rdy_i = ialu_rdy;
             ialu2exu_main_res_i = mul_cmd_hi
-                                ? mul_res[YCR1_MUL_RES_WIDTH-1:`YCR1_XLEN]
-                                : mul_res[`YCR1_XLEN-1:0];
- `else // ~YCR1_FAST_MUL
+                                ? mul_res[YCR_MUL_RES_WIDTH-1:`YCR_XLEN]
+                                : mul_res[`YCR_XLEN-1:0];
+ `else // ~YCR_FAST_MUL
             ialu2exu_rvm_res_rdy_i = mul_rdy;
             ialu2exu_main_res_i = mul_cmd_hi
-                                ? mul_res[YCR1_MUL_RES_WIDTH-1:`YCR1_XLEN]
-                                : mul_res[`YCR1_XLEN-1:0];
- `endif // ~YCR1_FAST_MUL
+                                ? mul_res[YCR_MUL_RES_WIDTH-1:`YCR_XLEN]
+                                : mul_res[`YCR_XLEN-1:0];
+ `endif // ~YCR_FAST_MUL
         end
-        YCR1_IALU_CMD_DIV,
-        YCR1_IALU_CMD_DIVU,
-        YCR1_IALU_CMD_REM,
-        YCR1_IALU_CMD_REMU : begin
+        YCR_IALU_CMD_DIV,
+        YCR_IALU_CMD_DIVU,
+        YCR_IALU_CMD_REM,
+        YCR_IALU_CMD_REMU : begin
             ialu2exu_main_res_i    = div_cmd_rem ? div_res_rem : div_res_quo;
             ialu2exu_rvm_res_rdy_i = div_rdy;
         end
-`endif // YCR1_RVM_EXT
+`endif // YCR_RVM_EXT
         default : begin end
     endcase
 end
 
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
 
-`ifdef YCR1_RVM_EXT
+`ifdef YCR_RVM_EXT
 
 // X checks
 
-YCR1_SVA_IALU_XCHECK_QUEUE : assert property (
+YCR_SVA_IALU_XCHECK_QUEUE : assert property (
     @(negedge clk) disable iff (~rst_n)
     exu2ialu_rvm_cmd_vd_ff |->
     !$isunknown({exu2ialu_main_op1_ff, exu2ialu_main_op2_ff, exu2ialu_cmd_ff})
@@ -556,8 +556,8 @@ YCR1_SVA_IALU_XCHECK_QUEUE : assert property (
 // Behavior checks
 
 
-`endif // YCR1_RVM_EXT
+`endif // YCR_RVM_EXT
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_pipe_ialu
+endmodule : ycr_pipe_ialu

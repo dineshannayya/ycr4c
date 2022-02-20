@@ -20,7 +20,7 @@
 ////  yifive core top                                                     ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     core top                                                         ////
@@ -38,21 +38,21 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_arch_types.svh"
-`include "ycr1_memif.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_arch_types.svh"
+`include "ycr_memif.svh"
 
-`ifdef YCR1_DBG_EN
-`include "ycr1_tapc.svh"
-`include "ycr1_dm.svh"
-`include "ycr1_hdu.svh"
-`endif // YCR1_DBG_EN
+`ifdef YCR_DBG_EN
+`include "ycr_tapc.svh"
+`include "ycr_dm.svh"
+`include "ycr_hdu.svh"
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_IPIC_EN
-`include "ycr1_ipic.svh"
-`endif // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+`include "ycr_ipic.svh"
+`endif // YCR_IPIC_EN
 
-module ycr1_core_top (
+module ycr_core_top (
     // Common
     input   logic                                   pwrup_rst_n,                // Power-Up reset
     input   logic                                   rst_n,                      // Regular reset
@@ -63,30 +63,30 @@ module ycr1_core_top (
     output  logic                                   core_rst_n_o,               // Core reset
     output  logic                                   core_rdc_qlfy_o,            // Core RDC qualifier
     output  logic   [48:0]                          core_debug  ,
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     output  logic                                   sys_rst_n_o,                // System reset
     output  logic                                   sys_rdc_qlfy_o,             // System RDC qualifier
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Fuses
-    input   logic [`YCR1_XLEN-1:0]                  core_fuse_mhartid_i,        // Fuse MHARTID value
-`ifdef YCR1_DBG_EN
+    input   logic [`YCR_XLEN-1:0]                  core_fuse_mhartid_i,        // Fuse MHARTID value
+`ifdef YCR_DBG_EN
     input   logic [31:0]                            tapc_fuse_idcode_i,         // Fuse IDCODE value
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // IRQ
-`ifdef YCR1_IPIC_EN
-    input   logic [YCR1_IRQ_LINES_NUM-1:0]          core_irq_lines_i,           // External interrupt request lines
+`ifdef YCR_IPIC_EN
+    input   logic [YCR_IRQ_LINES_NUM-1:0]          core_irq_lines_i,           // External interrupt request lines
 `else
     input   logic                                   core_irq_ext_i,             // External interrupt request
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     input   logic                                   core_irq_soft_i,            // Software generated interrupt request
     input   logic                                   core_irq_mtimer_i,          // Machine timer interrupt request
 
     // Memory-mapped external timer
     input   logic [63:0]                            core_mtimer_val_i,          // Machine timer value
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // Debug Interface
     input   logic                                   tapc_trst_n,                // Test Reset (TRSTn)
     input   logic                                   tapc_tck,                   // Test Clock (TCK)
@@ -94,15 +94,15 @@ module ycr1_core_top (
     input   logic                                   tapc_tdi,                   // Test Data Input (TDI)
     output  logic                                   tapc_tdo,                   // Test Data Output (TDO)
     output  logic                                   tapc_tdo_en,                // TDO Enable, signal for TDO buffer control
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Instruction Memory Interface
     input   logic                                   imem2core_req_ack_i,        // IMEM request acknowledge
     output  logic                                   core2imem_req_o,            // IMEM request
     output  logic                                   core2imem_cmd_o,            // IMEM command
-    output  logic [`YCR1_IMEM_AWIDTH-1:0]           core2imem_addr_o,           // IMEM address
-    output  logic [`YCR1_IMEM_BSIZE-1:0]            core2imem_bl_o,           // IMEM address
-    input   logic [`YCR1_IMEM_DWIDTH-1:0]           imem2core_rdata_i,          // IMEM read data
+    output  logic [`YCR_IMEM_AWIDTH-1:0]           core2imem_addr_o,           // IMEM address
+    output  logic [`YCR_IMEM_BSIZE-1:0]            core2imem_bl_o,           // IMEM address
+    input   logic [`YCR_IMEM_DWIDTH-1:0]           imem2core_rdata_i,          // IMEM read data
     input   logic [1:0]                             imem2core_resp_i,           // IMEM response
 
     // Data Memory Interface
@@ -110,28 +110,28 @@ module ycr1_core_top (
     output  logic                                   core2dmem_req_o,            // DMEM request
     output  logic                                   core2dmem_cmd_o,            // DMEM command
     output  logic[1:0]                             core2dmem_width_o,          // DMEM data width
-    output  logic [`YCR1_DMEM_AWIDTH-1:0]           core2dmem_addr_o,           // DMEM address
-    output  logic [`YCR1_DMEM_DWIDTH-1:0]           core2dmem_wdata_o,          // DMEM write data
-    input   logic [`YCR1_DMEM_DWIDTH-1:0]           dmem2core_rdata_i,          // DMEM read data
+    output  logic [`YCR_DMEM_AWIDTH-1:0]           core2dmem_addr_o,           // DMEM address
+    output  logic [`YCR_DMEM_DWIDTH-1:0]           core2dmem_wdata_o,          // DMEM write data
+    input   logic [`YCR_DMEM_DWIDTH-1:0]           dmem2core_rdata_i,          // DMEM read data
     input   logic [1:0]                             dmem2core_resp_i            // DMEM response
 );
 
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam int unsigned YCR1_CORE_TOP_RST_SYNC_STAGES_NUM               = 2;
+localparam int unsigned YCR_CORE_TOP_RST_SYNC_STAGES_NUM               = 2;
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
 //-------------------------------------------------------------------------------
 
 // Reset Logic
-`ifdef YCR1_DBG_EN
-`else // YCR1_DBG_EN
+`ifdef YCR_DBG_EN
+`else // YCR_DBG_EN
 logic                                           core_rst_n_in_sync;
 logic                                           core_rst_n_qlfy;
 logic                                           core_rst_n_status;
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 logic                                           core_rst_n;
 logic                                           core_rst_n_status_sync;
 logic                                           core_rst_status;
@@ -141,10 +141,10 @@ logic                                           pwrup_rst_n_sync;
 logic                                           rst_n_sync;
 logic                                           cpu_rst_n_sync;
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 // TAPC-DM Interface
 logic                                           tapc_dmi_ch_sel;
-logic [YCR1_DBG_DMI_CH_ID_WIDTH-1:0]            tapc_dmi_ch_id;
+logic [YCR_DBG_DMI_CH_ID_WIDTH-1:0]            tapc_dmi_ch_id;
 logic                                           tapc_dmi_ch_capture;
 logic                                           tapc_dmi_ch_shift;
 logic                                           tapc_dmi_ch_update;
@@ -152,7 +152,7 @@ logic                                           tapc_dmi_ch_tdi;
 logic                                           tapc_dmi_ch_tdo;
 //
 logic                                           tapc_dmi_ch_sel_tapout;
-logic [YCR1_DBG_DMI_CH_ID_WIDTH-1:0]            tapc_dmi_ch_id_tapout;
+logic [YCR_DBG_DMI_CH_ID_WIDTH-1:0]            tapc_dmi_ch_id_tapout;
 logic                                           tapc_dmi_ch_capture_tapout;
 logic                                           tapc_dmi_ch_shift_tapout;
 logic                                           tapc_dmi_ch_update_tapout;
@@ -161,10 +161,10 @@ logic                                           tapc_dmi_ch_tdo_tapin;
 //
 logic                                           dmi_req;
 logic                                           dmi_wr;
-logic [YCR1_DBG_DMI_ADDR_WIDTH-1:0]             dmi_addr;
-logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]             dmi_wdata;
+logic [YCR_DBG_DMI_ADDR_WIDTH-1:0]             dmi_addr;
+logic [YCR_DBG_DMI_DATA_WIDTH-1:0]             dmi_wdata;
 logic                                           dmi_resp;
-logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]             dmi_rdata;
+logic [YCR_DBG_DMI_DATA_WIDTH-1:0]             dmi_rdata;
 // TAPC-SCU Interface
 logic                                           tapc_scu_ch_sel;
 logic                                           tapc_scu_ch_sel_tapout;
@@ -178,39 +178,39 @@ logic                                           hdu2dm_rdc_qlfy;
 logic                                           ndm_rst_n;
 logic                                           dm_rst_n;
 logic                                           hart_rst_n;
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 // DM-Pipeline Interface
 // HART Run Control i/f
 logic                                           dm_active;
 logic                                           dm_cmd_req;
-type_ycr1_hdu_dbgstates_e                       dm_cmd;
+type_ycr_hdu_dbgstates_e                       dm_cmd;
 logic                                           dm_cmd_resp;
 logic                                           dm_cmd_resp_qlfy;
 logic                                           dm_cmd_rcode;
 logic                                           dm_hart_event;
 logic                                           dm_hart_event_qlfy;
-type_ycr1_hdu_hartstatus_s                      dm_hart_status;
-type_ycr1_hdu_hartstatus_s                      dm_hart_status_qlfy;
+type_ycr_hdu_hartstatus_s                      dm_hart_status;
+type_ycr_hdu_hartstatus_s                      dm_hart_status_qlfy;
 // Program Buffer - HART instruction execution i/f
-logic [YCR1_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr;
-logic [YCR1_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr_qlfy;
-logic [YCR1_HDU_CORE_INSTR_WIDTH-1:0]           dm_pbuf_instr;
+logic [YCR_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr;
+logic [YCR_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr_qlfy;
+logic [YCR_HDU_CORE_INSTR_WIDTH-1:0]           dm_pbuf_instr;
 // HART Abstract Data regs i/f
 logic                                           dm_dreg_req;
 logic                                           dm_dreg_req_qlfy;
 logic                                           dm_dreg_wr;
-logic [YCR1_HDU_DATA_REG_WIDTH-1:0]             dm_dreg_wdata;
+logic [YCR_HDU_DATA_REG_WIDTH-1:0]             dm_dreg_wdata;
 logic                                           dm_dreg_resp;
 logic                                           dm_dreg_fail;
-logic [YCR1_HDU_DATA_REG_WIDTH-1:0]             dm_dreg_rdata;
+logic [YCR_HDU_DATA_REG_WIDTH-1:0]             dm_dreg_rdata;
 
-logic [`YCR1_XLEN-1 : 0]                        dm_pc_sample;
-logic [`YCR1_XLEN-1 : 0]                        dm_pc_sample_qlfy;
-`endif // YCR1_DBG_EN
+logic [`YCR_XLEN-1 : 0]                        dm_pc_sample;
+logic [`YCR_XLEN-1 : 0]                        dm_pc_sample_qlfy;
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
 // Global clock gating logic
 logic                                           sleep_pipe;
 logic                                           wake_pipe;
@@ -218,14 +218,14 @@ logic                                           clk_pipe;
 logic                                           clk_pipe_en;
 logic                                           clk_dbgc;
 logic                                           clk_alw_on;
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
 
 //-------------------------------------------------------------------------------
 // Reset Logic
 //-------------------------------------------------------------------------------
-`ifdef YCR1_DBG_EN
-ycr1_scu    i_scu (
+`ifdef YCR_DBG_EN
+ycr_scu    i_scu (
     // Global signals
     .pwrup_rst_n                (pwrup_rst_n        ),
     .rst_n                      (rst_n              ),
@@ -270,7 +270,7 @@ assign sys_rst_n_o      = sys_rst_n;
 // Reset inputs are assumed synchronous
 assign pwrup_rst_n_sync = pwrup_rst_n;
 
-`else // YCR1_DBG_EN
+`else // YCR_DBG_EN
 
 // Reset inputs are assumed synchronous
 assign pwrup_rst_n_sync   = pwrup_rst_n;
@@ -279,7 +279,7 @@ assign cpu_rst_n_sync     = cpu_rst_n;
 assign core_rst_n_in_sync = rst_n_sync & cpu_rst_n_sync;
 
 // Core Reset: core_rst_n
-ycr1_reset_qlfy_adapter_cell_sync i_core_rstn_qlfy_adapter_cell_sync (
+ycr_reset_qlfy_adapter_cell_sync i_core_rstn_qlfy_adapter_cell_sync (
     .rst_n              (pwrup_rst_n_sync  ),
     .clk                (clk               ),
     .test_rst_n         (test_rst_n        ),
@@ -290,8 +290,8 @@ ycr1_reset_qlfy_adapter_cell_sync i_core_rstn_qlfy_adapter_cell_sync (
     .reset_n_status     (core_rst_n_status )
 );
 
-ycr1_data_sync_cell #(
-    .STAGES_AMOUNT      (YCR1_CORE_TOP_RST_SYNC_STAGES_NUM)
+ycr_data_sync_cell #(
+    .STAGES_AMOUNT      (YCR_CORE_TOP_RST_SYNC_STAGES_NUM)
 ) i_core_rstn_status_sync (
     .rst_n               (pwrup_rst_n_sync      ),
     .clk                 (clk                   ),
@@ -302,30 +302,30 @@ ycr1_data_sync_cell #(
 assign core_rst_status      = ~core_rst_n_status_sync;
 assign core_rdc_qlfy_o      = core_rst_n_qlfy;
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 assign core_rst_n_o         = core_rst_n;
 
 //-------------------------------------------------------------------------------
-// YCR1 pipeline
+// YCR pipeline
 //-------------------------------------------------------------------------------
-ycr1_pipe_top i_pipe_top (
+ycr_pipe_top i_pipe_top (
     // Control
     .pipe_rst_n                     (core_rst_n             ),
     .pipe_debug                     (core_debug             ),
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     .pipe2hdu_rdc_qlfy_i            (core2hdu_rdc_qlfy      ),
     .dbg_rst_n                      (hdu_rst_n              ),
-`endif // YCR1_DBG_EN
-`ifndef YCR1_CLKCTRL_EN
+`endif // YCR_DBG_EN
+`ifndef YCR_CLKCTRL_EN
     .clk                            (clk                    ),
-`else // YCR1_CLKCTRL_EN
+`else // YCR_CLKCTRL_EN
     .clk                            (clk_pipe               ),
     .pipe2clkctl_sleep_req_o        (sleep_pipe             ),
     .pipe2clkctl_wake_req_o         (wake_pipe              ),
     .clkctl2pipe_clk_alw_on_i       (clk_alw_on             ),
     .clkctl2pipe_clk_dbgc_i         (clk_dbgc               ),
     .clkctl2pipe_clk_en_i           (clk_pipe_en            ),
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
     // Instruction memory interface
     .pipe2imem_req_o                (core2imem_req_o        ),
@@ -346,7 +346,7 @@ ycr1_pipe_top i_pipe_top (
     .dmem2pipe_rdata_i              (dmem2core_rdata_i      ),
     .dmem2pipe_resp_i               (dmem2core_resp_i       ),
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // Debug interface:
     .dbg_en                         (1'b1                   ),
     // Debug interface:
@@ -373,14 +373,14 @@ ycr1_pipe_top i_pipe_top (
 
     // DM <-> Pipeline: PC i/f
     .pipe2dm_pc_sample_o            (dm_pc_sample           ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // IRQ
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     .soc2pipe_irq_lines_i           (core_irq_lines_i       ),
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
     .soc2pipe_irq_ext_i             (core_irq_ext_i         ),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     .soc2pipe_irq_soft_i            (core_irq_soft_i        ),
     .soc2pipe_irq_mtimer_i          (core_irq_mtimer_i      ),
 
@@ -392,11 +392,11 @@ ycr1_pipe_top i_pipe_top (
 );
 
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 //-------------------------------------------------------------------------------
 // TAP Controller (TAPC)
 //-------------------------------------------------------------------------------
-ycr1_tapc i_tapc (
+ycr_tapc i_tapc (
     // JTAG signals
     .tapc_trst_n                    (tapc_trst_n               ),
     .tapc_tck                       (tapc_tck                  ),
@@ -419,7 +419,7 @@ ycr1_tapc i_tapc (
     .tapcsync2tapc_ch_tdo_i         (tapc_dmi_ch_tdo_tapin     )
 );
 
-ycr1_tapc_synchronizer i_tapc_synchronizer (
+ycr_tapc_synchronizer i_tapc_synchronizer (
     // System common signals
     .pwrup_rst_n                    (pwrup_rst_n_sync          ),
     .dm_rst_n                       (dm_rst_n                  ),
@@ -451,7 +451,7 @@ ycr1_tapc_synchronizer i_tapc_synchronizer (
 assign tapc_ch_tdo = (tapc_scu_ch_tdo & tapc_scu_ch_sel)
                    | (tapc_dmi_ch_tdo & tapc_dmi_ch_sel);
 
-ycr1_dmi i_dmi (
+ycr_dmi i_dmi (
     .rst_n                      (dm_rst_n           ),
     .clk                        (clk                ),
 
@@ -473,10 +473,10 @@ ycr1_dmi i_dmi (
     .dmi2dm_wdata_o             (dmi_wdata          )
 );
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 
 //-------------------------------------------------------------------------------
 // Debug Module (DM)
@@ -484,14 +484,14 @@ ycr1_dmi i_dmi (
 assign dm_cmd_resp_qlfy    = dm_cmd_resp   & {$bits(dm_cmd_resp){hdu2dm_rdc_qlfy}};
 assign dm_hart_event_qlfy  = dm_hart_event & {$bits(dm_hart_event){hdu2dm_rdc_qlfy}};
 assign dm_hart_status_qlfy.dbg_state = hdu2dm_rdc_qlfy ? dm_hart_status.dbg_state
-                                                       : YCR1_HDU_DBGSTATE_RESET;
+                                                       : YCR_HDU_DBGSTATE_RESET;
 assign dm_hart_status_qlfy.except    = dm_hart_status.except;
 assign dm_hart_status_qlfy.ebreak    = dm_hart_status.ebreak;
 assign dm_pbuf_addr_qlfy   = dm_pbuf_addr  & {$bits(dm_pbuf_addr){hdu2dm_rdc_qlfy}};
 assign dm_dreg_req_qlfy    = dm_dreg_req   & {$bits(dm_dreg_req){hdu2dm_rdc_qlfy}};
 assign dm_pc_sample_qlfy   = dm_pc_sample  & {$bits(dm_pc_sample){core2dm_rdc_qlfy}};
 
-ycr1_dm i_dm (
+ycr_dm i_dm (
     // Common signals
     .rst_n                      (dm_rst_n               ),
     .clk                        (clk                    ),
@@ -530,14 +530,14 @@ ycr1_dm i_dm (
     .dm2pipe_dreg_fail_o        (dm_dreg_fail           ),
     .dm2pipe_dreg_rdata_o       (dm_dreg_rdata          )
 );
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
 //-------------------------------------------------------------------------------
 // Global clock gating logic
 //-------------------------------------------------------------------------------
-ycr1_clk_ctrl i_clk_ctrl (
+ycr_clk_ctrl i_clk_ctrl (
     .clk                            (clk        ),
     .rst_n                          (core_rst_n ),
     .test_mode                      (test_mode  ),
@@ -553,6 +553,6 @@ ycr1_clk_ctrl i_clk_ctrl (
     .clkctl2pipe_clk_en_o           (clk_pipe_en),
     .clkctl2pipe_clk_dbgc_o         (clk_dbgc   )
 );
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
-endmodule : ycr1_core_top
+endmodule : ycr_core_top

@@ -1,12 +1,12 @@
-/// @file       <ycr1_memory_tb_axi.sv>
+/// @file       <ycr_memory_tb_axi.sv>
 /// @brief      AXI memory testbench
 ///
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_ipic.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_ipic.svh"
 
-module ycr1_memory_tb_axi #(
-`ifdef YCR1_TCM_EN
+module ycr_memory_tb_axi #(
+`ifdef YCR_TCM_EN
     parameter SIZE   = 1*1024*1024, 
 `else
     parameter SIZE   = 8*1024*1024, // Memory sized increased for non TCM Mode
@@ -20,11 +20,11 @@ module ycr1_memory_tb_axi #(
     // System
     input   logic                          rst_n,
     input   logic                          clk,
-`ifdef YCR1_IPIC_EN
-    output  logic [YCR1_IRQ_LINES_NUM-1:0] irq_lines,
-`else // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+    output  logic [YCR_IRQ_LINES_NUM-1:0] irq_lines,
+`else // YCR_IPIC_EN
     output  logic                          ext_irq,
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     output  logic                          soft_irq,
 
     // Write address channel
@@ -75,11 +75,11 @@ logic  [N_IF-1:0] [2:0]                     awsize_hold;
 genvar                                      gi;
 genvar                                      gj;
 
-`ifdef YCR1_IPIC_EN
-logic [YCR1_IRQ_LINES_NUM-1:0]              irq_lines_reg;
-`else // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+logic [YCR_IRQ_LINES_NUM-1:0]              irq_lines_reg;
+`else // YCR_IPIC_EN
 logic                                       ext_irq_reg;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 logic                                       soft_irq_reg;
 
 `ifdef VERILATOR
@@ -112,23 +112,23 @@ function automatic logic [W_DATA-1:0] mem_read (
     // READ burst operation
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
         // Reading Soft IRQ value
-        if (adr[W_ADR-1:1] == YCR1_SIM_SOFT_IRQ_ADDR[W_ADR-1:1]) begin
+        if (adr[W_ADR-1:1] == YCR_SIM_SOFT_IRQ_ADDR[W_ADR-1:1]) begin
             mem_read[0] = soft_irq_reg;
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
         // Reading IRQ Lines values
-        end else if (adr[W_ADR-1:1] == YCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
-            if (i*8 < YCR1_IRQ_LINES_NUM) begin
-                if (YCR1_IRQ_LINES_NUM < 8) begin
+        end else if (adr[W_ADR-1:1] == YCR_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
+            if (i*8 < YCR_IRQ_LINES_NUM) begin
+                if (YCR_IRQ_LINES_NUM < 8) begin
                     mem_read[(i*8)+:8] = irq_lines_reg;
                 end else begin
                     mem_read[(i*8)+:8] = irq_lines_reg[(i*8)+:8];
                 end
             end
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
         // Reading External IRQ value
-        end else if (adr[W_ADR-1:1] == YCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
+        end else if (adr[W_ADR-1:1] == YCR_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
             mem_read[0] = ext_irq_reg;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
         // Regular read operation
         end else begin
             mem_read[(i*8)+:8] = memory[adr];
@@ -159,26 +159,26 @@ function automatic void mem_write (
     // WRITE burst operation
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
         // Printing character in the simulation console
-        if(bytes_en[i] & adr == YCR1_SIM_PRINT_ADDR) begin
+        if(bytes_en[i] & adr == YCR_SIM_PRINT_ADDR) begin
             $write("%c",data[(i*8)+:8]);
         // Writing Soft IRQ value
-        end else if(bytes_en[0] & adr[W_ADR-1:1] == YCR1_SIM_SOFT_IRQ_ADDR[W_ADR-1:1]) begin
+        end else if(bytes_en[0] & adr[W_ADR-1:1] == YCR_SIM_SOFT_IRQ_ADDR[W_ADR-1:1]) begin
             soft_irq_reg <= data[0];
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
         // Writing IRQ Lines values
-        end else if(bytes_en[i] & adr[W_ADR-1:1] == YCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
-            if( i*8 < YCR1_IRQ_LINES_NUM ) begin
-                if( YCR1_IRQ_LINES_NUM < 8 ) begin
-                    irq_lines_reg <= data[YCR1_IRQ_LINES_NUM-1:0];
+        end else if(bytes_en[i] & adr[W_ADR-1:1] == YCR_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
+            if( i*8 < YCR_IRQ_LINES_NUM ) begin
+                if( YCR_IRQ_LINES_NUM < 8 ) begin
+                    irq_lines_reg <= data[YCR_IRQ_LINES_NUM-1:0];
                 end else begin
                     irq_lines_reg[(i*8)+:8] <= data[(i*8)+:8];
                 end
             end
 `else
         // Writing External IRQ value
-        end else if(bytes_en[0] & adr[W_ADR-1:1] == YCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
+        end else if(bytes_en[0] & adr[W_ADR-1:1] == YCR_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
             ext_irq_reg <= data[0];
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
         // Regular write operation
         end else if (bytes_en[i]) begin
             memory[adr] = data[(i*8)+:8];
@@ -189,11 +189,11 @@ function automatic void mem_write (
 endfunction : mem_write
 
 
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
 assign irq_lines = irq_lines_reg;
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
 assign ext_irq = ext_irq_reg;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 assign soft_irq = soft_irq_reg;
 
 generate for(gi=0; gi<N_IF; ++gi) begin : rw_if
@@ -245,11 +245,11 @@ always @(posedge clk, negedge rst_n) begin
         wready[gi]      <= 1'b1;
 
         soft_irq_reg    <= '0;
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
         irq_lines_reg   <= '0;
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
         ext_irq_reg     <= '0;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 
         if (test_file_init) $readmemh(test_file, memory);
     end else begin
@@ -295,9 +295,9 @@ end
 SVA_TBMEM_AWADDR_404 :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        awvalid[gi] |-> awaddr[gi]<SIZE | awaddr[gi]==YCR1_SIM_PRINT_ADDR
-                                        | awaddr[gi]==YCR1_SIM_SOFT_IRQ_ADDR
-                                        | awaddr[gi]==YCR1_SIM_EXT_IRQ_ADDR
+        awvalid[gi] |-> awaddr[gi]<SIZE | awaddr[gi]==YCR_SIM_PRINT_ADDR
+                                        | awaddr[gi]==YCR_SIM_SOFT_IRQ_ADDR
+                                        | awaddr[gi]==YCR_SIM_EXT_IRQ_ADDR
     )
     else $error("TBMEM: awaddr[%0d] >= SIZE",gi);
 
@@ -355,9 +355,9 @@ SVA_TBMEM_X_BREADY :
 SVA_TBMEM_ARADDR_404 :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        arvalid[gi] |-> araddr[gi]<SIZE | araddr[gi]==YCR1_SIM_PRINT_ADDR
-                                        | awaddr[gi]==YCR1_SIM_SOFT_IRQ_ADDR
-                                        | awaddr[gi]==YCR1_SIM_EXT_IRQ_ADDR
+        arvalid[gi] |-> araddr[gi]<SIZE | araddr[gi]==YCR_SIM_PRINT_ADDR
+                                        | awaddr[gi]==YCR_SIM_SOFT_IRQ_ADDR
+                                        | awaddr[gi]==YCR_SIM_EXT_IRQ_ADDR
     )
     else $error("TBMEM: awaddr[%0d] >= SIZE",gi);
 
@@ -393,4 +393,4 @@ SVA_TBMEM_X_RREADY :
 
 end endgenerate
 
-endmodule : ycr1_memory_tb_axi
+endmodule : ycr_memory_tb_axi

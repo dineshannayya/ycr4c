@@ -20,7 +20,7 @@
 ////  yifive TAPC header file                                             ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     TAPC header file                                                 ////
@@ -38,64 +38,64 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`ifndef YCR1_INCLUDE_TAPC_DEFS
-`define YCR1_INCLUDE_TAPC_DEFS
+`ifndef YCR_INCLUDE_TAPC_DEFS
+`define YCR_INCLUDE_TAPC_DEFS
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 
 //==============================================================================
 // Parameters
 //==============================================================================
-localparam int unsigned                         YCR1_TAP_STATE_WIDTH            = 4;
-localparam int unsigned                         YCR1_TAP_INSTRUCTION_WIDTH      = 5;
-localparam int unsigned                         YCR1_TAP_DR_IDCODE_WIDTH        = 32;
-localparam int unsigned                         YCR1_TAP_DR_BLD_ID_WIDTH        = 32;
-localparam int unsigned                         YCR1_TAP_DR_BYPASS_WIDTH        = 1;
-//localparam bit [YCR1_TAP_DR_IDCODE_WIDTH-1:0]   YCR1_TAP_IDCODE_RISCV_SC        = `YCR1_TAP_IDCODE;
-localparam bit [YCR1_TAP_DR_BLD_ID_WIDTH-1:0]   YCR1_TAP_BLD_ID_VALUE           = `YCR1_MIMPID;
+localparam int unsigned                         YCR_TAP_STATE_WIDTH            = 4;
+localparam int unsigned                         YCR_TAP_INSTRUCTION_WIDTH      = 5;
+localparam int unsigned                         YCR_TAP_DR_IDCODE_WIDTH        = 32;
+localparam int unsigned                         YCR_TAP_DR_BLD_ID_WIDTH        = 32;
+localparam int unsigned                         YCR_TAP_DR_BYPASS_WIDTH        = 1;
+//localparam bit [YCR_TAP_DR_IDCODE_WIDTH-1:0]   YCR_TAP_IDCODE_RISCV_SC        = `YCR_TAP_IDCODE;
+localparam bit [YCR_TAP_DR_BLD_ID_WIDTH-1:0]   YCR_TAP_BLD_ID_VALUE           = `YCR_MIMPID;
 
 //==============================================================================
 // Types
 //==============================================================================
-typedef enum logic [YCR1_TAP_STATE_WIDTH-1:0] {
-    YCR1_TAP_STATE_RESET,
-    YCR1_TAP_STATE_IDLE,
-    YCR1_TAP_STATE_DR_SEL_SCAN,
-    YCR1_TAP_STATE_DR_CAPTURE,
-    YCR1_TAP_STATE_DR_SHIFT,
-    YCR1_TAP_STATE_DR_EXIT1,
-    YCR1_TAP_STATE_DR_PAUSE,
-    YCR1_TAP_STATE_DR_EXIT2,
-    YCR1_TAP_STATE_DR_UPDATE,
-    YCR1_TAP_STATE_IR_SEL_SCAN,
-    YCR1_TAP_STATE_IR_CAPTURE,
-    YCR1_TAP_STATE_IR_SHIFT,
-    YCR1_TAP_STATE_IR_EXIT1,
-    YCR1_TAP_STATE_IR_PAUSE,
-    YCR1_TAP_STATE_IR_EXIT2,
-    YCR1_TAP_STATE_IR_UPDATE
-`ifdef YCR1_XPROP_EN
+typedef enum logic [YCR_TAP_STATE_WIDTH-1:0] {
+    YCR_TAP_STATE_RESET,
+    YCR_TAP_STATE_IDLE,
+    YCR_TAP_STATE_DR_SEL_SCAN,
+    YCR_TAP_STATE_DR_CAPTURE,
+    YCR_TAP_STATE_DR_SHIFT,
+    YCR_TAP_STATE_DR_EXIT1,
+    YCR_TAP_STATE_DR_PAUSE,
+    YCR_TAP_STATE_DR_EXIT2,
+    YCR_TAP_STATE_DR_UPDATE,
+    YCR_TAP_STATE_IR_SEL_SCAN,
+    YCR_TAP_STATE_IR_CAPTURE,
+    YCR_TAP_STATE_IR_SHIFT,
+    YCR_TAP_STATE_IR_EXIT1,
+    YCR_TAP_STATE_IR_PAUSE,
+    YCR_TAP_STATE_IR_EXIT2,
+    YCR_TAP_STATE_IR_UPDATE
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_TAP_STATE_XXX       = 'X
-`endif // YCR1_XPROP_EN
-} type_ycr1_tap_state_e;
+    YCR_TAP_STATE_XXX       = 'X
+`endif // YCR_XPROP_EN
+} type_ycr_tap_state_e;
 
-typedef enum logic [YCR1_TAP_INSTRUCTION_WIDTH - 1:0] {
-    YCR1_TAP_INSTR_IDCODE            = 5'h01,
-    YCR1_TAP_INSTR_BLD_ID            = 5'h04,
-    YCR1_TAP_INSTR_SCU_ACCESS        = 5'h09,
+typedef enum logic [YCR_TAP_INSTRUCTION_WIDTH - 1:0] {
+    YCR_TAP_INSTR_IDCODE            = 5'h01,
+    YCR_TAP_INSTR_BLD_ID            = 5'h04,
+    YCR_TAP_INSTR_SCU_ACCESS        = 5'h09,
 
-    YCR1_TAP_INSTR_DTMCS             = 5'h10,
-    YCR1_TAP_INSTR_DMI_ACCESS        = 5'h11,
+    YCR_TAP_INSTR_DTMCS             = 5'h10,
+    YCR_TAP_INSTR_DMI_ACCESS        = 5'h11,
 
-    YCR1_TAP_INSTR_BYPASS            = 5'h1F
-`ifdef YCR1_XPROP_EN
+    YCR_TAP_INSTR_BYPASS            = 5'h1F
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_TAP_INSTR_XXX               = 'X
-`endif // YCR1_XPROP_EN
-} type_ycr1_tap_instr_e;
+    YCR_TAP_INSTR_XXX               = 'X
+`endif // YCR_XPROP_EN
+} type_ycr_tap_instr_e;
 
-`endif // YCR1_DBG_EN
-`endif // YCR1_INCLUDE_TAPC_DEFS
+`endif // YCR_DBG_EN
+`endif // YCR_INCLUDE_TAPC_DEFS

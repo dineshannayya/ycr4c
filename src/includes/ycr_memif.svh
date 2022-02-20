@@ -20,7 +20,7 @@
 ////  yifive Memory interface definitions file                            ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Memory interface definitions file                                ////
@@ -38,48 +38,48 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`ifndef YCR1_MEMIF_SVH
-`define YCR1_MEMIF_SVH
+`ifndef YCR_MEMIF_SVH
+`define YCR_MEMIF_SVH
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
 //-------------------------------------------------------------------------------
 // Memory command enum
 //-------------------------------------------------------------------------------
 //typedef enum logic {
-parameter    YCR1_MEM_CMD_RD     = 1'b0;
-parameter    YCR1_MEM_CMD_WR     = 1'b1;
-//`ifdef YCR1_XPROP_EN
+parameter    YCR_MEM_CMD_RD     = 1'b0;
+parameter    YCR_MEM_CMD_WR     = 1'b1;
+//`ifdef YCR_XPROP_EN
 //    ,
-parameter     YCR1_MEM_CMD_ERROR  = 'x;
-//`endif // YCR1_XPROP_EN
-//} type_ycr1_mem_cmd_e;
+parameter     YCR_MEM_CMD_ERROR  = 'x;
+//`endif // YCR_XPROP_EN
+//} type_ycr_mem_cmd_e;
 
 //-------------------------------------------------------------------------------
 // Memory data width enum
 //-------------------------------------------------------------------------------
 //typedef enum logic[1:0] {
-parameter    YCR1_MEM_WIDTH_BYTE     = 2'b00;
-parameter    YCR1_MEM_WIDTH_HWORD    = 2'b01;
-parameter    YCR1_MEM_WIDTH_WORD     = 2'b10;
-//`ifdef YCR1_XPROP_EN
+parameter    YCR_MEM_WIDTH_BYTE     = 2'b00;
+parameter    YCR_MEM_WIDTH_HWORD    = 2'b01;
+parameter    YCR_MEM_WIDTH_WORD     = 2'b10;
+//`ifdef YCR_XPROP_EN
 //    ,
-parameter    YCR1_MEM_WIDTH_ERROR    = 'x;
-//`endif // YCR1_XPROP_EN
-//} type_ycr1_mem_width_e;
+parameter    YCR_MEM_WIDTH_ERROR    = 'x;
+//`endif // YCR_XPROP_EN
+//} type_ycr_mem_width_e;
 
 //-------------------------------------------------------------------------------
 // Memory response enum
 //-------------------------------------------------------------------------------
 //typedef enum logic[1:0] {
-parameter    YCR1_MEM_RESP_NOTRDY    = 2'b00;
-parameter    YCR1_MEM_RESP_RDY_OK    = 2'b01;
-parameter    YCR1_MEM_RESP_RDY_ER    = 2'b10;
-parameter    YCR1_MEM_RESP_RDY_LOK   = 2'b11; // LAST ACK
-//`ifdef YCR1_XPROP_EN
+parameter    YCR_MEM_RESP_NOTRDY    = 2'b00;
+parameter    YCR_MEM_RESP_RDY_OK    = 2'b01;
+parameter    YCR_MEM_RESP_RDY_ER    = 2'b10;
+parameter    YCR_MEM_RESP_RDY_LOK   = 2'b11; // LAST ACK
+//`ifdef YCR_XPROP_EN
 //    ,
-parameter    YCR1_MEM_RESP_ERROR     = 'x;
-//`endif // YCR1_XPROP_EN
-//} type_ycr1_mem_resp_e;
+parameter    YCR_MEM_RESP_ERROR     = 'x;
+//`endif // YCR_XPROP_EN
+//} type_ycr_mem_resp_e;
 
-`endif // YCR1_MEMIF_SVH
+`endif // YCR_MEMIF_SVH

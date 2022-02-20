@@ -20,7 +20,7 @@
 ////  yifive clock gate primitive                                         ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     clock gate primitive                                             ////
@@ -38,10 +38,10 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_CLKCTRL_EN
-module ycr1_cg (
+`ifdef YCR_CLKCTRL_EN
+module ycr_cg (
     input   logic   clk,
     input   logic   clk_en,
     input   logic   test_mode,
@@ -62,6 +62,6 @@ end
 
 assign clk_out  = latch_en & clk;
 
-endmodule : ycr1_cg
+endmodule : ycr_cg
 
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN

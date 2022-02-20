@@ -21,15 +21,15 @@
 ////////////////////////////////////////////////////////////////////
 
 
-module ycr1_dmem_tb_wb #(
-    parameter YCR1_WB_WIDTH  = 32,
-    parameter YCR1_MEM_POWER_SIZE  = 25 // Memory sized increased for non TCM Mode
+module ycr_dmem_tb_wb #(
+    parameter YCR_WB_WIDTH  = 32,
+    parameter YCR_MEM_POWER_SIZE  = 25 // Memory sized increased for non TCM Mode
 )
 (
     // Control
     input   logic                                   rst_n,
     input   logic                                   clk,
-    input   logic [YCR1_WB_WIDTH-1:0]               mem_req_ack_stall_in,
+    input   logic [YCR_WB_WIDTH-1:0]               mem_req_ack_stall_in,
 
     // Memory Interface
     input  logic                                    wbd_mem_stb_i         ,
@@ -50,15 +50,15 @@ module ycr1_dmem_tb_wb #(
 // Local Types
 //-------------------------------------------------------------------------------
 typedef enum logic {
-    YCR1_STATE_IDLE = 1'b0,
-    YCR1_STATE_DATA = 1'b1,
-    YCR1_STATE_ERR  = 1'bx
+    YCR_STATE_IDLE = 1'b0,
+    YCR_STATE_DATA = 1'b1,
+    YCR_STATE_ERR  = 1'bx
 } type_wb_state_e;
 
 //-------------------------------------------------------------------------------
 // Memory definition
 //-------------------------------------------------------------------------------
-logic [7:0]                             memory [0:2**YCR1_MEM_POWER_SIZE-1];
+logic [7:0]                             memory [0:2**YCR_MEM_POWER_SIZE-1];
 
 `ifdef VERILATOR
 logic [255:0]                           test_file;
@@ -73,13 +73,13 @@ assign wbd_mem_err_o = 0;
 //-------------------------------------------------------------------------------
 // Local functions
 //-------------------------------------------------------------------------------
-function logic [YCR1_WB_WIDTH-1:0] ycr1_read_mem(
-    logic   [YCR1_WB_WIDTH-1:0]    addr,
+function logic [YCR_WB_WIDTH-1:0] ycr_read_mem(
+    logic   [YCR_WB_WIDTH-1:0]    addr,
     logic   [3:0]                  r_be
 );
-    logic [YCR1_WB_WIDTH-1:0]       tmp;
+    logic [YCR_WB_WIDTH-1:0]       tmp;
 begin
-    ycr1_read_mem = 'x;
+    ycr_read_mem = 'x;
 
     for (int unsigned i=0; i<4; ++i) begin
         tmp[(8*(i+1)-1)-:8] = (r_be[i]) ?  memory[addr+i] : 'x;
@@ -87,12 +87,12 @@ begin
     //$display("MEMORY READ ADDRESS: %x Data: %x",addr,tmp);
     return tmp;
 end
-endfunction : ycr1_read_mem
+endfunction : ycr_read_mem
 
-function void ycr1_write_mem(
-    logic   [YCR1_WB_WIDTH-1:0]    addr,
+function void ycr_write_mem(
+    logic   [YCR_WB_WIDTH-1:0]    addr,
     logic   [3:0]                  w_be,
-    logic   [YCR1_WB_WIDTH-1:0]    data
+    logic   [YCR_WB_WIDTH-1:0]    data
 );
 begin
     for (int unsigned i=0; i<4; ++i) begin
@@ -101,7 +101,7 @@ begin
         end
     end
 end
-endfunction : ycr1_write_mem
+endfunction : ycr_write_mem
 
 
 //-------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ endfunction : ycr1_write_mem
 
 
 // MEM access
-logic   [YCR1_WB_WIDTH-1:0]    mem_req_ack_stall;
+logic   [YCR_WB_WIDTH-1:0]    mem_req_ack_stall;
 bit                            mem_req_ack_rnd;
 logic                          mem_req_ack;
 logic                          mem_req_ack_nc;
@@ -142,7 +142,7 @@ assign mem_req_ack = (mem_req_ack_stall == 32'd0) ?  mem_req_ack_rnd : mem_req_a
 //-------------------------------------------------------------------------------
 logic       wbd_mem_stb_l;
 logic [9:0] mem_bl_cnt;
-logic [YCR1_MEM_POWER_SIZE-1:0] mem_ptr;
+logic [YCR_MEM_POWER_SIZE-1:0] mem_ptr;
 
 wire wbd_mem_stb_pedge = (wbd_mem_stb_l == 1'b0) && wbd_mem_stb_i;
 always @(negedge rst_n, posedge clk) begin
@@ -159,12 +159,12 @@ always @(negedge rst_n, posedge clk) begin
 	wbd_mem_stb_l   = wbd_mem_stb_i;
 	if(wbd_mem_stb_pedge) begin
 	    mem_bl_cnt    = 10'h1;
-	    mem_ptr       =  {wbd_mem_adr_i[YCR1_MEM_POWER_SIZE-1:2], 2'b00};
+	    mem_ptr       =  {wbd_mem_adr_i[YCR_MEM_POWER_SIZE-1:2], 2'b00};
 	end
 
         if (wbd_mem_stb_i && mem_req_ack && wbd_mem_bry_i && ~wbd_mem_we_i && !wbd_mem_lack_o) begin
             wbd_mem_ack_o   = #1 1'b1;
-            wbd_mem_dat_o   = ycr1_read_mem(mem_ptr, wbd_mem_sel_i );
+            wbd_mem_dat_o   = ycr_read_mem(mem_ptr, wbd_mem_sel_i );
 	    if(wbd_mem_bl_i == mem_bl_cnt)
                 wbd_mem_lack_o   = #1 1'b1;
 
@@ -189,4 +189,4 @@ always @(negedge rst_n, posedge clk) begin
 end
 
 
-endmodule : ycr1_dmem_tb_wb
+endmodule : ycr_dmem_tb_wb

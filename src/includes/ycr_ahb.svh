@@ -20,7 +20,7 @@
 ////  yifive AHB header file                                              ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     AHB header file                                                  ////
@@ -38,57 +38,57 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`ifndef YCR1_AHB_SVH
-`define YCR1_AHB_SVH
+`ifndef YCR_AHB_SVH
+`define YCR_AHB_SVH
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-parameter YCR1_AHB_WIDTH  = 32;
+parameter YCR_AHB_WIDTH  = 32;
 
 // Encoding for HTRANS signal
-parameter logic [1:0] YCR1_HTRANS_IDLE   = 2'b00;
-parameter logic [1:0] YCR1_HTRANS_NONSEQ = 2'b10;
-`ifdef YCR1_XPROP_EN
-parameter logic [1:0] YCR1_HTRANS_ERR    = 'x;
-`else // YCR1_XPROP_EN
-parameter logic [1:0] YCR1_HTRANS_ERR    = '0;
-`endif // YCR1_XPROP_EN
+parameter logic [1:0] YCR_HTRANS_IDLE   = 2'b00;
+parameter logic [1:0] YCR_HTRANS_NONSEQ = 2'b10;
+`ifdef YCR_XPROP_EN
+parameter logic [1:0] YCR_HTRANS_ERR    = 'x;
+`else // YCR_XPROP_EN
+parameter logic [1:0] YCR_HTRANS_ERR    = '0;
+`endif // YCR_XPROP_EN
 
 // Encoding for HBURST signal
-parameter logic [2:0] YCR1_HBURST_SINGLE = 3'b000;
-`ifdef YCR1_XPROP_EN
-parameter logic [2:0] YCR1_HBURST_ERR    = 'x;
-`else // YCR1_XPROP_EN
-parameter logic [1:0] YCR1_HBURST_ERR    = '0;
-`endif // YCR1_XPROP_EN
+parameter logic [2:0] YCR_HBURST_SINGLE = 3'b000;
+`ifdef YCR_XPROP_EN
+parameter logic [2:0] YCR_HBURST_ERR    = 'x;
+`else // YCR_XPROP_EN
+parameter logic [1:0] YCR_HBURST_ERR    = '0;
+`endif // YCR_XPROP_EN
 
 // Encoding for HSIZE signal
-parameter logic [2:0] YCR1_HSIZE_8B    = 3'b000;
-parameter logic [2:0] YCR1_HSIZE_16B   = 3'b001;
-parameter logic [2:0] YCR1_HSIZE_32B   = 3'b010;
-`ifdef YCR1_XPROP_EN
-parameter logic [2:0] YCR1_HSIZE_ERR   = 'x;
-`else // YCR1_XPROP_EN
-parameter logic [1:0] YCR1_HSIZE_ERR   = '0;
-`endif // YCR1_XPROP_EN
+parameter logic [2:0] YCR_HSIZE_8B    = 3'b000;
+parameter logic [2:0] YCR_HSIZE_16B   = 3'b001;
+parameter logic [2:0] YCR_HSIZE_32B   = 3'b010;
+`ifdef YCR_XPROP_EN
+parameter logic [2:0] YCR_HSIZE_ERR   = 'x;
+`else // YCR_XPROP_EN
+parameter logic [1:0] YCR_HSIZE_ERR   = '0;
+`endif // YCR_XPROP_EN
 
 // Encoding HPROT signal
 // HPROT[0] : 0 - instr;      1 - data
 // HPROT[1] : 0 - user;       1 - privilege
 // HPROT[2] : 0 - not buffer; 1 - buffer
 // HPROT[3] : 0 - cacheable;  1 - cacheable
-parameter YCR1_HPROT_DATA  = 0;
-parameter YCR1_HPROT_PRV   = 1;
-parameter YCR1_HPROT_BUF   = 2;
-parameter YCR1_HPROT_CACHE = 3;
+parameter YCR_HPROT_DATA  = 0;
+parameter YCR_HPROT_PRV   = 1;
+parameter YCR_HPROT_BUF   = 2;
+parameter YCR_HPROT_CACHE = 3;
 
 // Encoding HRESP signal
-parameter logic YCR1_HRESP_OKAY  = 1'b0;
-parameter logic YCR1_HRESP_ERROR = 1'b1;
-`ifdef YCR1_XPROP_EN
-parameter logic YCR1_HRESP_ERR   = 1'bx;
-`else // YCR1_XPROP_EN
-parameter logic YCR1_HRESP_ERR   = 1'b0;
-`endif // YCR1_XPROP_EN
+parameter logic YCR_HRESP_OKAY  = 1'b0;
+parameter logic YCR_HRESP_ERROR = 1'b1;
+`ifdef YCR_XPROP_EN
+parameter logic YCR_HRESP_ERR   = 1'bx;
+`else // YCR_XPROP_EN
+parameter logic YCR_HRESP_ERR   = 1'b0;
+`endif // YCR_XPROP_EN
 
-`endif // YCR1_AHB_SVH
+`endif // YCR_AHB_SVH

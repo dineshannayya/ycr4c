@@ -20,7 +20,7 @@
 ////  yifive HART Debug Unit definitions file                             ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     HART Debug Unit definitions file                                 ////
@@ -38,27 +38,27 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`ifndef YCR1_INCLUDE_HDU_DEFS
-`define YCR1_INCLUDE_HDU_DEFS
+`ifndef YCR_INCLUDE_HDU_DEFS
+`define YCR_INCLUDE_HDU_DEFS
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_csr.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_csr.svh"
 
-`ifdef YCR1_MMU_EN
- `define YCR1_HDU_FEATURE_MPRVEN
-`endif // YCR1_MMU_EN
+`ifdef YCR_MMU_EN
+ `define YCR_HDU_FEATURE_MPRVEN
+`endif // YCR_MMU_EN
 
 //==============================================================================
 // Parameters
 //==============================================================================
-//localparam int unsigned YCR1_HDU_DEBUGCSR_BASE_ADDR      = 12'h7B0;
-localparam int unsigned YCR1_HDU_DEBUGCSR_ADDR_SPAN      = 4; // YOSYS FIX
-localparam int unsigned YCR1_HDU_DEBUGCSR_ADDR_WIDTH     = $clog2(YCR1_HDU_DEBUGCSR_ADDR_SPAN);
-localparam bit [3:0]    YCR1_HDU_DEBUGCSR_DCSR_XDEBUGVER = 4'h4;
-localparam int unsigned YCR1_HDU_PBUF_ADDR_SPAN          = 8;
-localparam int unsigned YCR1_HDU_PBUF_ADDR_WIDTH         = $clog2(YCR1_HDU_PBUF_ADDR_SPAN);
-localparam int unsigned YCR1_HDU_DATA_REG_WIDTH          = 32;
-localparam int unsigned YCR1_HDU_CORE_INSTR_WIDTH        = 32;
+//localparam int unsigned YCR_HDU_DEBUGCSR_BASE_ADDR      = 12'h7B0;
+localparam int unsigned YCR_HDU_DEBUGCSR_ADDR_SPAN      = 4; // YOSYS FIX
+localparam int unsigned YCR_HDU_DEBUGCSR_ADDR_WIDTH     = $clog2(YCR_HDU_DEBUGCSR_ADDR_SPAN);
+localparam bit [3:0]    YCR_HDU_DEBUGCSR_DCSR_XDEBUGVER = 4'h4;
+localparam int unsigned YCR_HDU_PBUF_ADDR_SPAN          = 8;
+localparam int unsigned YCR_HDU_PBUF_ADDR_WIDTH         = $clog2(YCR_HDU_PBUF_ADDR_SPAN);
+localparam int unsigned YCR_HDU_DATA_REG_WIDTH          = 32;
+localparam int unsigned YCR_HDU_CORE_INSTR_WIDTH        = 32;
 
 
 //==============================================================================
@@ -67,132 +67,132 @@ localparam int unsigned YCR1_HDU_CORE_INSTR_WIDTH        = 32;
 
 // HART Debug States:
 typedef enum logic [1:0] {
-    YCR1_HDU_DBGSTATE_RESET         = 2'b00,
-    YCR1_HDU_DBGSTATE_RUN           = 2'b01,
-    YCR1_HDU_DBGSTATE_DHALTED       = 2'b10,
-    YCR1_HDU_DBGSTATE_DRUN          = 2'b11
-`ifdef YCR1_XPROP_EN
+    YCR_HDU_DBGSTATE_RESET         = 2'b00,
+    YCR_HDU_DBGSTATE_RUN           = 2'b01,
+    YCR_HDU_DBGSTATE_DHALTED       = 2'b10,
+    YCR_HDU_DBGSTATE_DRUN          = 2'b11
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_HDU_DBGSTATE_XXX           = 'X
-`endif // YCR1_XPROP_EN
-} type_ycr1_hdu_dbgstates_e;
+    YCR_HDU_DBGSTATE_XXX           = 'X
+`endif // YCR_XPROP_EN
+} type_ycr_hdu_dbgstates_e;
 
 typedef enum logic [1:0] {
-    YCR1_HDU_PBUFSTATE_IDLE          = 2'b00,
-    YCR1_HDU_PBUFSTATE_FETCH         = 2'b01,
-    YCR1_HDU_PBUFSTATE_EXCINJECT     = 2'b10,
-    YCR1_HDU_PBUFSTATE_WAIT4END      = 2'b11
-`ifdef YCR1_XPROP_EN
+    YCR_HDU_PBUFSTATE_IDLE          = 2'b00,
+    YCR_HDU_PBUFSTATE_FETCH         = 2'b01,
+    YCR_HDU_PBUFSTATE_EXCINJECT     = 2'b10,
+    YCR_HDU_PBUFSTATE_WAIT4END      = 2'b11
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_HDU_PBUFSTATE_XXX           = 'X
-`endif // YCR1_XPROP_EN
-} type_ycr1_hdu_pbufstates_e;
+    YCR_HDU_PBUFSTATE_XXX           = 'X
+`endif // YCR_XPROP_EN
+} type_ycr_hdu_pbufstates_e;
 
 typedef enum logic {
-    YCR1_HDU_HARTCMD_RESUME         = 1'b0,
-    YCR1_HDU_HARTCMD_HALT           = 1'b1
-`ifdef YCR1_XPROP_EN
+    YCR_HDU_HARTCMD_RESUME         = 1'b0,
+    YCR_HDU_HARTCMD_HALT           = 1'b1
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_HDU_HARTCMD_XXX            = 1'bX
-`endif // YCR1_XPROP_EN
-} type_ycr1_hdu_hart_command_e;
+    YCR_HDU_HARTCMD_XXX            = 1'bX
+`endif // YCR_XPROP_EN
+} type_ycr_hdu_hart_command_e;
 
 typedef enum logic {
-    YCR1_HDU_FETCH_SRC_NORMAL       = 1'b0,
-    YCR1_HDU_FETCH_SRC_PBUF         = 1'b1
-`ifdef YCR1_XPROP_EN
+    YCR_HDU_FETCH_SRC_NORMAL       = 1'b0,
+    YCR_HDU_FETCH_SRC_PBUF         = 1'b1
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_HDU_FETCH_SRC_XXX          = 1'bX
-`endif // YCR1_XPROP_EN
-} type_ycr1_hdu_fetch_src_e;
+    YCR_HDU_FETCH_SRC_XXX          = 1'bX
+`endif // YCR_XPROP_EN
+} type_ycr_hdu_fetch_src_e;
 
 typedef struct packed {
     //logic                               reset_n;
     logic                               except;
     logic                               ebreak;
-    type_ycr1_hdu_dbgstates_e           dbg_state;
-} type_ycr1_hdu_hartstatus_s;
+    type_ycr_hdu_dbgstates_e           dbg_state;
+} type_ycr_hdu_hartstatus_s;
 
 // Debug Mode Redirection control:
 typedef struct packed {
     logic                               sstep;          // Single Step
     logic                               ebreak;         // Redirection after EBREAK execution
-} type_ycr1_hdu_redirect_s;
+} type_ycr_hdu_redirect_s;
 
 typedef struct packed {
     logic                               irq_dsbl;
-    type_ycr1_hdu_fetch_src_e           fetch_src;
+    type_ycr_hdu_fetch_src_e           fetch_src;
     logic                               pc_advmt_dsbl;
     logic                               hwbrkpt_dsbl;
-    type_ycr1_hdu_redirect_s            redirect;
-} type_ycr1_hdu_runctrl_s;
+    type_ycr_hdu_redirect_s            redirect;
+} type_ycr_hdu_runctrl_s;
 
 // HART Halt Status:
 typedef enum logic [2:0] {
-    YCR1_HDU_HALTCAUSE_NONE         = 3'b000,
-    YCR1_HDU_HALTCAUSE_EBREAK       = 3'b001,
-    YCR1_HDU_HALTCAUSE_TMREQ        = 3'b010,
-    YCR1_HDU_HALTCAUSE_DMREQ        = 3'b011,
-    YCR1_HDU_HALTCAUSE_SSTEP        = 3'b100,
-    YCR1_HDU_HALTCAUSE_RSTEXIT      = 3'b101
-`ifdef YCR1_XPROP_EN
+    YCR_HDU_HALTCAUSE_NONE         = 3'b000,
+    YCR_HDU_HALTCAUSE_EBREAK       = 3'b001,
+    YCR_HDU_HALTCAUSE_TMREQ        = 3'b010,
+    YCR_HDU_HALTCAUSE_DMREQ        = 3'b011,
+    YCR_HDU_HALTCAUSE_SSTEP        = 3'b100,
+    YCR_HDU_HALTCAUSE_RSTEXIT      = 3'b101
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_HDU_HALTCAUSE_XXX          = 'X
-`endif // YCR1_XPROP_EN
-} type_ycr1_hdu_haltcause_e;
+    YCR_HDU_HALTCAUSE_XXX          = 'X
+`endif // YCR_XPROP_EN
+} type_ycr_hdu_haltcause_e;
 
 typedef struct packed {
     logic                               except;
-    type_ycr1_hdu_haltcause_e           cause;
-} type_ycr1_hdu_haltstatus_s;
+    type_ycr_hdu_haltcause_e           cause;
+} type_ycr_hdu_haltstatus_s;
 
 
 // Debug CSR map
-localparam YCR1_HDU_DBGCSR_OFFS_DCSR       = YCR1_HDU_DEBUGCSR_ADDR_WIDTH'( 'd0 );
-localparam YCR1_HDU_DBGCSR_OFFS_DPC        = YCR1_HDU_DEBUGCSR_ADDR_WIDTH'( 'd1 );
-localparam YCR1_HDU_DBGCSR_OFFS_DSCRATCH0  = YCR1_HDU_DEBUGCSR_ADDR_WIDTH'( 'd2 );
-localparam YCR1_HDU_DBGCSR_OFFS_DSCRATCH1  = YCR1_HDU_DEBUGCSR_ADDR_WIDTH'( 'd3 );
+localparam YCR_HDU_DBGCSR_OFFS_DCSR       = YCR_HDU_DEBUGCSR_ADDR_WIDTH'( 'd0 );
+localparam YCR_HDU_DBGCSR_OFFS_DPC        = YCR_HDU_DEBUGCSR_ADDR_WIDTH'( 'd1 );
+localparam YCR_HDU_DBGCSR_OFFS_DSCRATCH0  = YCR_HDU_DEBUGCSR_ADDR_WIDTH'( 'd2 );
+localparam YCR_HDU_DBGCSR_OFFS_DSCRATCH1  = YCR_HDU_DEBUGCSR_ADDR_WIDTH'( 'd3 );
 
-localparam bit [YCR1_CSR_ADDR_WIDTH-1:0] YCR1_HDU_DBGCSR_ADDR_DCSR      = YCR1_CSR_ADDR_HDU_MBASE + YCR1_HDU_DBGCSR_OFFS_DCSR;
-localparam bit [YCR1_CSR_ADDR_WIDTH-1:0] YCR1_HDU_DBGCSR_ADDR_DPC       = YCR1_CSR_ADDR_HDU_MBASE + YCR1_HDU_DBGCSR_OFFS_DPC;
-localparam bit [YCR1_CSR_ADDR_WIDTH-1:0] YCR1_HDU_DBGCSR_ADDR_DSCRATCH0 = YCR1_CSR_ADDR_HDU_MBASE + YCR1_HDU_DBGCSR_OFFS_DSCRATCH0;
-localparam bit [YCR1_CSR_ADDR_WIDTH-1:0] YCR1_HDU_DBGCSR_ADDR_DSCRATCH1 = YCR1_CSR_ADDR_HDU_MBASE + YCR1_HDU_DBGCSR_OFFS_DSCRATCH1;
+localparam bit [YCR_CSR_ADDR_WIDTH-1:0] YCR_HDU_DBGCSR_ADDR_DCSR      = YCR_CSR_ADDR_HDU_MBASE + YCR_HDU_DBGCSR_OFFS_DCSR;
+localparam bit [YCR_CSR_ADDR_WIDTH-1:0] YCR_HDU_DBGCSR_ADDR_DPC       = YCR_CSR_ADDR_HDU_MBASE + YCR_HDU_DBGCSR_OFFS_DPC;
+localparam bit [YCR_CSR_ADDR_WIDTH-1:0] YCR_HDU_DBGCSR_ADDR_DSCRATCH0 = YCR_CSR_ADDR_HDU_MBASE + YCR_HDU_DBGCSR_OFFS_DSCRATCH0;
+localparam bit [YCR_CSR_ADDR_WIDTH-1:0] YCR_HDU_DBGCSR_ADDR_DSCRATCH1 = YCR_CSR_ADDR_HDU_MBASE + YCR_HDU_DBGCSR_OFFS_DSCRATCH1;
 
 // Debug CSRs :: DCSR
 typedef enum int {
-    YCR1_HDU_DCSR_PRV_BIT_R         = 0,
-    YCR1_HDU_DCSR_PRV_BIT_L         = 1,
-    YCR1_HDU_DCSR_STEP_BIT          = 2,
-    YCR1_HDU_DCSR_RSRV0_BIT_R       = 3,
-    YCR1_HDU_DCSR_RSRV0_BIT_L       = 5,
-    YCR1_HDU_DCSR_CAUSE_BIT_R       = 6,
-    YCR1_HDU_DCSR_CAUSE_BIT_L       = 8,
-    YCR1_HDU_DCSR_RSRV1_BIT_R       = 9,
-    YCR1_HDU_DCSR_RSRV1_BIT_L       = 10,
-    YCR1_HDU_DCSR_STEPIE_BIT        = 11,
-    YCR1_HDU_DCSR_RSRV2_BIT_R       = 12,
-    YCR1_HDU_DCSR_RSRV2_BIT_L       = 14,
-    YCR1_HDU_DCSR_EBREAKM_BIT       = 15,
-    YCR1_HDU_DCSR_RSRV3_BIT_R       = 16,
-    YCR1_HDU_DCSR_RSRV3_BIT_L       = 27,
-    YCR1_HDU_DCSR_XDEBUGVER_BIT_R   = 28,
-    YCR1_HDU_DCSR_XDEBUGVER_BIT_L   = 31
-} type_ycr1_hdu_dcsr_bits_e;
+    YCR_HDU_DCSR_PRV_BIT_R         = 0,
+    YCR_HDU_DCSR_PRV_BIT_L         = 1,
+    YCR_HDU_DCSR_STEP_BIT          = 2,
+    YCR_HDU_DCSR_RSRV0_BIT_R       = 3,
+    YCR_HDU_DCSR_RSRV0_BIT_L       = 5,
+    YCR_HDU_DCSR_CAUSE_BIT_R       = 6,
+    YCR_HDU_DCSR_CAUSE_BIT_L       = 8,
+    YCR_HDU_DCSR_RSRV1_BIT_R       = 9,
+    YCR_HDU_DCSR_RSRV1_BIT_L       = 10,
+    YCR_HDU_DCSR_STEPIE_BIT        = 11,
+    YCR_HDU_DCSR_RSRV2_BIT_R       = 12,
+    YCR_HDU_DCSR_RSRV2_BIT_L       = 14,
+    YCR_HDU_DCSR_EBREAKM_BIT       = 15,
+    YCR_HDU_DCSR_RSRV3_BIT_R       = 16,
+    YCR_HDU_DCSR_RSRV3_BIT_L       = 27,
+    YCR_HDU_DCSR_XDEBUGVER_BIT_R   = 28,
+    YCR_HDU_DCSR_XDEBUGVER_BIT_L   = 31
+} type_ycr_hdu_dcsr_bits_e;
 
-//localparam int unsigned YCR1_HDU_DEBUGCSR_DCSR_PRV_WIDTH = YCR1_HDU_DCSR_PRV_BIT_L-YCR1_HDU_DCSR_PRV_BIT_R+1;
+//localparam int unsigned YCR_HDU_DEBUGCSR_DCSR_PRV_WIDTH = YCR_HDU_DCSR_PRV_BIT_L-YCR_HDU_DCSR_PRV_BIT_R+1;
 
 typedef struct packed {
-    logic [YCR1_HDU_DCSR_XDEBUGVER_BIT_L-YCR1_HDU_DCSR_XDEBUGVER_BIT_R:0]   xdebugver;
-    logic [YCR1_HDU_DCSR_RSRV3_BIT_L-YCR1_HDU_DCSR_RSRV3_BIT_R:0]           rsrv3;
+    logic [YCR_HDU_DCSR_XDEBUGVER_BIT_L-YCR_HDU_DCSR_XDEBUGVER_BIT_R:0]   xdebugver;
+    logic [YCR_HDU_DCSR_RSRV3_BIT_L-YCR_HDU_DCSR_RSRV3_BIT_R:0]           rsrv3;
     logic                                                                   ebreakm;
-    logic [YCR1_HDU_DCSR_RSRV2_BIT_L-YCR1_HDU_DCSR_RSRV2_BIT_R:0]           rsrv2;
+    logic [YCR_HDU_DCSR_RSRV2_BIT_L-YCR_HDU_DCSR_RSRV2_BIT_R:0]           rsrv2;
     logic                                                                   stepie;
-    logic [YCR1_HDU_DCSR_RSRV1_BIT_L-YCR1_HDU_DCSR_RSRV1_BIT_R:0]           rsrv1;
-    logic [YCR1_HDU_DCSR_CAUSE_BIT_L-YCR1_HDU_DCSR_CAUSE_BIT_R:0]           cause;
-    logic [YCR1_HDU_DCSR_RSRV0_BIT_L-YCR1_HDU_DCSR_RSRV0_BIT_R:0]           rsrv0;
+    logic [YCR_HDU_DCSR_RSRV1_BIT_L-YCR_HDU_DCSR_RSRV1_BIT_R:0]           rsrv1;
+    logic [YCR_HDU_DCSR_CAUSE_BIT_L-YCR_HDU_DCSR_CAUSE_BIT_R:0]           cause;
+    logic [YCR_HDU_DCSR_RSRV0_BIT_L-YCR_HDU_DCSR_RSRV0_BIT_R:0]           rsrv0;
     logic                                                                   step;
-    logic [YCR1_HDU_DCSR_PRV_BIT_L-YCR1_HDU_DCSR_PRV_BIT_R:0]               prv;
-} type_ycr1_hdu_dcsr_s;
+    logic [YCR_HDU_DCSR_PRV_BIT_L-YCR_HDU_DCSR_PRV_BIT_R:0]               prv;
+} type_ycr_hdu_dcsr_s;
 
 
-`endif // YCR1_INCLUDE_HDU_DEFS
+`endif // YCR_INCLUDE_HDU_DEFS

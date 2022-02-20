@@ -1,5 +1,5 @@
-/// @file       <ycr1_top_tb_runtests.sv>
-/// @brief      YCR1 testbench run tests
+/// @file       <ycr_top_tb_runtests.sv>
+/// @brief      YCR testbench run tests
 ///
 
 
@@ -31,8 +31,8 @@ initial begin
 end
 /***
 // Debug message - dinesh A
- logic [`YCR1_DMEM_AWIDTH-1:0]           core2imem_addr_o_r;           // DMEM address
- logic [`YCR1_DMEM_AWIDTH-1:0]           core2dmem_addr_o_r;           // DMEM address
+ logic [`YCR_DMEM_AWIDTH-1:0]           core2imem_addr_o_r;           // DMEM address
+ logic [`YCR_DMEM_AWIDTH-1:0]           core2dmem_addr_o_r;           // DMEM address
  logic                                   core2dmem_cmd_o_r;
  
  `define RISC_CORE  i_top.i_core_top
@@ -123,7 +123,7 @@ always @(posedge clk) begin
 	   $display("ERROR: CURRENT PC Counter State is Known");
 	   $finish;
 	end
-        if ((i_top.i_core_top.i_pipe_top.i_pipe_exu.exu2pipe_pc_curr_o == YCR1_SIM_EXIT_ADDR) & ~rst_init & &rst_cnt) begin
+        if ((i_top.i_core_top.i_pipe_top.i_pipe_exu.exu2pipe_pc_curr_o == YCR_SIM_EXIT_ADDR) & ~rst_init & &rst_cnt) begin
 
             `ifdef VERILATOR
                 logic [255:0] full_filename;
@@ -274,9 +274,9 @@ always @(posedge clk) begin
             f_test = $fopen(test_file,"r");
             if (f_test != 0) begin
             // Launch new test
-                `ifdef YCR1_TRACE_LOG_EN
+                `ifdef YCR_TRACE_LOG_EN
                     i_top.i_core_top.i_pipe_top.i_tracelog.test_name = test_file;
-                `endif // YCR1_TRACE_LOG_EN
+                `endif // YCR_TRACE_LOG_EN
                 //i_imem_tb.test_file = test_file;
                 //i_imem_tb.test_file_init = 1'b1;
                 $readmemh(test_file, i_imem_tb.memory);

@@ -20,7 +20,7 @@
 ////  yifive Tightly-Coupled Memory (TCM)                                 ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Tightly-Coupled Memory (TCM)                                     ////
@@ -41,20 +41,20 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-`include "ycr1_memif.svh"
-`include "ycr1_arch_description.svh"
+`include "ycr_memif.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_TCM_EN
-module ycr1_tcm
+`ifdef YCR_TCM_EN
+module ycr_tcm
 #(
-    parameter YCR1_TCM_SIZE = `YCR1_IMEM_AWIDTH'h00010000
+    parameter YCR_TCM_SIZE = `YCR_IMEM_AWIDTH'h00010000
 )
 (
     // Control signals
     input   logic                           clk,
     input   logic                           rst_n,
 
-`ifndef YCR1_TCM_MEM
+`ifndef YCR_TCM_MEM
     // SRAM0 PORT-0
     output  logic                           sram0_clk0,
     output  logic                           sram0_csb0,
@@ -90,8 +90,8 @@ module ycr1_tcm
     // Core instruction interface
     output  logic                           imem_req_ack,
     input   logic                           imem_req,
-    input   logic [`YCR1_IMEM_AWIDTH-1:0]   imem_addr,
-    output  logic [`YCR1_IMEM_DWIDTH-1:0]   imem_rdata,
+    input   logic [`YCR_IMEM_AWIDTH-1:0]   imem_addr,
+    output  logic [`YCR_IMEM_DWIDTH-1:0]   imem_rdata,
     output  logic [1:0]                     imem_resp,
 
     // Core data interface
@@ -99,9 +99,9 @@ module ycr1_tcm
     input   logic                           dmem_req,
     input   logic                           dmem_cmd,
     input   logic [1:0]                     dmem_width,
-    input   logic [`YCR1_DMEM_AWIDTH-1:0]   dmem_addr,
-    input   logic [`YCR1_DMEM_DWIDTH-1:0]   dmem_wdata,
-    output  logic [`YCR1_DMEM_DWIDTH-1:0]   dmem_rdata,
+    input   logic [`YCR_DMEM_AWIDTH-1:0]   dmem_addr,
+    input   logic [`YCR_DMEM_DWIDTH-1:0]   dmem_wdata,
+    output  logic [`YCR_DMEM_DWIDTH-1:0]   dmem_rdata,
     output  logic [1:0]                     dmem_resp
 );
 
@@ -113,29 +113,29 @@ logic                               dmem_req_en;
 logic                               imem_rd;
 logic                               dmem_rd;
 logic                               dmem_wr;
-logic [`YCR1_DMEM_DWIDTH-1:0]       dmem_writedata;
-logic [`YCR1_DMEM_DWIDTH-1:0]       dmem_rdata_local;
+logic [`YCR_DMEM_DWIDTH-1:0]       dmem_writedata;
+logic [`YCR_DMEM_DWIDTH-1:0]       dmem_rdata_local;
 logic [3:0]                         dmem_byteen;
 logic [1:0]                         dmem_rdata_shift_reg;
 //-------------------------------------------------------------------------------
 // Core interface
 //-------------------------------------------------------------------------------
-assign imem_req_en = (imem_resp == YCR1_MEM_RESP_RDY_OK) ^ imem_req;
-assign dmem_req_en = (dmem_resp == YCR1_MEM_RESP_RDY_OK) ^ dmem_req;
+assign imem_req_en = (imem_resp == YCR_MEM_RESP_RDY_OK) ^ imem_req;
+assign dmem_req_en = (dmem_resp == YCR_MEM_RESP_RDY_OK) ^ dmem_req;
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
-        imem_resp <= YCR1_MEM_RESP_NOTRDY;
+        imem_resp <= YCR_MEM_RESP_NOTRDY;
     end else if (imem_req_en) begin
-        imem_resp <= imem_req ? YCR1_MEM_RESP_RDY_OK : YCR1_MEM_RESP_NOTRDY;
+        imem_resp <= imem_req ? YCR_MEM_RESP_RDY_OK : YCR_MEM_RESP_NOTRDY;
     end
 end
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
-        dmem_resp <= YCR1_MEM_RESP_NOTRDY;
+        dmem_resp <= YCR_MEM_RESP_NOTRDY;
     end else if (dmem_req_en) begin
-        dmem_resp <= dmem_req ? YCR1_MEM_RESP_RDY_OK : YCR1_MEM_RESP_NOTRDY;
+        dmem_resp <= dmem_req ? YCR_MEM_RESP_RDY_OK : YCR_MEM_RESP_NOTRDY;
     end
 end
 
@@ -144,7 +144,7 @@ assign dmem_req_ack = 1'b1;
 //-------------------------------------------------------------------------------
 // Memory data composing
 //-------------------------------------------------------------------------------
-`ifndef YCR1_TCM_MEM
+`ifndef YCR_TCM_MEM
 // connect the TCM memory to SRAM-0
 assign sram0_clk1 = clk;
 assign sram0_csb1 =!(imem_req & imem_addr[11] == 1'b0);
@@ -160,16 +160,16 @@ assign imem_rdata  = (imem_addr[11] == 1'b0) ?  sram0_dout1: sram1_dout1;
 
 // SRAM-0 Port 0 Control Generation
 assign sram0_clk0 = clk;
-assign sram0_csb0   = !(dmem_req & (dmem_addr[11] == 1'b0) & ((dmem_cmd == YCR1_MEM_CMD_RD) | (dmem_cmd == YCR1_MEM_CMD_WR)));
-assign sram0_web0   = !(dmem_req & (dmem_cmd == YCR1_MEM_CMD_WR));
+assign sram0_csb0   = !(dmem_req & (dmem_addr[11] == 1'b0) & ((dmem_cmd == YCR_MEM_CMD_RD) | (dmem_cmd == YCR_MEM_CMD_WR)));
+assign sram0_web0   = !(dmem_req & (dmem_cmd == YCR_MEM_CMD_WR));
 assign sram0_addr0  = dmem_addr[10:2];
 assign sram0_wmask0 =  dmem_byteen;
 assign sram0_din0   =  dmem_writedata;
 
 // SRAM-1 Port 0 Control Generation
 assign sram1_clk0 = clk;
-assign sram1_csb0   = !(dmem_req & (dmem_addr[11] == 1'b1) & ((dmem_cmd == YCR1_MEM_CMD_RD) | (dmem_cmd == YCR1_MEM_CMD_WR)));
-assign sram1_web0   = !(dmem_req & (dmem_cmd == YCR1_MEM_CMD_WR));
+assign sram1_csb0   = !(dmem_req & (dmem_addr[11] == 1'b1) & ((dmem_cmd == YCR_MEM_CMD_RD) | (dmem_cmd == YCR_MEM_CMD_WR)));
+assign sram1_web0   = !(dmem_req & (dmem_cmd == YCR_MEM_CMD_WR));
 assign sram1_addr0  = dmem_addr[10:2];
 assign sram1_wmask0 =  dmem_byteen;
 assign sram1_din0   =  dmem_writedata;
@@ -185,12 +185,12 @@ always_comb begin
     dmem_writedata = dmem_wdata;
     dmem_byteen    = 4'b1111;
     case ( dmem_width )
-        YCR1_MEM_WIDTH_BYTE : begin
-            dmem_writedata  = {(`YCR1_DMEM_DWIDTH /  8){dmem_wdata[7:0]}};
+        YCR_MEM_WIDTH_BYTE : begin
+            dmem_writedata  = {(`YCR_DMEM_DWIDTH /  8){dmem_wdata[7:0]}};
             dmem_byteen     = 4'b0001 << dmem_addr[1:0];
         end
-        YCR1_MEM_WIDTH_HWORD : begin
-            dmem_writedata  = {(`YCR1_DMEM_DWIDTH / 16){dmem_wdata[15:0]}};
+        YCR_MEM_WIDTH_HWORD : begin
+            dmem_writedata  = {(`YCR_DMEM_DWIDTH / 16){dmem_wdata[15:0]}};
             dmem_byteen     = 4'b0011 << {dmem_addr[1], 1'b0};
         end
         default : begin
@@ -200,23 +200,23 @@ end
 //-------------------------------------------------------------------------------
 // Memory instantiation
 //-------------------------------------------------------------------------------
-`ifdef YCR1_TCM_MEM
-ycr1_dp_memory #(
-    .YCR1_WIDTH ( 32            ),
-    .YCR1_SIZE  ( YCR1_TCM_SIZE )
+`ifdef YCR_TCM_MEM
+ycr_dp_memory #(
+    .YCR_WIDTH ( 32            ),
+    .YCR_SIZE  ( YCR_TCM_SIZE )
 ) i_dp_memory (
     .clk    ( clk                                   ),
     // Instruction port
     // Port A
     .rena   ( imem_rd                               ),
-    .addra  ( imem_addr[$clog2(YCR1_TCM_SIZE)-1:2]  ),
+    .addra  ( imem_addr[$clog2(YCR_TCM_SIZE)-1:2]  ),
     .qa     ( imem_rdata                            ),
     // Data port
     // Port B
     .renb   ( dmem_rd                               ),
     .wenb   ( dmem_wr                               ),
     .webb   ( dmem_byteen                           ),
-    .addrb  ( dmem_addr[$clog2(YCR1_TCM_SIZE)-1:2]  ),
+    .addrb  ( dmem_addr[$clog2(YCR_TCM_SIZE)-1:2]  ),
     .qb     ( dmem_rdata_local                      ),
     .datab  ( dmem_writedata                        )
 );
@@ -229,6 +229,6 @@ ycr1_dp_memory #(
 assign dmem_rdata_shift_reg = dmem_addr[1:0];
 assign dmem_rdata = dmem_rdata_local >> ( 8 * dmem_rdata_shift_reg );
 
-endmodule : ycr1_tcm
+endmodule : ycr_tcm
 
-`endif // YCR1_TCM_EN
+`endif // YCR_TCM_EN

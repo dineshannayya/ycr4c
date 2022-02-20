@@ -20,7 +20,7 @@
 ////  yifive Core tracelog module                                         ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Core tracelog module                                             ////
@@ -38,38 +38,38 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_arch_types.svh"
-`include "ycr1_csr.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_arch_types.svh"
+`include "ycr_csr.svh"
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 
-module ycr1_tracelog (
+module ycr_tracelog (
     input   logic                                 rst_n,                        // Tracelog reset
     input   logic                                 clk,                          // Tracelog clock
-    input   logic [`YCR1_XLEN-1:0]                soc2pipe_fuse_mhartid_i,      // Fuse MHARTID
+    input   logic [`YCR_XLEN-1:0]                soc2pipe_fuse_mhartid_i,      // Fuse MHARTID
 
     // MPRF
-`ifdef  YCR1_MPRF_RAM
-    input   logic   [`YCR1_XLEN-1:0]            mprf2trace_int_i   [1:`YCR1_MPRF_SIZE-1], // MPRF registers content
-`else // YCR1_MPRF_RAM
-    logic [`YCR1_XLEN-1:0]                      mprf2trace_int_i[1:`YCR1_MPRF_SIZE-1],             // MPRF registers content
-`endif // YCR1_MPRF_RAM
+`ifdef  YCR_MPRF_RAM
+    input   logic   [`YCR_XLEN-1:0]            mprf2trace_int_i   [1:`YCR_MPRF_SIZE-1], // MPRF registers content
+`else // YCR_MPRF_RAM
+    logic [`YCR_XLEN-1:0]                      mprf2trace_int_i[1:`YCR_MPRF_SIZE-1],             // MPRF registers content
+`endif // YCR_MPRF_RAM
     input   logic                                 mprf2trace_wr_en_i,           // MPRF write enable
-    input   logic [`YCR1_MPRF_AWIDTH-1:0]         mprf2trace_wr_addr_i,         // MPRF write address
-    input   logic [`YCR1_XLEN-1:0]                mprf2trace_wr_data_i,         // MPRF write data
+    input   logic [`YCR_MPRF_AWIDTH-1:0]         mprf2trace_wr_addr_i,         // MPRF write address
+    input   logic [`YCR_XLEN-1:0]                mprf2trace_wr_data_i,         // MPRF write data
 
     // EXU
     input   logic                                 exu2trace_update_pc_en_i,     // PC updated flag
-    input   logic [`YCR1_XLEN-1:0]                exu2trace_update_pc_i,        // Next PC value
+    input   logic [`YCR_XLEN-1:0]                exu2trace_update_pc_i,        // Next PC value
 
     // IFU
-    input   logic [`YCR1_IMEM_DWIDTH-1:0]         ifu2trace_instr_i,            // Current instruction from IFU stage
+    input   logic [`YCR_IMEM_DWIDTH-1:0]         ifu2trace_instr_i,            // Current instruction from IFU stage
 
     // CSR
     input   logic                                 csr2trace_mstatus_mie_i,      // CSR MSTATUS.mie bit
     input   logic                                 csr2trace_mstatus_mpie_i,     // CSR MSTATUS.mpie bit
-    input   logic [`YCR1_XLEN-1:6]                csr2trace_mtvec_base_i,       // CSR MTVEC.
+    input   logic [`YCR_XLEN-1:6]                csr2trace_mtvec_base_i,       // CSR MTVEC.
     input   logic                                 csr2trace_mtvec_mode_i,       // CSR MTVEC.
     input   logic                                 csr2trace_mie_meie_i,         // CSR MIE.meie bit
     input   logic                                 csr2trace_mie_mtie_i,         // CSR MIE.mtie bit
@@ -77,14 +77,14 @@ module ycr1_tracelog (
     input   logic                                 csr2trace_mip_meip_i,         // CSR MIP.meip bit
     input   logic                                 csr2trace_mip_mtip_i,         // CSR MIP.mtip bit
     input   logic                                 csr2trace_mip_msip_i,         // CSR MIP.msip bit
- `ifdef YCR1_RVC_EXT
-    input   logic [`YCR1_XLEN-1:1]                csr2trace_mepc_i,             // CSR MEPC register
- `else // YCR1_RVC_EXT
-    input   logic [`YCR1_XLEN-1:2]                csr2trace_mepc_i,             // CSR MEPC register
- `endif // YCR1_RVC_EXT
+ `ifdef YCR_RVC_EXT
+    input   logic [`YCR_XLEN-1:1]                csr2trace_mepc_i,             // CSR MEPC register
+ `else // YCR_RVC_EXT
+    input   logic [`YCR_XLEN-1:2]                csr2trace_mepc_i,             // CSR MEPC register
+ `endif // YCR_RVC_EXT
     input   logic                                 csr2trace_mcause_irq_i,       // CSR MCAUSE.interrupt bit
-    input   [YCR1_EXC_CODE_WIDTH_E-1:0]           csr2trace_mcause_ec_i,        // CSR MCAUSE.exception_code bit
-    input   logic [`YCR1_XLEN-1:0]                csr2trace_mtval_i,            // CSR MTVAL register
+    input   [YCR_EXC_CODE_WIDTH_E-1:0]           csr2trace_mcause_ec_i,        // CSR MCAUSE.exception_code bit
+    input   logic [`YCR_XLEN-1:0]                csr2trace_mtval_i,            // CSR MTVAL register
     input   logic                                 csr2trace_mstatus_mie_up_i,   // CSR MSTATUS.mie update flag
 
     // Events
@@ -98,59 +98,59 @@ module ycr1_tracelog (
 // Local types declaration
 //-------------------------------------------------------------------------------
 typedef struct {
-    logic [`YCR1_XLEN-1:0]      INT_00_ZERO ;
-    logic [`YCR1_XLEN-1:0]      INT_01_RA   ;
-    logic [`YCR1_XLEN-1:0]      INT_02_SP   ;
-    logic [`YCR1_XLEN-1:0]      INT_03_GP   ;
-    logic [`YCR1_XLEN-1:0]      INT_04_TP   ;
-    logic [`YCR1_XLEN-1:0]      INT_05_T0   ;
-    logic [`YCR1_XLEN-1:0]      INT_06_T1   ;
-    logic [`YCR1_XLEN-1:0]      INT_07_T2   ;
-    logic [`YCR1_XLEN-1:0]      INT_08_S0   ;
-    logic [`YCR1_XLEN-1:0]      INT_09_S1   ;
-    logic [`YCR1_XLEN-1:0]      INT_10_A0   ;
-    logic [`YCR1_XLEN-1:0]      INT_11_A1   ;
-    logic [`YCR1_XLEN-1:0]      INT_12_A2   ;
-    logic [`YCR1_XLEN-1:0]      INT_13_A3   ;
-    logic [`YCR1_XLEN-1:0]      INT_14_A4   ;
-    logic [`YCR1_XLEN-1:0]      INT_15_A5   ;
-`ifndef YCR1_RVE_EXT
-    logic [`YCR1_XLEN-1:0]      INT_16_A6   ;
-    logic [`YCR1_XLEN-1:0]      INT_17_A7   ;
-    logic [`YCR1_XLEN-1:0]      INT_18_S2   ;
-    logic [`YCR1_XLEN-1:0]      INT_19_S3   ;
-    logic [`YCR1_XLEN-1:0]      INT_20_S4   ;
-    logic [`YCR1_XLEN-1:0]      INT_21_S5   ;
-    logic [`YCR1_XLEN-1:0]      INT_22_S6   ;
-    logic [`YCR1_XLEN-1:0]      INT_23_S7   ;
-    logic [`YCR1_XLEN-1:0]      INT_24_S8   ;
-    logic [`YCR1_XLEN-1:0]      INT_25_S9   ;
-    logic [`YCR1_XLEN-1:0]      INT_26_S10  ;
-    logic [`YCR1_XLEN-1:0]      INT_27_S11  ;
-    logic [`YCR1_XLEN-1:0]      INT_28_T3   ;
-    logic [`YCR1_XLEN-1:0]      INT_29_T4   ;
-    logic [`YCR1_XLEN-1:0]      INT_30_T5   ;
-    logic [`YCR1_XLEN-1:0]      INT_31_T6   ;
-`endif // YCR1_RVE_EXT
-} type_ycr1_ireg_name_s;
+    logic [`YCR_XLEN-1:0]      INT_00_ZERO ;
+    logic [`YCR_XLEN-1:0]      INT_01_RA   ;
+    logic [`YCR_XLEN-1:0]      INT_02_SP   ;
+    logic [`YCR_XLEN-1:0]      INT_03_GP   ;
+    logic [`YCR_XLEN-1:0]      INT_04_TP   ;
+    logic [`YCR_XLEN-1:0]      INT_05_T0   ;
+    logic [`YCR_XLEN-1:0]      INT_06_T1   ;
+    logic [`YCR_XLEN-1:0]      INT_07_T2   ;
+    logic [`YCR_XLEN-1:0]      INT_08_S0   ;
+    logic [`YCR_XLEN-1:0]      INT_09_S1   ;
+    logic [`YCR_XLEN-1:0]      INT_10_A0   ;
+    logic [`YCR_XLEN-1:0]      INT_11_A1   ;
+    logic [`YCR_XLEN-1:0]      INT_12_A2   ;
+    logic [`YCR_XLEN-1:0]      INT_13_A3   ;
+    logic [`YCR_XLEN-1:0]      INT_14_A4   ;
+    logic [`YCR_XLEN-1:0]      INT_15_A5   ;
+`ifndef YCR_RVE_EXT
+    logic [`YCR_XLEN-1:0]      INT_16_A6   ;
+    logic [`YCR_XLEN-1:0]      INT_17_A7   ;
+    logic [`YCR_XLEN-1:0]      INT_18_S2   ;
+    logic [`YCR_XLEN-1:0]      INT_19_S3   ;
+    logic [`YCR_XLEN-1:0]      INT_20_S4   ;
+    logic [`YCR_XLEN-1:0]      INT_21_S5   ;
+    logic [`YCR_XLEN-1:0]      INT_22_S6   ;
+    logic [`YCR_XLEN-1:0]      INT_23_S7   ;
+    logic [`YCR_XLEN-1:0]      INT_24_S8   ;
+    logic [`YCR_XLEN-1:0]      INT_25_S9   ;
+    logic [`YCR_XLEN-1:0]      INT_26_S10  ;
+    logic [`YCR_XLEN-1:0]      INT_27_S11  ;
+    logic [`YCR_XLEN-1:0]      INT_28_T3   ;
+    logic [`YCR_XLEN-1:0]      INT_29_T4   ;
+    logic [`YCR_XLEN-1:0]      INT_30_T5   ;
+    logic [`YCR_XLEN-1:0]      INT_31_T6   ;
+`endif // YCR_RVE_EXT
+} type_ycr_ireg_name_s;
 
 typedef struct packed {
-    logic [`YCR1_XLEN-1:0]  mstatus;
-    logic [`YCR1_XLEN-1:0]  mtvec;
-    logic [`YCR1_XLEN-1:0]  mie;
-    logic [`YCR1_XLEN-1:0]  mip;
-    logic [`YCR1_XLEN-1:0]  mepc;
-    logic [`YCR1_XLEN-1:0]  mcause;
-    logic [`YCR1_XLEN-1:0]  mtval;
-} type_ycr1_csr_trace_s;
+    logic [`YCR_XLEN-1:0]  mstatus;
+    logic [`YCR_XLEN-1:0]  mtvec;
+    logic [`YCR_XLEN-1:0]  mie;
+    logic [`YCR_XLEN-1:0]  mip;
+    logic [`YCR_XLEN-1:0]  mepc;
+    logic [`YCR_XLEN-1:0]  mcause;
+    logic [`YCR_XLEN-1:0]  mtval;
+} type_ycr_csr_trace_s;
 
 //-------------------------------------------------------------------------------
 // Local Signal Declaration
 //-------------------------------------------------------------------------------
 
-type_ycr1_ireg_name_s               mprf_int_alias;
+type_ycr_ireg_name_s               mprf_int_alias;
 
-`ifdef YCR1_TRACE_LOG_EN
+`ifdef YCR_TRACE_LOG_EN
 
 time                                current_time;
 
@@ -160,30 +160,30 @@ logic                               trace_update;
 logic                               trace_update_r;
 byte                                event_type;
 
-logic [`YCR1_XLEN-1:0]              trace_pc;
-logic [`YCR1_XLEN-1:0]              trace_npc;
-logic [`YCR1_IMEM_DWIDTH-1:0]       trace_instr;
+logic [`YCR_XLEN-1:0]              trace_pc;
+logic [`YCR_XLEN-1:0]              trace_npc;
+logic [`YCR_IMEM_DWIDTH-1:0]       trace_instr;
 
-type_ycr1_csr_trace_s               csr_trace1;
+type_ycr_csr_trace_s               csr_trace1;
 
 // File handlers
 int unsigned                        trace_fhandler_core;
 
 // MPRF signals
 logic                               mprf_up;
-logic [`YCR1_MPRF_AWIDTH-1:0]       mprf_addr;
-logic [`YCR1_XLEN-1:0]              mprf_wdata;
+logic [`YCR_MPRF_AWIDTH-1:0]       mprf_addr;
+logic [`YCR_XLEN-1:0]              mprf_wdata;
 
 string                              hart;
 string                              test_name;
 
-`endif // YCR1_TRACE_LOG_EN
+`endif // YCR_TRACE_LOG_EN
 
 //-------------------------------------------------------------------------------
 // Local tasks
 //-------------------------------------------------------------------------------
 
-`ifdef YCR1_TRACE_LOG_EN
+`ifdef YCR_TRACE_LOG_EN
 
 task trace_write_common;
     $fwrite(trace_fhandler_core, "%16d  ", current_time);
@@ -212,7 +212,7 @@ task trace_write_int_walias;
         13 :  $fwrite(trace_fhandler_core, " x13_a3    ");
         14 :  $fwrite(trace_fhandler_core, " x14_a4    ");
         15 :  $fwrite(trace_fhandler_core, " x15_a5    ");
-`ifndef YCR1_RVE_EXT
+`ifndef YCR_RVE_EXT
         16 :  $fwrite(trace_fhandler_core, " x16_a6    ");
         17 :  $fwrite(trace_fhandler_core, " x17_a7    ");
         18 :  $fwrite(trace_fhandler_core, " x18_s2    ");
@@ -229,14 +229,14 @@ task trace_write_int_walias;
         29 :  $fwrite(trace_fhandler_core, " x29_t4    ");
         30 :  $fwrite(trace_fhandler_core, " x30_t5    ");
         31 :  $fwrite(trace_fhandler_core, " x31_t6    ");
-`endif // YCR1_RVE_EXT
+`endif // YCR_RVE_EXT
         default: begin
               $fwrite(trace_fhandler_core, " xxx       ");
         end
     endcase
 endtask
 
-`endif // YCR1_TRACE_LOG_EN
+`endif // YCR_TRACE_LOG_EN
 
 //-------------------------------------------------------------------------------
 // MPRF Registers assignment
@@ -257,7 +257,7 @@ assign mprf_int_alias.INT_12_A2     = mprf2trace_int_i[12];
 assign mprf_int_alias.INT_13_A3     = mprf2trace_int_i[13];
 assign mprf_int_alias.INT_14_A4     = mprf2trace_int_i[14];
 assign mprf_int_alias.INT_15_A5     = mprf2trace_int_i[15];
-`ifndef YCR1_RVE_EXT
+`ifndef YCR_RVE_EXT
 assign mprf_int_alias.INT_16_A6     = mprf2trace_int_i[16];
 assign mprf_int_alias.INT_17_A7     = mprf2trace_int_i[17];
 assign mprf_int_alias.INT_18_S2     = mprf2trace_int_i[18];
@@ -274,7 +274,7 @@ assign mprf_int_alias.INT_28_T3     = mprf2trace_int_i[28];
 assign mprf_int_alias.INT_29_T4     = mprf2trace_int_i[29];
 assign mprf_int_alias.INT_30_T5     = mprf2trace_int_i[30];
 assign mprf_int_alias.INT_31_T6     = mprf2trace_int_i[31];
-`endif // YCR1_RVE_EXT
+`endif // YCR_RVE_EXT
 
 //-------------------------------------------------------------------------------
 // Legacy time counter
@@ -295,7 +295,7 @@ end
 // Initial part pipeline tracelog
 //-------------------------------------------------------------------------------
 
-`ifdef YCR1_TRACE_LOG_EN
+`ifdef YCR_TRACE_LOG_EN
 // Files opening and writing initial header
 initial begin
     $timeformat(-9, 0, " ns", 10);
@@ -304,8 +304,8 @@ initial begin
     trace_fhandler_core = $fopen({"tracelog_core_", hart, ".log"}, "w");
 
     // Writing initial header
-    $fwrite(trace_fhandler_core,  "# Total Core %h\n", YCR1_CSR_NUMCORES);
-    $fwrite(trace_fhandler_core,  "# RTL_ID %h\n", YCR1_CSR_MIMPID);
+    $fwrite(trace_fhandler_core,  "# Total Core %h\n", YCR_CSR_NUMCORES);
+    $fwrite(trace_fhandler_core,  "# RTL_ID %h\n", YCR_CSR_MIMPID);
     $fwrite(trace_fhandler_core,  "#\n");
     // $fwrite(trace_fhandler_core,  "# R - return from trap:\n");
     // $fwrite(trace_fhandler_core,  "#    1 - MRET\n");
@@ -461,11 +461,11 @@ end
 always_comb begin
     csr_trace1.mtvec        = {csr2trace_mtvec_base_i, 4'd0, 2'(csr2trace_mtvec_mode_i)};
     csr_trace1.mepc         =
-`ifdef YCR1_RVC_EXT
+`ifdef YCR_RVC_EXT
                               {csr2trace_mepc_i, 1'b0};
-`else // YCR1_RVC_EXT
+`else // YCR_RVC_EXT
                               {csr2trace_mepc_i, 2'b00};
-`endif // YCR1_RVC_EXT
+`endif // YCR_RVC_EXT
     csr_trace1.mcause       = {csr2trace_mcause_irq_i, csr2trace_mcause_ec_i};
     csr_trace1.mtval        = csr2trace_mtval_i;
 
@@ -473,19 +473,19 @@ always_comb begin
     csr_trace1.mie          = '0;
     csr_trace1.mip          = '0;
 
-    csr_trace1.mstatus[YCR1_CSR_MSTATUS_MIE_OFFSET]     = csr2trace_mstatus_mie_i;
-    csr_trace1.mstatus[YCR1_CSR_MSTATUS_MPIE_OFFSET]    = csr2trace_mstatus_mpie_i;
-    csr_trace1.mstatus[YCR1_CSR_MSTATUS_MPP_OFFSET+1:YCR1_CSR_MSTATUS_MPP_OFFSET]   = YCR1_CSR_MSTATUS_MPP;
-    csr_trace1.mie[YCR1_CSR_MIE_MSIE_OFFSET]            = csr2trace_mie_msie_i;
-    csr_trace1.mie[YCR1_CSR_MIE_MTIE_OFFSET]            = csr2trace_mie_mtie_i;
-    csr_trace1.mie[YCR1_CSR_MIE_MEIE_OFFSET]            = csr2trace_mie_meie_i;
-    csr_trace1.mip[YCR1_CSR_MIE_MSIE_OFFSET]            = csr2trace_mip_msip_i;
-    csr_trace1.mip[YCR1_CSR_MIE_MTIE_OFFSET]            = csr2trace_mip_mtip_i;
-    csr_trace1.mip[YCR1_CSR_MIE_MEIE_OFFSET]            = csr2trace_mip_meip_i;
+    csr_trace1.mstatus[YCR_CSR_MSTATUS_MIE_OFFSET]     = csr2trace_mstatus_mie_i;
+    csr_trace1.mstatus[YCR_CSR_MSTATUS_MPIE_OFFSET]    = csr2trace_mstatus_mpie_i;
+    csr_trace1.mstatus[YCR_CSR_MSTATUS_MPP_OFFSET+1:YCR_CSR_MSTATUS_MPP_OFFSET]   = YCR_CSR_MSTATUS_MPP;
+    csr_trace1.mie[YCR_CSR_MIE_MSIE_OFFSET]            = csr2trace_mie_msie_i;
+    csr_trace1.mie[YCR_CSR_MIE_MTIE_OFFSET]            = csr2trace_mie_mtie_i;
+    csr_trace1.mie[YCR_CSR_MIE_MEIE_OFFSET]            = csr2trace_mie_meie_i;
+    csr_trace1.mip[YCR_CSR_MIE_MSIE_OFFSET]            = csr2trace_mip_msip_i;
+    csr_trace1.mip[YCR_CSR_MIE_MTIE_OFFSET]            = csr2trace_mip_mtip_i;
+    csr_trace1.mip[YCR_CSR_MIE_MEIE_OFFSET]            = csr2trace_mip_meip_i;
 end
 
-`endif // YCR1_TRACE_LOG_EN
+`endif // YCR_TRACE_LOG_EN
 
-endmodule : ycr1_tracelog
+endmodule : ycr_tracelog
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION

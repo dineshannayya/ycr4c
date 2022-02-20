@@ -20,7 +20,7 @@
 ////  yifive pipeline top                                                 ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     pipeline top                                                     ////
@@ -36,110 +36,110 @@
 ////     v1:    June 7, 2021, Dinesh A                                    ////
 ////             opentool(iverilog/yosys) related cleanup                 ////
 ////     v2:    June 10, 2021, Dinesh A                                   ////
-////           Bugfix- reset correction for ycr1_pipe_tdu when debug is   ////
+////           Bugfix- reset correction for ycr_pipe_tdu when debug is   ////
 ////           not enabled                                                ////
 ////           Note: previously reset rst_n is floating at simulation is  ////
-////           failing when YCR1_DBG_EN is disabled                       ////
+////           failing when YCR_DBG_EN is disabled                       ////
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_memif.svh"
-`include "ycr1_riscv_isa_decoding.svh"
-`include "ycr1_csr.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_memif.svh"
+`include "ycr_riscv_isa_decoding.svh"
+`include "ycr_csr.svh"
 
-`ifdef YCR1_IPIC_EN
-`include "ycr1_ipic.svh"
-`endif // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+`include "ycr_ipic.svh"
+`endif // YCR_IPIC_EN
 
-`ifdef YCR1_DBG_EN
-`include "ycr1_hdu.svh"
-`endif // YCR1_DBG_EN
+`ifdef YCR_DBG_EN
+`include "ycr_hdu.svh"
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_TDU_EN
-`include "ycr1_tdu.svh"
-`endif // YCR1_TDU_EN
+`ifdef YCR_TDU_EN
+`include "ycr_tdu.svh"
+`endif // YCR_TDU_EN
 
-module ycr1_pipe_top (
+module ycr_pipe_top (
     // Common
     input   logic                                       pipe_rst_n,                 // Pipe reset
     output  logic [48:0]                                pipe_debug,
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     input   logic                                       pipe2hdu_rdc_qlfy_i,        // Pipe RDC qualifier
     input   logic                                       dbg_rst_n,                  // Debug reset
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
     input   logic                                       clk,                        // Pipe clock
 
     // Instruction Memory Interface
     output  logic                                       pipe2imem_req_o,            // IMEM request
     output  logic                                       pipe2imem_cmd_o,            // IMEM command
-    output  logic [`YCR1_IMEM_AWIDTH-1:0]               pipe2imem_addr_o,           // IMEM address
-    output  logic [`YCR1_IMEM_BSIZE-1:0]                pipe2imem_bl_o,             // IMEM Burst Length
+    output  logic [`YCR_IMEM_AWIDTH-1:0]               pipe2imem_addr_o,           // IMEM address
+    output  logic [`YCR_IMEM_BSIZE-1:0]                pipe2imem_bl_o,             // IMEM Burst Length
     input   logic                                       imem2pipe_req_ack_i,        // IMEM request acknowledge
-    input   logic [`YCR1_IMEM_DWIDTH-1:0]               imem2pipe_rdata_i,          // IMEM read data
+    input   logic [`YCR_IMEM_DWIDTH-1:0]               imem2pipe_rdata_i,          // IMEM read data
     input   logic [1:0]                                 imem2pipe_resp_i,           // IMEM response
 
     // Data Memory Interface
     output  logic                                       pipe2dmem_req_o,            // DMEM request
     output  logic                                       pipe2dmem_cmd_o,            // DMEM command
     output  logic [1:0]                                 pipe2dmem_width_o,          // DMEM data width
-    output  logic [`YCR1_DMEM_AWIDTH-1:0]               pipe2dmem_addr_o,           // DMEM address
-    output  logic [`YCR1_DMEM_DWIDTH-1:0]               pipe2dmem_wdata_o,          // DMEM write data
+    output  logic [`YCR_DMEM_AWIDTH-1:0]               pipe2dmem_addr_o,           // DMEM address
+    output  logic [`YCR_DMEM_DWIDTH-1:0]               pipe2dmem_wdata_o,          // DMEM write data
     input   logic                                       dmem2pipe_req_ack_i,        // DMEM request acknowledge
-    input   logic [`YCR1_DMEM_DWIDTH-1:0]               dmem2pipe_rdata_i,          // DMEM read data
+    input   logic [`YCR_DMEM_DWIDTH-1:0]               dmem2pipe_rdata_i,          // DMEM read data
     input   logic [1:0]                                 dmem2pipe_resp_i,           // DMEM response
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // Debug interface:
     input  logic                                        dbg_en,                     // 1 - debug operations enabled
     // DM <-> Pipeline: HART Run Control i/f
     input  logic                                        dm2pipe_active_i,           // Debug Module active flag
     input  logic                                        dm2pipe_cmd_req_i,          // Request from Debug Module
-    input  type_ycr1_hdu_dbgstates_e                    dm2pipe_cmd_i,              // Command from Debug Module
+    input  type_ycr_hdu_dbgstates_e                    dm2pipe_cmd_i,              // Command from Debug Module
     output logic                                        pipe2dm_cmd_resp_o,         // Response to Debug Module
     output logic                                        pipe2dm_cmd_rcode_o,        // Debug Module return code: 0 - Ok; 1 - Error
     output logic                                        pipe2dm_hart_event_o,       // HART event flag
-    output type_ycr1_hdu_hartstatus_s                   pipe2dm_hart_status_o,      // HART status
+    output type_ycr_hdu_hartstatus_s                   pipe2dm_hart_status_o,      // HART status
 
     // DM <-> Pipeline: Program Buffer - HART instruction execution i/f
-    output logic [YCR1_HDU_PBUF_ADDR_WIDTH-1:0]         pipe2dm_pbuf_addr_o,        // Program Buffer address
-    input  logic [YCR1_HDU_CORE_INSTR_WIDTH-1:0]        dm2pipe_pbuf_instr_i,       // Program Buffer instruction
+    output logic [YCR_HDU_PBUF_ADDR_WIDTH-1:0]         pipe2dm_pbuf_addr_o,        // Program Buffer address
+    input  logic [YCR_HDU_CORE_INSTR_WIDTH-1:0]        dm2pipe_pbuf_instr_i,       // Program Buffer instruction
 
     // DM <-> Pipeline: HART Abstract Data regs i/f
     output logic                                        pipe2dm_dreg_req_o,         // Abstract Data Register request
     output logic                                        pipe2dm_dreg_wr_o,          // Abstract Data Register write
-    output logic [`YCR1_XLEN-1:0]                       pipe2dm_dreg_wdata_o,       // Abstract Data Register write data
+    output logic [`YCR_XLEN-1:0]                       pipe2dm_dreg_wdata_o,       // Abstract Data Register write data
     input  logic                                        dm2pipe_dreg_resp_i,        // Abstract Data Register response
     input  logic                                        dm2pipe_dreg_fail_i,        // Abstract Data Register fail - possibly not needed?
-    input  logic [`YCR1_XLEN-1:0]                       dm2pipe_dreg_rdata_i,       // Abstract Data Register read data
+    input  logic [`YCR_XLEN-1:0]                       dm2pipe_dreg_rdata_i,       // Abstract Data Register read data
 
     // DM <-> Pipeling: PC i/f
-    output logic [`YCR1_XLEN-1:0]                       pipe2dm_pc_sample_o,        // Current PC for sampling
-`endif // YCR1_DBG_EN
+    output logic [`YCR_XLEN-1:0]                       pipe2dm_pc_sample_o,        // Current PC for sampling
+`endif // YCR_DBG_EN
 
     // IRQ
-`ifdef YCR1_IPIC_EN
-    input   logic [YCR1_IRQ_LINES_NUM-1:0]              soc2pipe_irq_lines_i,       // External interrupt request lines
-`else // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+    input   logic [YCR_IRQ_LINES_NUM-1:0]              soc2pipe_irq_lines_i,       // External interrupt request lines
+`else // YCR_IPIC_EN
     input   logic                                       soc2pipe_irq_ext_i,         // External interrupt request
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     input   logic                                       soc2pipe_irq_soft_i,        // Software generated interrupt request
     input   logic                                       soc2pipe_irq_mtimer_i,      // Machine timer interrupt request
 
     // Memory-mapped external timer
     input   logic [63:0]                                soc2pipe_mtimer_val_i,      // Machine timer value
 
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
     // CLK_CTRL interface
     output  logic                                       pipe2clkctl_sleep_req_o,    // CLK disable request to CLK gating circuit
     output  logic                                       pipe2clkctl_wake_req_o,     // CLK enable request to CLK gating circuit
     input   logic                                       clkctl2pipe_clk_alw_on_i,   // Not gated CLK
     input   logic                                       clkctl2pipe_clk_dbgc_i,     // CLK for HDU (not gated for now)
     input   logic                                       clkctl2pipe_clk_en_i,       // CLK enabled flag
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
     // Fuse
-    input   logic [`YCR1_XLEN-1:0]                      soc2pipe_fuse_mhartid_i     // Fuse MHARTID value
+    input   logic [`YCR_XLEN-1:0]                      soc2pipe_fuse_mhartid_i     // Fuse MHARTID value
 );
 
 //-------------------------------------------------------------------------------
@@ -147,10 +147,10 @@ module ycr1_pipe_top (
 //-------------------------------------------------------------------------------
 
 // Pipeline control
-logic [`YCR1_XLEN-1:0]                      curr_pc;                // Current PC
-logic [`YCR1_XLEN-1:0]                      next_pc;                // Is written to MEPC on interrupt trap
+logic [`YCR_XLEN-1:0]                      curr_pc;                // Current PC
+logic [`YCR_XLEN-1:0]                      next_pc;                // Is written to MEPC on interrupt trap
 logic                                       new_pc_req;             // New PC request (jumps, branches, traps etc)
-logic [`YCR1_XLEN-1:0]                      new_pc;                 // New PC
+logic [`YCR_XLEN-1:0]                      new_pc;                 // New PC
 
 logic                                       stop_fetch;             // Stop IFU
 logic                                       exu_exc_req;            // Exception request
@@ -159,27 +159,27 @@ logic                                       exu_init_pc;            // Reset exi
 logic                                       wfi_run2halt;           // Transition to WFI halted state
 logic                                       instret;                // Instruction retirement (with or without exception)
 logic                                       instret_nexc;           // Instruction retirement (without exception)
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
 logic                                       ipic2csr_irq;           // IRQ request from IPIC
-`endif // YCR1_IPIC_EN
-`ifdef YCR1_TDU_EN
+`endif // YCR_IPIC_EN
+`ifdef YCR_TDU_EN
 logic                                       brkpt_hw;               // Hardware breakpoint on current instruction
-`endif // YCR1_TDU_EN
-`ifdef YCR1_CLKCTRL_EN
+`endif // YCR_TDU_EN
+`ifdef YCR_CLKCTRL_EN
 logic                                       imem_txns_pending;      // There are pending imem transactions
 logic                                       wfi_halted;             // WFI halted state
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
 // IFU <-> IDU
 logic                                       ifu2idu_vd;             // IFU request
-logic [`YCR1_IMEM_DWIDTH-1:0]               ifu2idu_instr;          // IFU instruction
+logic [`YCR_IMEM_DWIDTH-1:0]               ifu2idu_instr;          // IFU instruction
 logic                                       ifu2idu_imem_err;       // IFU instruction access fault
 logic                                       ifu2idu_err_rvi_hi;     // 1 - imem fault when trying to fetch second half of an unaligned RVI instruction
 logic                                       idu2ifu_rdy;            // IDU ready for new data
 
 // IDU <-> EXU
 logic                                       idu2exu_req;            // IDU request
-type_ycr1_exu_cmd_s                         idu2exu_cmd;            // IDU command (see ycr1_riscv_isa_decoding.svh)
+type_ycr_exu_cmd_s                         idu2exu_cmd;            // IDU command (see ycr_riscv_isa_decoding.svh)
 logic                                       idu2exu_use_rs1;        // Instruction uses rs1
 logic                                       idu2exu_use_rs2;        // Instruction uses rs2
 logic                                       idu2exu_use_rd;         // Instruction uses rd
@@ -187,21 +187,21 @@ logic                                       idu2exu_use_imm;        // Instructi
 logic                                       exu2idu_rdy;            // EXU ready for new data
 
 // EXU <-> MPRF
-logic [`YCR1_MPRF_AWIDTH-1:0]               exu2mprf_rs1_addr;      // MPRF rs1 read address
-logic [`YCR1_XLEN-1:0]                      mprf2exu_rs1_data;      // MPRF rs1 read data
-logic [`YCR1_MPRF_AWIDTH-1:0]               exu2mprf_rs2_addr;      // MPRF rs2 read address
-logic [`YCR1_XLEN-1:0]                      mprf2exu_rs2_data;      // MPRF rs2 read data
+logic [`YCR_MPRF_AWIDTH-1:0]               exu2mprf_rs1_addr;      // MPRF rs1 read address
+logic [`YCR_XLEN-1:0]                      mprf2exu_rs1_data;      // MPRF rs1 read data
+logic [`YCR_MPRF_AWIDTH-1:0]               exu2mprf_rs2_addr;      // MPRF rs2 read address
+logic [`YCR_XLEN-1:0]                      mprf2exu_rs2_data;      // MPRF rs2 read data
 logic                                       exu2mprf_w_req;         // MPRF write request
-logic [`YCR1_MPRF_AWIDTH-1:0]               exu2mprf_rd_addr;       // MPRF rd write address
-logic [`YCR1_XLEN-1:0]                      exu2mprf_rd_data;       // MPRF rd write data
+logic [`YCR_MPRF_AWIDTH-1:0]               exu2mprf_rd_addr;       // MPRF rd write address
+logic [`YCR_XLEN-1:0]                      exu2mprf_rd_data;       // MPRF rd write data
 
 // EXU <-> CSR
-logic [YCR1_CSR_ADDR_WIDTH-1:0]             exu2csr_rw_addr;        // CSR read/write address
+logic [YCR_CSR_ADDR_WIDTH-1:0]             exu2csr_rw_addr;        // CSR read/write address
 logic                                       exu2csr_r_req;          // CSR read request
-logic [`YCR1_XLEN-1:0]                      csr2exu_r_data;         // CSR read data
+logic [`YCR_XLEN-1:0]                      csr2exu_r_data;         // CSR read data
 logic                                       exu2csr_w_req;          // CSR write request
-type_ycr1_csr_cmd_sel_e                     exu2csr_w_cmd;          // CSR write command
-logic [`YCR1_XLEN-1:0]                      exu2csr_w_data;         // CSR write data
+type_ycr_csr_cmd_sel_e                     exu2csr_w_cmd;          // CSR write command
+logic [`YCR_XLEN-1:0]                      exu2csr_w_data;         // CSR write data
 logic                                       csr2exu_rw_exc;         // CSR read/write access exception
 
 // EXU <-> CSR event interface
@@ -209,63 +209,63 @@ logic                                       exu2csr_take_irq;       // Take IRQ 
 logic                                       exu2csr_take_exc;       // Take exception trap
 logic                                       exu2csr_mret_update;    // MRET update CSR
 logic                                       exu2csr_mret_instr;     // MRET instruction
-logic [YCR1_EXC_CODE_WIDTH_E-1:0]           exu2csr_exc_code;       // Exception code (see ycr1_arch_types.svh)
-logic [`YCR1_XLEN-1:0]                      exu2csr_trap_val;       // Trap value
-logic [`YCR1_XLEN-1:0]                      csr2exu_new_pc;         // Exception/IRQ/MRET new PC
+logic [YCR_EXC_CODE_WIDTH_E-1:0]           exu2csr_exc_code;       // Exception code (see ycr_arch_types.svh)
+logic [`YCR_XLEN-1:0]                      exu2csr_trap_val;       // Trap value
+logic [`YCR_XLEN-1:0]                      csr2exu_new_pc;         // Exception/IRQ/MRET new PC
 logic                                       csr2exu_irq;            // IRQ request
 logic                                       csr2exu_ip_ie;          // Some IRQ pending and locally enabled
 logic                                       csr2exu_mstatus_mie_up; // MSTATUS or MIE update in the current cycle
 
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
 // CSR <-> IPIC
 logic                                       csr2ipic_r_req;         // IPIC read request
 logic                                       csr2ipic_w_req;         // IPIC write request
 logic [2:0]                                 csr2ipic_addr;          // IPIC address
-logic [`YCR1_XLEN-1:0]                      csr2ipic_wdata;         // IPIC write data
-logic [`YCR1_XLEN-1:0]                      ipic2csr_rdata;         // IPIC read data
-`endif // YCR1_IPIC_EN
+logic [`YCR_XLEN-1:0]                      csr2ipic_wdata;         // IPIC write data
+logic [`YCR_XLEN-1:0]                      ipic2csr_rdata;         // IPIC read data
+`endif // YCR_IPIC_EN
 
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
 // CSR <-> TDU
 logic                                       csr2tdu_req;           // Request to TDU
-type_ycr1_csr_cmd_sel_e                     csr2tdu_cmd;           // TDU command
-logic [YCR1_CSR_ADDR_TDU_OFFS_W-1:0]        csr2tdu_addr;          // TDU address
-logic [`YCR1_XLEN-1:0]                      csr2tdu_wdata;         // TDU write data
-logic [`YCR1_XLEN-1:0]                      tdu2csr_rdata;         // TDU read data
-type_ycr1_csr_resp_e                        tdu2csr_resp;          // TDU response
- `ifdef YCR1_DBG_EN
+type_ycr_csr_cmd_sel_e                     csr2tdu_cmd;           // TDU command
+logic [YCR_CSR_ADDR_TDU_OFFS_W-1:0]        csr2tdu_addr;          // TDU address
+logic [`YCR_XLEN-1:0]                      csr2tdu_wdata;         // TDU write data
+logic [`YCR_XLEN-1:0]                      tdu2csr_rdata;         // TDU read data
+type_ycr_csr_resp_e                        tdu2csr_resp;          // TDU response
+ `ifdef YCR_DBG_EN
                                                                     // Qualified TDU input signals from pipe_rst_n
                                                                     // reset domain:
 logic                                       csr2tdu_req_qlfy;      //     Request to TDU
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
 
 // EXU/LSU <-> TDU
-type_ycr1_brkm_instr_mon_s                  exu2tdu_i_mon;         // Instruction monitor
-type_ycr1_brkm_lsu_mon_s                    lsu2tdu_d_mon;         // Data monitor
-logic [YCR1_TDU_ALLTRIG_NUM-1:0]            tdu2exu_i_match;       // Instruction breakpoint(s) match
-logic [YCR1_TDU_MTRIG_NUM-1:0]              tdu2lsu_d_match;       // Data breakpoint(s) match
+type_ycr_brkm_instr_mon_s                  exu2tdu_i_mon;         // Instruction monitor
+type_ycr_brkm_lsu_mon_s                    lsu2tdu_d_mon;         // Data monitor
+logic [YCR_TDU_ALLTRIG_NUM-1:0]            tdu2exu_i_match;       // Instruction breakpoint(s) match
+logic [YCR_TDU_MTRIG_NUM-1:0]              tdu2lsu_d_match;       // Data breakpoint(s) match
 logic                                       tdu2exu_i_x_req;       // Instruction breakpoint exception
 logic                                       tdu2lsu_i_x_req;       // Instruction breakpoint exception
 logic                                       tdu2lsu_d_x_req;       // Data breakpoint exception
-logic [YCR1_TDU_ALLTRIG_NUM-1:0]            exu2tdu_bp_retire;     // Instruction with breakpoint flag retire
- `ifdef YCR1_DBG_EN
+logic [YCR_TDU_ALLTRIG_NUM-1:0]            exu2tdu_bp_retire;     // Instruction with breakpoint flag retire
+ `ifdef YCR_DBG_EN
                                                                     // Qualified TDU input signals from pipe_rst_n
                                                                     // reset domain:
-type_ycr1_brkm_instr_mon_s                  exu2tdu_i_mon_qlfy;         // Instruction monitor
-type_ycr1_brkm_lsu_mon_s                    lsu2tdu_d_mon_qlfy;         // Data monitor
-logic [YCR1_TDU_ALLTRIG_NUM-1:0]            exu2tdu_bp_retire_qlfy;     // Instruction with breakpoint flag retire
- `endif // YCR1_DBG_EN
-`endif // YCR1_TDU_EN
+type_ycr_brkm_instr_mon_s                  exu2tdu_i_mon_qlfy;         // Instruction monitor
+type_ycr_brkm_lsu_mon_s                    lsu2tdu_d_mon_qlfy;         // Data monitor
+logic [YCR_TDU_ALLTRIG_NUM-1:0]            exu2tdu_bp_retire_qlfy;     // Instruction with breakpoint flag retire
+ `endif // YCR_DBG_EN
+`endif // YCR_TDU_EN
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 // Debug signals:
 logic                                       fetch_pbuf;             // Fetch instructions provided by Program Buffer (via HDU)
 logic                                       csr2hdu_req;            // Request to HDU
-type_ycr1_csr_cmd_sel_e                     csr2hdu_cmd;            // HDU command
-logic [YCR1_HDU_DEBUGCSR_ADDR_WIDTH-1:0]    csr2hdu_addr;           // HDU address
-logic [`YCR1_XLEN-1:0]                      csr2hdu_wdata;          // HDU write data
-logic [`YCR1_XLEN-1:0]                      hdu2csr_rdata;          // HDU read data
-type_ycr1_csr_resp_e                        hdu2csr_resp;           // HDU response
+type_ycr_csr_cmd_sel_e                     csr2hdu_cmd;            // HDU command
+logic [YCR_HDU_DEBUGCSR_ADDR_WIDTH-1:0]    csr2hdu_addr;           // HDU address
+logic [`YCR_XLEN-1:0]                      csr2hdu_wdata;          // HDU write data
+logic [`YCR_XLEN-1:0]                      hdu2csr_rdata;          // HDU read data
+type_ycr_csr_resp_e                        hdu2csr_resp;           // HDU response
                                                                     // Qualified HDU input signals from pipe_rst_n
                                                                     // reset domain:
 logic                                       csr2hdu_req_qlfy;       //     Request to HDU
@@ -283,12 +283,12 @@ logic                                       dbg_halted;             // Debug hal
 logic                                       dbg_run2halt;           // Transition to debug halted state
 logic                                       dbg_halt2run;           // Transition to run state
 logic                                       dbg_run_start;          // First cycle of run state
-logic [`YCR1_XLEN-1:0]                      dbg_new_pc;             // New PC as starting point for HART Resume
+logic [`YCR_XLEN-1:0]                      dbg_new_pc;             // New PC as starting point for HART Resume
 
 logic                                       ifu2hdu_pbuf_rdy;
 logic                                       hdu2ifu_pbuf_vd;
 logic                                       hdu2ifu_pbuf_err;
-logic [YCR1_HDU_CORE_INSTR_WIDTH-1:0]       hdu2ifu_pbuf_instr;
+logic [YCR_HDU_CORE_INSTR_WIDTH-1:0]       hdu2ifu_pbuf_instr;
 
 // Qualified HDU input signals from pipe_rst_n reset domain:
 logic                                       ifu2hdu_pbuf_rdy_qlfy;
@@ -298,14 +298,14 @@ logic                                       exu_init_pc_qlfy;
 logic                                       exu_exc_req_qlfy;
 logic                                       brkpt_qlfy;
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 logic                                       exu_busy;
 
 
-`ifndef YCR1_CLKCTRL_EN
+`ifndef YCR_CLKCTRL_EN
 logic                                       pipe2clkctl_wake_req_o;
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
 
 assign pipe_debug = {curr_pc[31:0],new_pc_req,stop_fetch, exu_exc_req,brkpt,exu_init_pc,wfi_run2halt,instret,
@@ -315,28 +315,28 @@ assign pipe_debug = {curr_pc[31:0],new_pc_req,stop_fetch, exu_exc_req,brkpt,exu_
 // Pipeline logic
 //-------------------------------------------------------------------------------
 assign stop_fetch   = wfi_run2halt
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
                     | fetch_pbuf
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
                     ;
 
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
 assign pipe2clkctl_sleep_req_o = wfi_halted & ~imem_txns_pending;
 assign pipe2clkctl_wake_req_o  = csr2exu_ip_ie
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
                     | dm2pipe_active_i
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
                     ;
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 assign pipe2dm_pc_sample_o = curr_pc;
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 //-------------------------------------------------------------------------------
 // Instruction fetch unit
 //-------------------------------------------------------------------------------
-ycr1_pipe_ifu i_pipe_ifu (
+ycr_pipe_ifu i_pipe_ifu (
     .rst_n                    (pipe_rst_n         ),
     .clk                      (clk                ),
 
@@ -354,17 +354,17 @@ ycr1_pipe_ifu i_pipe_ifu (
     .exu2ifu_pc_new_i         (new_pc             ),
     .pipe2ifu_stop_fetch_i    (stop_fetch         ),
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // IFU <-> HDU Program Buffer interface
     .hdu2ifu_pbuf_fetch_i     (fetch_pbuf         ),
     .ifu2hdu_pbuf_rdy_o       (ifu2hdu_pbuf_rdy   ),
     .hdu2ifu_pbuf_vd_i        (hdu2ifu_pbuf_vd    ),
     .hdu2ifu_pbuf_err_i       (hdu2ifu_pbuf_err   ),
     .hdu2ifu_pbuf_instr_i     (hdu2ifu_pbuf_instr ),
-`endif // YCR1_DBG_EN
-`ifdef YCR1_CLKCTRL_EN
+`endif // YCR_DBG_EN
+`ifdef YCR_CLKCTRL_EN
     .ifu2pipe_imem_txns_pnd_o (imem_txns_pending  ),
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
     // IFU <-> IDU interface
     .idu2ifu_rdy_i            (idu2ifu_rdy        ),
@@ -377,11 +377,11 @@ ycr1_pipe_ifu i_pipe_ifu (
 //-------------------------------------------------------------------------------
 // Instruction decode unit
 //-------------------------------------------------------------------------------
-ycr1_pipe_idu i_pipe_idu (
-`ifdef YCR1_TRGT_SIMULATION
+ycr_pipe_idu i_pipe_idu (
+`ifdef YCR_TRGT_SIMULATION
     .rst_n                  (pipe_rst_n        ),
     .clk                    (clk               ),
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
     .idu2ifu_rdy_o          (idu2ifu_rdy       ),
     .ifu2idu_instr_i        (ifu2idu_instr     ),
     .ifu2idu_imem_err_i     (ifu2idu_imem_err  ),
@@ -400,13 +400,13 @@ ycr1_pipe_idu i_pipe_idu (
 //-------------------------------------------------------------------------------
 // Execution unit
 //-------------------------------------------------------------------------------
-ycr1_pipe_exu i_pipe_exu (
+ycr_pipe_exu i_pipe_exu (
     .rst_n                          (pipe_rst_n              ),
     .clk                            (clk                     ),
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
     .clk_alw_on                     (clkctl2pipe_clk_alw_on_i),
     .clk_pipe_en                    (clkctl2pipe_clk_en_i),
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
     // IDU <-> EXU interface
     .idu2exu_req_i                  (idu2exu_req             ),
@@ -414,10 +414,10 @@ ycr1_pipe_exu i_pipe_exu (
     .idu2exu_cmd_i                  (idu2exu_cmd             ),
     .idu2exu_use_rs1_i              (idu2exu_use_rs1         ),
     .idu2exu_use_rs2_i              (idu2exu_use_rs2         ),
-`ifndef YCR1_NO_EXE_STAGE
+`ifndef YCR_NO_EXE_STAGE
     .idu2exu_use_rd_i               (idu2exu_use_rd          ),
     .idu2exu_use_imm_i              (idu2exu_use_imm         ),
-`endif // YCR1_NO_EXE_STAGE
+`endif // YCR_NO_EXE_STAGE
 
     // EXU <-> MPRF interface
     .exu2mprf_rs1_addr_o            (exu2mprf_rs1_addr       ),
@@ -459,7 +459,7 @@ ycr1_pipe_exu i_pipe_exu (
     .dmem2exu_rdata_i               (dmem2pipe_rdata_i       ),
     .dmem2exu_resp_i                (dmem2pipe_resp_i        ),
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // EXU <-> HDU interface
     .hdu2exu_no_commit_i            (exu_no_commit           ),
     .hdu2exu_irq_dsbl_i             (exu_irq_dsbl            ),
@@ -471,9 +471,9 @@ ycr1_pipe_exu i_pipe_exu (
     .hdu2exu_dbg_halt2run_i         (dbg_halt2run            ),
     .hdu2exu_dbg_run_start_i        (dbg_run_start           ),
     .hdu2exu_dbg_new_pc_i           (dbg_new_pc              ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
     // EXU <-> TDU interface
     .exu2tdu_imon_o                 (exu2tdu_i_mon           ),
     .tdu2exu_ibrkpt_match_i         (tdu2exu_i_match         ),
@@ -484,7 +484,7 @@ ycr1_pipe_exu i_pipe_exu (
     .tdu2lsu_dbrkpt_exc_req_i       (tdu2lsu_d_x_req         ),
     .exu2tdu_ibrkpt_ret_o           (exu2tdu_bp_retire       ),
     .exu2hdu_ibrkpt_hw_o            (brkpt_hw                ),
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
     // EXU control
     .exu2pipe_exc_req_o             (exu_exc_req             ),
@@ -496,9 +496,9 @@ ycr1_pipe_exu i_pipe_exu (
     .exu2pipe_exu_busy_o            (exu_busy                ),
 
     // PC interface
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
     .exu2pipe_wfi_halted_o          (wfi_halted              ),
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
     .exu2pipe_pc_curr_o             (curr_pc                 ),
     .exu2csr_pc_next_o              (next_pc                 ),
     .exu2ifu_pc_new_req_o           (new_pc_req              ),
@@ -508,10 +508,10 @@ ycr1_pipe_exu i_pipe_exu (
 //-------------------------------------------------------------------------------
 // Multi-port register file
 //-------------------------------------------------------------------------------
-ycr1_pipe_mprf i_pipe_mprf (
-`ifdef YCR1_MPRF_RST_EN
+ycr_pipe_mprf i_pipe_mprf (
+`ifdef YCR_MPRF_RST_EN
     .rst_n                  (pipe_rst_n       ),
-`endif // YCR1_MPRF_RST_EN
+`endif // YCR_MPRF_RST_EN
     .clk                    (clk              ),
 
     // EXU <-> MPRF interface
@@ -527,12 +527,12 @@ ycr1_pipe_mprf i_pipe_mprf (
 //-------------------------------------------------------------------------------
 // Control and status registers
 //-------------------------------------------------------------------------------
-ycr1_pipe_csr i_pipe_csr (
+ycr_pipe_csr i_pipe_csr (
     .rst_n                      (pipe_rst_n              ),
     .clk                        (clk                     ),
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
     .clk_alw_on                 (clkctl2pipe_clk_alw_on_i),
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
     // EXU <-> CSR read/write interface
     .exu2csr_r_req_i            (exu2csr_r_req           ),
@@ -555,35 +555,35 @@ ycr1_pipe_csr i_pipe_csr (
     .csr2exu_ip_ie_o            (csr2exu_ip_ie           ),
     .csr2exu_mstatus_mie_up_o   (csr2exu_mstatus_mie_up  ),
 
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     // CSR <-> IPIC interface
     .csr2ipic_r_req_o           (csr2ipic_r_req          ),
     .csr2ipic_w_req_o           (csr2ipic_w_req          ),
     .csr2ipic_addr_o            (csr2ipic_addr           ),
     .csr2ipic_wdata_o           (csr2ipic_wdata          ),
     .ipic2csr_rdata_i           (ipic2csr_rdata          ),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 
     // CSR <-> PC interface
     .exu2csr_pc_curr_i          (curr_pc                 ),
     .exu2csr_pc_next_i          (next_pc                 ),
-`ifndef YCR1_CSR_REDUCED_CNT
+`ifndef YCR_CSR_REDUCED_CNT
     .exu2csr_instret_no_exc_i   (instret_nexc            ),
-`endif // YCR1_CSR_REDUCED_CNT
+`endif // YCR_CSR_REDUCED_CNT
 
     // IRQ
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     .soc2csr_irq_ext_i          (ipic2csr_irq            ),
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
     .soc2csr_irq_ext_i          (soc2pipe_irq_ext_i      ),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     .soc2csr_irq_soft_i         (soc2pipe_irq_soft_i     ),
     .soc2csr_irq_mtimer_i       (soc2pipe_irq_mtimer_i   ),
 
     // Memory-mapped external timer
     .soc2csr_mtimer_val_i       (soc2pipe_mtimer_val_i   ),
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // CSR <-> HDU interface
     .csr2hdu_req_o              (csr2hdu_req             ),
     .csr2hdu_cmd_o              (csr2hdu_cmd             ),
@@ -592,9 +592,9 @@ ycr1_pipe_csr i_pipe_csr (
     .hdu2csr_rdata_i            (hdu2csr_rdata           ),
     .hdu2csr_resp_i             (hdu2csr_resp            ),
     .hdu2csr_no_commit_i        (exu_no_commit           ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
     // CSR <-> TDU interface
     .csr2tdu_req_o              (csr2tdu_req             ),
     .csr2tdu_cmd_o              (csr2tdu_cmd             ),
@@ -602,21 +602,21 @@ ycr1_pipe_csr i_pipe_csr (
     .csr2tdu_wdata_o            (csr2tdu_wdata           ),
     .tdu2csr_rdata_i            (tdu2csr_rdata           ),
     .tdu2csr_resp_i             (tdu2csr_resp            ),
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
     .soc2csr_fuse_mhartid_i     (soc2pipe_fuse_mhartid_i )
 );
 
 //-------------------------------------------------------------------------------
 // Integrated programmable interrupt controller
 //-------------------------------------------------------------------------------
-`ifdef YCR1_IPIC_EN
-ycr1_ipic i_pipe_ipic (
+`ifdef YCR_IPIC_EN
+ycr_ipic i_pipe_ipic (
     .rst_n                  (pipe_rst_n              ),
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
     .clk                    (clkctl2pipe_clk_alw_on_i),
-`else // YCR1_CLKCTRL_EN
+`else // YCR_CLKCTRL_EN
     .clk                    (clk                     ),
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
     .soc2ipic_irq_lines_i   (soc2pipe_irq_lines_i    ),
     .csr2ipic_r_req_i       (csr2ipic_r_req          ),
     .csr2ipic_w_req_i       (csr2ipic_w_req          ),
@@ -625,74 +625,74 @@ ycr1_ipic i_pipe_ipic (
     .ipic2csr_rdata_o       (ipic2csr_rdata          ),
     .ipic2csr_irq_m_req_o   (ipic2csr_irq            )
 );
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 
 //-------------------------------------------------------------------------------
 // Breakpoint module
 //-------------------------------------------------------------------------------
-`ifdef YCR1_TDU_EN
-ycr1_pipe_tdu i_pipe_tdu (
+`ifdef YCR_TDU_EN
+ycr_pipe_tdu i_pipe_tdu (
     // Common signals
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
     .rst_n                      (dbg_rst_n             ),
  `else
     .rst_n                      (pipe_rst_n            ),
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
     .clk                        (clk                   ),
     .clk_en                     (1'b1                  ),
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
     .tdu_dsbl_i                 (hwbrk_dsbl            ),
- `else // YCR1_DBG_EN
+ `else // YCR_DBG_EN
     .tdu_dsbl_i                 (1'b0                  ),
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
 
     // TDU <-> CSR interface
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
     .csr2tdu_req_i              (csr2tdu_req_qlfy      ),
     .csr2tdu_cmd_i              (csr2tdu_cmd           ),
     .csr2tdu_addr_i             (csr2tdu_addr          ),
     .csr2tdu_wdata_i            (csr2tdu_wdata         ),
- `else // YCR1_DBG_EN
+ `else // YCR_DBG_EN
     .csr2tdu_req_i              (csr2tdu_req           ),
     .csr2tdu_cmd_i              (csr2tdu_cmd           ),
     .csr2tdu_addr_i             (csr2tdu_addr          ),
     .csr2tdu_wdata_i            (csr2tdu_wdata         ),
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
     .tdu2csr_rdata_o            (tdu2csr_rdata         ),
     .tdu2csr_resp_o             (tdu2csr_resp          ),
 
     // TDU <-> EXU interface
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
     .exu2tdu_imon_i             (exu2tdu_i_mon_qlfy    ),
- `else // YCR1_DBG_EN
+ `else // YCR_DBG_EN
     .exu2tdu_imon_i             (exu2tdu_i_mon         ),
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
     .tdu2exu_ibrkpt_match_o     (tdu2exu_i_match       ),
     .tdu2exu_ibrkpt_exc_req_o   (tdu2exu_i_x_req       ),
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
     .exu2tdu_bp_retire_i        (exu2tdu_bp_retire_qlfy),
- `else // YCR1_DBG_EN
+ `else // YCR_DBG_EN
     .exu2tdu_bp_retire_i        (exu2tdu_bp_retire     ),
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
 
     // TDU <-> LSU interface
     .tdu2lsu_ibrkpt_exc_req_o   (tdu2lsu_i_x_req       ),
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
     .lsu2tdu_dmon_i             (lsu2tdu_d_mon_qlfy    ),
- `else // YCR1_DBG_EN
+ `else // YCR_DBG_EN
     .lsu2tdu_dmon_i             (lsu2tdu_d_mon         ),
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
     .tdu2lsu_dbrkpt_match_o     (tdu2lsu_d_match       ),
     .tdu2lsu_dbrkpt_exc_req_o   (tdu2lsu_d_x_req       ),
     // EPU I/F
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
     .tdu2hdu_dmode_req_o        (tdu2hdu_dmode_req     )
- `else // YCR1_DBG_EN
+ `else // YCR_DBG_EN
     .tdu2hdu_dmode_req_o        (                      )
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
 );
 
- `ifdef YCR1_DBG_EN
+ `ifdef YCR_DBG_EN
 assign hwbrk_dsbl               = (~dbg_en) | hdu_hwbrk_dsbl;
 //
 assign csr2tdu_req_qlfy         = dbg_en & csr2tdu_req & pipe2hdu_rdc_qlfy_i;
@@ -705,24 +705,24 @@ assign lsu2tdu_d_mon_qlfy.load  = lsu2tdu_d_mon.load;
 assign lsu2tdu_d_mon_qlfy.store = lsu2tdu_d_mon.store;
 assign lsu2tdu_d_mon_qlfy.addr  = lsu2tdu_d_mon.addr;
 assign exu2tdu_bp_retire_qlfy   = exu2tdu_bp_retire & {$bits(exu2tdu_bp_retire){pipe2hdu_rdc_qlfy_i}};
- `endif // YCR1_DBG_EN
+ `endif // YCR_DBG_EN
 
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
 //-------------------------------------------------------------------------------
 // HART Debug Unit (HDU)
 //-------------------------------------------------------------------------------
-`ifdef YCR1_DBG_EN
-ycr1_pipe_hdu i_pipe_hdu (
+`ifdef YCR_DBG_EN
+ycr_pipe_hdu i_pipe_hdu (
     // Common signals
     .rst_n                      (dbg_rst_n             ),
     .clk_en                     (dm2pipe_active_i      ),
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
     .clk_pipe_en                (clkctl2pipe_clk_en_i  ),
     .clk                        (clkctl2pipe_clk_dbgc_i),
 `else
     .clk                        (clk                   ),
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
 
     // Control/status registers i/f
     .csr2hdu_req_i              (csr2hdu_req_qlfy      ),
@@ -753,12 +753,12 @@ ycr1_pipe_hdu i_pipe_hdu (
     .dm2hdu_dreg_fail_i         (dm2pipe_dreg_fail_i   ),
     .dm2hdu_dreg_rdata_i        (dm2pipe_dreg_rdata_i  ),
     //
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
     // HDU <-> TDU interface
     .hdu2tdu_hwbrk_dsbl_o       (hdu_hwbrk_dsbl        ),
     .tdu2hdu_dmode_req_i        (tdu2hdu_dmode_req     ),
     .exu2hdu_ibrkpt_hw_i        (brkpt_hw              ),
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
     // HART Run Status
     .pipe2hdu_exu_busy_i        (exu_busy_qlfy         ),
@@ -802,14 +802,14 @@ assign exu_exc_req_qlfy         = exu_exc_req       & {$bits(exu_exc_req){pipe2h
 assign brkpt_qlfy               = brkpt             & {$bits(brkpt){pipe2hdu_rdc_qlfy_i}};
 assign ifu2hdu_pbuf_rdy_qlfy    = ifu2hdu_pbuf_rdy  & {$bits(ifu2hdu_pbuf_rdy){pipe2hdu_rdc_qlfy_i}};
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Tracelog
 //-------------------------------------------------------------------------------
 
-ycr1_tracelog i_tracelog (
+ycr_tracelog i_tracelog (
     .rst_n                          (pipe_rst_n                         ),
     .clk                            (clk                                ),
     .soc2pipe_fuse_mhartid_i        (soc2pipe_fuse_mhartid_i            ),
@@ -851,6 +851,6 @@ ycr1_tracelog i_tracelog (
     .csr2trace_e_mret_i             (i_pipe_csr.e_mret                  )
 );
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_pipe_top
+endmodule : ycr_pipe_top

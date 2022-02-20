@@ -20,7 +20,7 @@
 ////  yifive Memory AXI bridge                                            ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     integrated wishbone i/f to data  memory                          ////
@@ -38,16 +38,16 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_memif.svh"
-`include "ycr1_arch_description.svh"
+`include "ycr_memif.svh"
+`include "ycr_arch_description.svh"
 
-module ycr1_mem_axi
+module ycr_mem_axi
 #(
-    parameter YCR1_REQ_BUF_SIZE     = 2,                    // Power of 2 value
-    parameter YCR1_AXI_IDWIDTH      = 4,
-    parameter YCR1_ADDR_WIDTH       = 32,
-    parameter YCR1_AXI_REQ_BP       = 1,
-    parameter YCR1_AXI_RESP_BP      = 1
+    parameter YCR_REQ_BUF_SIZE     = 2,                    // Power of 2 value
+    parameter YCR_AXI_IDWIDTH      = 4,
+    parameter YCR_ADDR_WIDTH       = 32,
+    parameter YCR_AXI_REQ_BP       = 1,
+    parameter YCR_AXI_RESP_BP      = 1
 )
 (
     // Clock and Reset
@@ -60,14 +60,14 @@ module ycr1_mem_axi
     input   logic                           core_req,
     input   logic                           core_cmd,
     input   logic [1:0]                     core_width,
-    input   logic [YCR1_ADDR_WIDTH-1:0]     core_addr,
+    input   logic [YCR_ADDR_WIDTH-1:0]     core_addr,
     input   logic [31:0]                    core_wdata,
     output  logic [31:0]                    core_rdata,
     output  logic [1:0]                     core_resp,
 
     // AXI
-    output  logic [YCR1_AXI_IDWIDTH-1:0]    awid,
-    output  logic [YCR1_ADDR_WIDTH-1:0]     awaddr,
+    output  logic [YCR_AXI_IDWIDTH-1:0]    awid,
+    output  logic [YCR_ADDR_WIDTH-1:0]     awaddr,
     output  logic [ 7:0]                    awlen,
     output  logic [ 2:0]                    awsize,
     output  logic [ 1:0]                    awburst,
@@ -85,13 +85,13 @@ module ycr1_mem_axi
     output  logic [3:0]                     wuser,
     output  logic                           wvalid,
     input   logic                           wready,
-    input   logic [YCR1_AXI_IDWIDTH-1:0]    bid,
+    input   logic [YCR_AXI_IDWIDTH-1:0]    bid,
     input   logic [ 1:0]                    bresp,
     input   logic                           bvalid,
     input   logic [ 3:0]                    buser,
     output  logic                           bready,
-    output  logic [YCR1_AXI_IDWIDTH-1:0]    arid,
-    output  logic [YCR1_ADDR_WIDTH-1:0]     araddr,
+    output  logic [YCR_AXI_IDWIDTH-1:0]    arid,
+    output  logic [YCR_ADDR_WIDTH-1:0]     araddr,
     output  logic [ 7:0]                    arlen,
     output  logic [ 2:0]                    arsize,
     output  logic [ 1:0]                    arburst,
@@ -103,7 +103,7 @@ module ycr1_mem_axi
     output  logic [ 3:0]                    arqos,
     output  logic                           arvalid,
     input   logic                           arready,
-    input   logic [YCR1_AXI_IDWIDTH-1:0]    rid,
+    input   logic [YCR_AXI_IDWIDTH-1:0]    rid,
     input   logic [31:0]                    rdata,
     input   logic [ 1:0]                    rresp,
     input   logic                           rlast,
@@ -119,9 +119,9 @@ function automatic logic [2:0] width2axsize (
     logic [2:0] axsize;
 begin
     case (width)
-        YCR1_MEM_WIDTH_BYTE :  axsize = 3'b000;
-        YCR1_MEM_WIDTH_HWORD:  axsize = 3'b001;
-        YCR1_MEM_WIDTH_WORD :  axsize = 3'b010;
+        YCR_MEM_WIDTH_BYTE :  axsize = 3'b000;
+        YCR_MEM_WIDTH_HWORD:  axsize = 3'b001;
+        YCR_MEM_WIDTH_WORD :  axsize = 3'b010;
                      default:  axsize = 'x;
     endcase
 
@@ -131,37 +131,37 @@ endfunction
 
 typedef struct packed {
     logic [1:0]                                         axi_width;
-    logic                    [YCR1_ADDR_WIDTH-1:0]      axi_addr;
+    logic                    [YCR_ADDR_WIDTH-1:0]      axi_addr;
     logic                                   [31:0]      axi_wdata;
-} type_ycr1_request_s;
+} type_ycr_request_s;
 
 typedef struct packed {
     logic                                               req_write;
     logic                                               req_addr;
     logic                                               req_data;
     logic                                               req_resp;
-} type_ycr1_req_status_s;
+} type_ycr_req_status_s;
 
 
-//type_ycr1_request_s         [YCR1_REQ_BUF_SIZE-1:0]   req_fifo;
-logic [1:0]                                             req_fifo_axi_width[YCR1_REQ_BUF_SIZE-1:0];
-logic [YCR1_ADDR_WIDTH-1:0]                             req_fifo_axi_addr [YCR1_REQ_BUF_SIZE-1:0];
-logic [31:0]                                            req_fifo_axi_wdata [YCR1_REQ_BUF_SIZE-1:0];
-//type_ycr1_req_status_s      [YCR1_REQ_BUF_SIZE-1:0]   req_status;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_req_write ;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_req_addr ;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_req_data ;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_req_resp ;
-//type_ycr1_req_status_s      [YCR1_REQ_BUF_SIZE-1:0]   req_status_new;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_new_req_write ;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_new_req_addr ;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_new_req_data ;
-logic   [YCR1_REQ_BUF_SIZE-1:0]                         req_status_new_req_resp ;
+//type_ycr_request_s         [YCR_REQ_BUF_SIZE-1:0]   req_fifo;
+logic [1:0]                                             req_fifo_axi_width[YCR_REQ_BUF_SIZE-1:0];
+logic [YCR_ADDR_WIDTH-1:0]                             req_fifo_axi_addr [YCR_REQ_BUF_SIZE-1:0];
+logic [31:0]                                            req_fifo_axi_wdata [YCR_REQ_BUF_SIZE-1:0];
+//type_ycr_req_status_s      [YCR_REQ_BUF_SIZE-1:0]   req_status;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_req_write ;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_req_addr ;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_req_data ;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_req_resp ;
+//type_ycr_req_status_s      [YCR_REQ_BUF_SIZE-1:0]   req_status_new;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_new_req_write ;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_new_req_addr ;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_new_req_data ;
+logic   [YCR_REQ_BUF_SIZE-1:0]                         req_status_new_req_resp ;
 
-logic                       [YCR1_REQ_BUF_SIZE-1:0]     req_status_en;
-logic               [$clog2(YCR1_REQ_BUF_SIZE)-1:0]     req_aval_ptr;
-logic               [$clog2(YCR1_REQ_BUF_SIZE)-1:0]     req_proc_ptr;
-logic               [$clog2(YCR1_REQ_BUF_SIZE)-1:0]     req_done_ptr;
+logic                       [YCR_REQ_BUF_SIZE-1:0]     req_status_en;
+logic               [$clog2(YCR_REQ_BUF_SIZE)-1:0]     req_aval_ptr;
+logic               [$clog2(YCR_REQ_BUF_SIZE)-1:0]     req_proc_ptr;
+logic               [$clog2(YCR_REQ_BUF_SIZE)-1:0]     req_done_ptr;
 logic                                                   rresp_err;
 logic                                       [31:0]      rcvd_rdata;
 logic [1:0]                                             rcvd_resp;
@@ -172,20 +172,20 @@ logic                                                   force_write;
 
 assign core_req_ack =   ~axi_reinit                        &
                         ~req_status_req_resp[req_aval_ptr] &
-                         core_resp!=YCR1_MEM_RESP_RDY_ER;
+                         core_resp!=YCR_MEM_RESP_RDY_ER;
 
 
 assign rready      = ~req_status_req_write[req_done_ptr];
 assign bready      =  req_status_req_write[req_done_ptr];
 
 
-assign force_read  = YCR1_AXI_REQ_BP & core_req & core_req_ack & req_aval_ptr==req_proc_ptr & core_cmd==YCR1_MEM_CMD_RD;
-assign force_write = YCR1_AXI_REQ_BP & core_req & core_req_ack & req_aval_ptr==req_proc_ptr & core_cmd==YCR1_MEM_CMD_WR;
+assign force_read  = YCR_AXI_REQ_BP & core_req & core_req_ack & req_aval_ptr==req_proc_ptr & core_cmd==YCR_MEM_CMD_RD;
+assign force_write = YCR_AXI_REQ_BP & core_req & core_req_ack & req_aval_ptr==req_proc_ptr & core_cmd==YCR_MEM_CMD_WR;
 
 integer i;
 always_comb begin: idle_status
     core_idle = 1'b1;
-    for (i=0; i<YCR1_REQ_BUF_SIZE; i=i+1) begin
+    for (i=0; i<YCR_REQ_BUF_SIZE; i=i+1) begin
         core_idle &= req_status_req_resp[i]==1'b0;
     end
 end
@@ -215,13 +215,13 @@ always_comb begin
         req_status_en[req_aval_ptr]            = 1'd1;
 
         req_status_new_req_resp[req_aval_ptr]  = 1'd1;
-        req_status_new_req_write[req_aval_ptr] = core_cmd == YCR1_MEM_CMD_WR;
+        req_status_new_req_write[req_aval_ptr] = core_cmd == YCR_MEM_CMD_WR;
 
         req_status_new_req_addr[req_aval_ptr]  = ~( (force_read & arready) |
                                                     (force_write & awready) );
 
         req_status_new_req_data[req_aval_ptr]  = ~( (force_write & wready & awlen == 8'd0) |
-                                                    (~force_write & core_cmd == YCR1_MEM_CMD_RD) );
+                                                    (~force_write & core_cmd == YCR_MEM_CMD_RD) );
     end
 
     // Update status on AXI address phase
@@ -252,7 +252,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         req_status_req_data <= '0;
         req_status_req_resp <= '0;
     end else begin
-        for (j = 0; j < YCR1_REQ_BUF_SIZE; j = j+1) begin // cp.4
+        for (j = 0; j < YCR_REQ_BUF_SIZE; j = j+1) begin // cp.4
             if ( req_status_en[j] ) begin
                 req_status_req_write[j] <= req_status_new_req_write[j];
                 req_status_req_addr[j]  <= req_status_new_req_addr[j];
@@ -304,36 +304,36 @@ assign awaddr  = (~force_write)? req_fifo_axi_addr[req_proc_ptr] : core_addr;
 
 always_comb begin
     if (bvalid & bready & req_status_req_resp[req_done_ptr]) begin
-        rcvd_resp = (bresp==2'b00)? YCR1_MEM_RESP_RDY_OK :
-                                    YCR1_MEM_RESP_RDY_ER;
+        rcvd_resp = (bresp==2'b00)? YCR_MEM_RESP_RDY_OK :
+                                    YCR_MEM_RESP_RDY_ER;
     end else begin
         if (rvalid & rready & rlast & req_status_req_resp[req_done_ptr]) begin
-            rcvd_resp = (rresp==2'b00)? YCR1_MEM_RESP_RDY_OK :
-                                        YCR1_MEM_RESP_RDY_ER;
+            rcvd_resp = (rresp==2'b00)? YCR_MEM_RESP_RDY_OK :
+                                        YCR_MEM_RESP_RDY_ER;
         end else begin
-            rcvd_resp = YCR1_MEM_RESP_NOTRDY;
+            rcvd_resp = YCR_MEM_RESP_NOTRDY;
         end
     end
 end
 
 
-wire [YCR1_ADDR_WIDTH-1:0] CurAddr1 = req_fifo_axi_addr[req_proc_ptr];
+wire [YCR_ADDR_WIDTH-1:0] CurAddr1 = req_fifo_axi_addr[req_proc_ptr];
 wire [1:0]  bShift1 = CurAddr1[1:0];
 
 // Write data signals adaptation
 always_comb begin
     if (force_write)
         case (core_width)
-            YCR1_MEM_WIDTH_BYTE :  wstrb = 4'h1 << core_addr[1:0];
-            YCR1_MEM_WIDTH_HWORD:  wstrb = 4'h3 << core_addr[1:0];
-            YCR1_MEM_WIDTH_WORD :  wstrb = 4'hf << core_addr[1:0];
+            YCR_MEM_WIDTH_BYTE :  wstrb = 4'h1 << core_addr[1:0];
+            YCR_MEM_WIDTH_HWORD:  wstrb = 4'h3 << core_addr[1:0];
+            YCR_MEM_WIDTH_WORD :  wstrb = 4'hf << core_addr[1:0];
                          default:  wstrb = 'x;
         endcase
     else
         case (req_fifo_axi_width[req_proc_ptr])
-            YCR1_MEM_WIDTH_BYTE :  wstrb = 4'h1 << bShift1;
-            YCR1_MEM_WIDTH_HWORD:  wstrb = 4'h3 << bShift1;
-            YCR1_MEM_WIDTH_WORD :  wstrb = 4'hf << bShift1;
+            YCR_MEM_WIDTH_BYTE :  wstrb = 4'h1 << bShift1;
+            YCR_MEM_WIDTH_HWORD:  wstrb = 4'h3 << bShift1;
+            YCR_MEM_WIDTH_WORD :  wstrb = 4'hf << bShift1;
                          default:  wstrb = 'x;
         endcase
 end
@@ -343,28 +343,28 @@ end
 assign wdata = (force_write)?                       core_wdata << (8*                       core_addr[1:0]) :
                               req_fifo_axi_wdata[req_proc_ptr] << (8* bShift1);
 
-wire [YCR1_ADDR_WIDTH-1:0] CurAddr2 = req_fifo_axi_addr[req_done_ptr];
+wire [YCR_ADDR_WIDTH-1:0] CurAddr2 = req_fifo_axi_addr[req_done_ptr];
 wire [1:0]  bShift2 = CurAddr2[1:0];
 
 // Read data adaptation
 always_comb begin
    case (req_fifo_axi_width[req_done_ptr])
-        YCR1_MEM_WIDTH_BYTE :  rcvd_rdata = rdata >> (8*bShift2);
-        YCR1_MEM_WIDTH_HWORD:  rcvd_rdata = rdata >> (8*bShift2);
-        YCR1_MEM_WIDTH_WORD :  rcvd_rdata = rdata >> (8*bShift2);
+        YCR_MEM_WIDTH_BYTE :  rcvd_rdata = rdata >> (8*bShift2);
+        YCR_MEM_WIDTH_HWORD:  rcvd_rdata = rdata >> (8*bShift2);
+        YCR_MEM_WIDTH_WORD :  rcvd_rdata = rdata >> (8*bShift2);
         default:  rcvd_rdata = 'x;
     endcase 
 end
 
 
 generate
-    if (YCR1_AXI_RESP_BP == 1) begin : axi_resp_bp
+    if (YCR_AXI_RESP_BP == 1) begin : axi_resp_bp
         assign core_rdata = (rvalid & rready & rlast) ? rcvd_rdata : '0;
-        assign core_resp  = (axi_reinit) ? YCR1_MEM_RESP_NOTRDY : rcvd_resp;
+        assign core_resp  = (axi_reinit) ? YCR_MEM_RESP_NOTRDY : rcvd_resp;
     end else begin : axi_resp_no_bp
         always_ff @(negedge rst_n, posedge clk) begin
-            if (~rst_n)              core_resp  <= YCR1_MEM_RESP_NOTRDY;
-            else                     core_resp  <= (axi_reinit) ? YCR1_MEM_RESP_NOTRDY : rcvd_resp;
+            if (~rst_n)              core_resp  <= YCR_MEM_RESP_NOTRDY;
+            else                     core_resp  <= (axi_reinit) ? YCR_MEM_RESP_NOTRDY : rcvd_resp;
         end
         always_ff @(posedge clk) begin
             if (rvalid & rready & rlast) core_rdata <= rcvd_rdata;
@@ -375,7 +375,7 @@ endgenerate
 
 
 // AXI interface assignments
-assign awid     = YCR1_AXI_IDWIDTH'(1);
+assign awid     = YCR_AXI_IDWIDTH'(1);
 assign awlen    = 8'd0;
 assign awsize   = (force_write) ? width2axsize(core_width) : width2axsize(req_fifo_axi_width[req_proc_ptr]);
 assign awburst  = 2'd1;
@@ -386,7 +386,7 @@ assign awregion = '0;
 assign awuser   = '0;
 assign awqos    = '0;
 
-assign arid     = YCR1_AXI_IDWIDTH'(0);
+assign arid     = YCR_AXI_IDWIDTH'(0);
 assign arlen    = 8'd0;
 assign arsize   = (force_read) ? width2axsize(core_width) : width2axsize(req_fifo_axi_width[req_proc_ptr]);
 assign arburst  = 2'd1;
@@ -401,23 +401,23 @@ assign wlast    = 1'd1;
 assign wuser    = '0;
 
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
 
 // X checks
-YCR1_SVA_AXI_X_CHECK0  : assert property (@(negedge clk) disable iff (~rst_n)   !$isunknown({core_req, awready, wready, bvalid, arready, rvalid}) )
+YCR_SVA_AXI_X_CHECK0  : assert property (@(negedge clk) disable iff (~rst_n)   !$isunknown({core_req, awready, wready, bvalid, arready, rvalid}) )
                                                                                                         else $error("AXI bridge: X state on input");
-YCR1_SVA_AXI_X_CHECK1  : assert property (@(negedge clk) disable iff (~rst_n)   core_req |->
+YCR_SVA_AXI_X_CHECK1  : assert property (@(negedge clk) disable iff (~rst_n)   core_req |->
                                                                                     !$isunknown({core_cmd, core_width, core_addr}) )
                                                                                                         else $error("AXI bridge: X state on input");
-YCR1_SVA_AXI_X_CHECK2  : assert property (@(negedge clk) disable iff (~rst_n)   bvalid |->
+YCR_SVA_AXI_X_CHECK2  : assert property (@(negedge clk) disable iff (~rst_n)   bvalid |->
                                                                                     !$isunknown({bid, bresp}) )
                                                                                                         else $error("AXI bridge: X state on input");
-YCR1_SVA_AXI_X_CHECK3  : assert property (@(negedge clk) disable iff (~rst_n)   rvalid |->
+YCR_SVA_AXI_X_CHECK3  : assert property (@(negedge clk) disable iff (~rst_n)   rvalid |->
                                                                                     !$isunknown({rid, rresp}) )
                                                                                                         else $error("AXI bridge: X state on input");
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_mem_axi
+endmodule : ycr_mem_axi

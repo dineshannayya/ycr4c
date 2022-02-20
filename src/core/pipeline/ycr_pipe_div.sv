@@ -20,7 +20,7 @@
 ////  32 / 32 Divider with 16 stage pipe line , Support Signed Division   ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////    32 Div By 32 with 16 stage pipe line for timing reason            ////
@@ -61,7 +61,7 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-module ycr1_pipe_div(
+module ycr_pipe_div(
 	input   logic        clk, 
 	input   logic        rstn, 
 	input   logic        data_valid,   // input valid

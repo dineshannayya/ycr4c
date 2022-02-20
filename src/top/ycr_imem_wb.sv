@@ -20,7 +20,7 @@
 ////  yifive Wishbone interface for Instruction memory                    ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     integrated wishbone i/f to instruction memory                    ////
@@ -44,10 +44,10 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_wb.svh"
-`include "ycr1_memif.svh"
+`include "ycr_wb.svh"
+`include "ycr_memif.svh"
 
-module ycr1_imem_wb (
+module ycr_imem_wb (
     // Control Signals
     input   logic                           core_rst_n, // core reset
     input   logic                           core_clk,   // Core clock
@@ -55,19 +55,19 @@ module ycr1_imem_wb (
     // Core Interface
     output  logic                           imem_req_ack,
     input   logic                           imem_req,
-    input   logic   [YCR1_WB_WIDTH-1:0]     imem_addr,
-    output  logic   [YCR1_WB_WIDTH-1:0]     imem_rdata,
+    input   logic   [YCR_WB_WIDTH-1:0]     imem_addr,
+    output  logic   [YCR_WB_WIDTH-1:0]     imem_rdata,
     output  logic [1:0]                     imem_resp,
 
     // WB Interface
     input   logic                           wb_rst_n,   // wishbone reset
     input   logic                           wb_clk,     // wishbone clock
     output  logic                           wbd_stb_o, // strobe/request
-    output  logic   [YCR1_WB_WIDTH-1:0]     wbd_adr_o, // address
+    output  logic   [YCR_WB_WIDTH-1:0]     wbd_adr_o, // address
     output  logic                           wbd_we_o,  // write
-    output  logic   [YCR1_WB_WIDTH-1:0]     wbd_dat_o, // data output
+    output  logic   [YCR_WB_WIDTH-1:0]     wbd_dat_o, // data output
     output  logic   [3:0]                   wbd_sel_o, // byte enable
-    input   logic   [YCR1_WB_WIDTH-1:0]     wbd_dat_i, // data input
+    input   logic   [YCR_WB_WIDTH-1:0]     wbd_dat_i, // data input
     input   logic                           wbd_ack_i, // acknowlegement
     input   logic                           wbd_err_i  // error
 
@@ -82,13 +82,13 @@ module ycr1_imem_wb (
 //-------------------------------------------------------------------------------
 
 typedef struct packed {
-    logic   [YCR1_WB_WIDTH-1:0]    haddr;
-} type_ycr1_req_fifo_s;
+    logic   [YCR_WB_WIDTH-1:0]    haddr;
+} type_ycr_req_fifo_s;
 
 typedef struct packed {
     logic                           hresp;
-    logic   [YCR1_WB_WIDTH-1:0]    hrdata;
-} type_ycr1_resp_fifo_s;
+    logic   [YCR_WB_WIDTH-1:0]    hrdata;
+} type_ycr_resp_fifo_s;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -114,8 +114,8 @@ logic                                      resp_fifo_rd;
 //-------------------------------------------------------------------------------
 // REQ_FIFO
 //-------------------------------------------------------------------------------
-type_ycr1_req_fifo_s    req_fifo_din;
-type_ycr1_req_fifo_s    req_fifo_dout;
+type_ycr_req_fifo_s    req_fifo_din;
+type_ycr_req_fifo_s    req_fifo_dout;
 
 assign req_fifo_wr  = ~req_fifo_full & imem_req;
 assign imem_req_ack = ~req_fifo_full;
@@ -123,7 +123,7 @@ assign imem_req_ack = ~req_fifo_full;
 assign req_fifo_din.haddr = imem_addr;
 
  async_fifo #(
-      .W(YCR1_WB_WIDTH), // Data Width
+      .W(YCR_WB_WIDTH), // Data Width
       .DP(4),            // FIFO DEPTH
       .WR_FAST(1),       // We need FF'ed Full
       .RD_FAST(1)        // We need FF'ed Empty
@@ -162,14 +162,14 @@ assign wbd_sel_o    = 4'b1111; // Only Read allowed in imem i/f
 //-------------------------------------------------------------------------------
 // Response path - Used by Read path logic
 //-------------------------------------------------------------------------------
-type_ycr1_resp_fifo_s                       resp_fifo_din;
-type_ycr1_resp_fifo_s                       resp_fifo_dout;
+type_ycr_resp_fifo_s                       resp_fifo_din;
+type_ycr_resp_fifo_s                       resp_fifo_dout;
 
 assign resp_fifo_din.hresp  = (wbd_err_i) ? 1'b0 : 1'b1;
 assign resp_fifo_din.hrdata = wbd_dat_i;
 
  async_fifo #(
-      .W(YCR1_WB_WIDTH+1), // Data Width
+      .W(YCR_WB_WIDTH+1), // Data Width
       .DP(4),            // FIFO DEPTH
       .WR_FAST(1),       // We need FF'ed Full
       .RD_FAST(1)        // We need FF'ed Empty
@@ -197,43 +197,43 @@ assign imem_rdata   = resp_fifo_dout.hrdata;
 
 assign imem_resp = (resp_fifo_rd)
                     ? (resp_fifo_dout.hresp == 1'b1)
-                        ? YCR1_MEM_RESP_RDY_OK
-                        : YCR1_MEM_RESP_RDY_ER
-                    : YCR1_MEM_RESP_NOTRDY ;
+                        ? YCR_MEM_RESP_RDY_OK
+                        : YCR_MEM_RESP_RDY_ER
+                    : YCR_MEM_RESP_NOTRDY ;
 
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
 
 // Check Core interface
-YCR1_SVA_IMEM_WB_BRIDGE_REQ_XCHECK : assert property (
+YCR_SVA_IMEM_WB_BRIDGE_REQ_XCHECK : assert property (
     @(negedge core_clk) disable iff (~core_rst_n)
     !$isunknown(imem_req)
     ) else $error("IMEM WB bridge Error: imem_req has unknown values");
 
-YCR1_IMEM_WB_BRIDGE_ADDR_XCHECK : assert property (
+YCR_IMEM_WB_BRIDGE_ADDR_XCHECK : assert property (
     @(negedge core_clk) disable iff (~core_rst_n)
     imem_req |-> !$isunknown(imem_addr)
     ) else $error("IMEM WB bridge Error: imem_addr has unknown values");
 
-YCR1_IMEM_WB_BRIDGE_ADDR_ALLIGN : assert property (
+YCR_IMEM_WB_BRIDGE_ADDR_ALLIGN : assert property (
     @(negedge core_clk) disable iff (~core_rst_n)
     imem_req |-> (imem_addr[1:0] == '0)
     ) else $error("IMEM WB bridge Error: imem_addr has unalign values");
 
 // Check WB interface
-YCR1_IMEM_WB_BRIDGE_HREADY_XCHECK : assert property (
+YCR_IMEM_WB_BRIDGE_HREADY_XCHECK : assert property (
     @(negedge core_clk) disable iff (~core_rst_n)
     !$isunknown(imem_req_ack)
     ) else $error("IMEM WB bridge Error: imem_req_ack has unknown values");
 
-YCR1_IMEM_WB_BRIDGE_HRESP_XCHECK : assert property (
+YCR_IMEM_WB_BRIDGE_HRESP_XCHECK : assert property (
     @(negedge core_clk) disable iff (~core_rst_n)
     !$isunknown(imem_resp)
     ) else $error("IMEM WB bridge Error: imem_resp has unknown values");
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_imem_wb
+endmodule : ycr_imem_wb

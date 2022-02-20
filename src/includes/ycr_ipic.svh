@@ -20,7 +20,7 @@
 ////  yifive IPIC header file                                             ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     IPIC header file                                                 ////
@@ -39,56 +39,56 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-`ifndef YCR1_IPIC_SVH
-`define YCR1_IPIC_SVH
+`ifndef YCR_IPIC_SVH
+`define YCR_IPIC_SVH
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
 //-------------------------------------------------------------------------------
 // Parameters declaration
 //-------------------------------------------------------------------------------
-parameter                                   YCR1_IRQ_VECT_NUM       = 16;   // must be power of 2 in the current implementation
-parameter                                   YCR1_IRQ_VECT_WIDTH     = $clog2(YCR1_IRQ_VECT_NUM+1);
-parameter                                   YCR1_IRQ_LINES_NUM      = YCR1_IRQ_VECT_NUM;
-parameter                                   YCR1_IRQ_LINES_WIDTH    = $clog2(YCR1_IRQ_LINES_NUM);
-parameter   logic [YCR1_IRQ_VECT_WIDTH-1:0] YCR1_IRQ_VOID_VECT_NUM  = YCR1_IRQ_VECT_WIDTH'(YCR1_IRQ_VECT_NUM);
-parameter                                   YCR1_IRQ_IDX_WIDTH      = $clog2(YCR1_IRQ_VECT_NUM);
+parameter                                   YCR_IRQ_VECT_NUM       = 16;   // must be power of 2 in the current implementation
+parameter                                   YCR_IRQ_VECT_WIDTH     = $clog2(YCR_IRQ_VECT_NUM+1);
+parameter                                   YCR_IRQ_LINES_NUM      = YCR_IRQ_VECT_NUM;
+parameter                                   YCR_IRQ_LINES_WIDTH    = $clog2(YCR_IRQ_LINES_NUM);
+parameter   logic [YCR_IRQ_VECT_WIDTH-1:0] YCR_IRQ_VOID_VECT_NUM  = YCR_IRQ_VECT_WIDTH'(YCR_IRQ_VECT_NUM);
+parameter                                   YCR_IRQ_IDX_WIDTH      = $clog2(YCR_IRQ_VECT_NUM);
 
 // Address decoding parameters
-parameter   logic [2:0]                     YCR1_IPIC_CISV          = 3'h0;    // RO
-parameter   logic [2:0]                     YCR1_IPIC_CICSR         = 3'h1;    // {IP, IE}
-parameter   logic [2:0]                     YCR1_IPIC_IPR           = 3'h2;    // RW1C
-parameter   logic [2:0]                     YCR1_IPIC_ISVR          = 3'h3;    // RO
-parameter   logic [2:0]                     YCR1_IPIC_EOI           = 3'h4;    // RZW
-parameter   logic [2:0]                     YCR1_IPIC_SOI           = 3'h5;    // RZW
-parameter   logic [2:0]                     YCR1_IPIC_IDX           = 3'h6;    // RW
-parameter   logic [2:0]                     YCR1_IPIC_ICSR          = 3'h7;    // RW
+parameter   logic [2:0]                     YCR_IPIC_CISV          = 3'h0;    // RO
+parameter   logic [2:0]                     YCR_IPIC_CICSR         = 3'h1;    // {IP, IE}
+parameter   logic [2:0]                     YCR_IPIC_IPR           = 3'h2;    // RW1C
+parameter   logic [2:0]                     YCR_IPIC_ISVR          = 3'h3;    // RO
+parameter   logic [2:0]                     YCR_IPIC_EOI           = 3'h4;    // RZW
+parameter   logic [2:0]                     YCR_IPIC_SOI           = 3'h5;    // RZW
+parameter   logic [2:0]                     YCR_IPIC_IDX           = 3'h6;    // RW
+parameter   logic [2:0]                     YCR_IPIC_ICSR          = 3'h7;    // RW
 
-parameter                                   YCR1_IPIC_ICSR_IP       = 0;
-parameter                                   YCR1_IPIC_ICSR_IE       = 1;
-parameter                                   YCR1_IPIC_ICSR_IM       = 2;
-parameter                                   YCR1_IPIC_ICSR_INV      = 3;
-parameter                                   YCR1_IPIC_ICSR_IS       = 4;
-parameter                                   YCR1_IPIC_ICSR_PRV_LSB  = 8;
-parameter                                   YCR1_IPIC_ICSR_PRV_MSB  = 9;
-parameter                                   YCR1_IPIC_ICSR_LN_LSB   = 12;
-parameter                                   YCR1_IPIC_ICSR_LN_MSB   = YCR1_IPIC_ICSR_LN_LSB
-                                                                    + YCR1_IRQ_LINES_WIDTH;
+parameter                                   YCR_IPIC_ICSR_IP       = 0;
+parameter                                   YCR_IPIC_ICSR_IE       = 1;
+parameter                                   YCR_IPIC_ICSR_IM       = 2;
+parameter                                   YCR_IPIC_ICSR_INV      = 3;
+parameter                                   YCR_IPIC_ICSR_IS       = 4;
+parameter                                   YCR_IPIC_ICSR_PRV_LSB  = 8;
+parameter                                   YCR_IPIC_ICSR_PRV_MSB  = 9;
+parameter                                   YCR_IPIC_ICSR_LN_LSB   = 12;
+parameter                                   YCR_IPIC_ICSR_LN_MSB   = YCR_IPIC_ICSR_LN_LSB
+                                                                    + YCR_IRQ_LINES_WIDTH;
 
-parameter   logic [1:0]                     YCR1_IPIC_PRV_M         = 2'b11;
+parameter   logic [1:0]                     YCR_IPIC_PRV_M         = 2'b11;
 
 //-------------------------------------------------------------------------------
 // Types declaration
 //-------------------------------------------------------------------------------
 typedef enum logic {
-    YCR1_CSR2IPIC_RD,
-    YCR1_CSR2IPIC_WR
-`ifdef YCR1_XPROP_EN
+    YCR_CSR2IPIC_RD,
+    YCR_CSR2IPIC_WR
+`ifdef YCR_XPROP_EN
     ,
-    YCR1_CSR2IPIC_ERROR = 'x
-`endif // YCR1_XPROP_EN
-} type_ycr1_csr2ipic_wr_e;
+    YCR_CSR2IPIC_ERROR = 'x
+`endif // YCR_XPROP_EN
+} type_ycr_csr2ipic_wr_e;
 
-`endif // YCR1_IPIC_EN
-`endif // YCR1_IPIC_SVH
+`endif // YCR_IPIC_EN
+`endif // YCR_IPIC_SVH

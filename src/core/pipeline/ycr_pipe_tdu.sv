@@ -20,7 +20,7 @@
 ////  yifive Trigger Debug Unit (TDU)                                     ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Trigger Debug Unit (TDU)                                         ////
@@ -62,13 +62,13 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_TDU_EN
-`include "ycr1_riscv_isa_decoding.svh"
-`include "ycr1_tdu.svh"
+`ifdef YCR_TDU_EN
+`include "ycr_riscv_isa_decoding.svh"
+`include "ycr_tdu.svh"
 
-module ycr1_pipe_tdu (
+module ycr_pipe_tdu (
     // Common signals
     input  logic                                            rst_n,                      // TDU reset
     input  logic                                            clk,                        // TDU clock
@@ -77,25 +77,25 @@ module ycr1_pipe_tdu (
 
     // TDU <-> CSR interface
     input  logic                                            csr2tdu_req_i,              // CSR-TDU i/f request
-    input  type_ycr1_csr_cmd_sel_e                          csr2tdu_cmd_i,              // CSR-TDU i/f command
-    input  logic [YCR1_CSR_ADDR_TDU_OFFS_W-1:0]             csr2tdu_addr_i,             // CSR-TDU i/f address
-    input  logic [YCR1_TDU_DATA_W-1:0]                      csr2tdu_wdata_i,            // CSR-TDU i/f write data
-    output logic [YCR1_TDU_DATA_W-1:0]                      tdu2csr_rdata_o,            // CSR-TDU i/f read data
-    output type_ycr1_csr_resp_e                             tdu2csr_resp_o,             // CSR-TDU i/f response
+    input  type_ycr_csr_cmd_sel_e                          csr2tdu_cmd_i,              // CSR-TDU i/f command
+    input  logic [YCR_CSR_ADDR_TDU_OFFS_W-1:0]             csr2tdu_addr_i,             // CSR-TDU i/f address
+    input  logic [YCR_TDU_DATA_W-1:0]                      csr2tdu_wdata_i,            // CSR-TDU i/f write data
+    output logic [YCR_TDU_DATA_W-1:0]                      tdu2csr_rdata_o,            // CSR-TDU i/f read data
+    output type_ycr_csr_resp_e                             tdu2csr_resp_o,             // CSR-TDU i/f response
 
     // TDU <-> EXU interface
-    input  type_ycr1_brkm_instr_mon_s                       exu2tdu_imon_i,             // Instruction stream monitoring
-    output logic [YCR1_TDU_ALLTRIG_NUM-1 : 0]               tdu2exu_ibrkpt_match_o,     // Instruction BP match
+    input  type_ycr_brkm_instr_mon_s                       exu2tdu_imon_i,             // Instruction stream monitoring
+    output logic [YCR_TDU_ALLTRIG_NUM-1 : 0]               tdu2exu_ibrkpt_match_o,     // Instruction BP match
     output logic                                            tdu2exu_ibrkpt_exc_req_o,   // Instruction BP exception request
-    input  logic [YCR1_TDU_ALLTRIG_NUM-1 : 0]               exu2tdu_bp_retire_i,        // Map of BPs being retired
+    input  logic [YCR_TDU_ALLTRIG_NUM-1 : 0]               exu2tdu_bp_retire_i,        // Map of BPs being retired
 
     // TDU <-> LSU interface
-`ifndef YCR1_TDU_EN
+`ifndef YCR_TDU_EN
     output logic                                            tdu2lsu_brk_en_o,           // TDU-LSU Breakpoint enable
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
     output logic                                            tdu2lsu_ibrkpt_exc_req_o,   // TDU-LSU Instruction BP exception request
-    input  type_ycr1_brkm_lsu_mon_s                         lsu2tdu_dmon_i,             // TDU-LSU Data address stream monitoring
-    output logic [YCR1_TDU_MTRIG_NUM-1 : 0]                 tdu2lsu_dbrkpt_match_o,     // TDU-LSU Data BP match
+    input  type_ycr_brkm_lsu_mon_s                         lsu2tdu_dmon_i,             // TDU-LSU Data address stream monitoring
+    output logic [YCR_TDU_MTRIG_NUM-1 : 0]                 tdu2lsu_dbrkpt_match_o,     // TDU-LSU Data BP match
     output logic                                            tdu2lsu_dbrkpt_exc_req_o,   // TDU-LSU Data BP exception request
 
     // TDU <-> HDU interface
@@ -106,8 +106,8 @@ module ycr1_pipe_tdu (
 // Local parameters declaration
 //------------------------------------------------------------------------------
 
-localparam int unsigned MTRIG_NUM   = YCR1_TDU_MTRIG_NUM;
-localparam int unsigned ALLTRIG_NUM = YCR1_TDU_ALLTRIG_NUM;
+localparam int unsigned MTRIG_NUM   = YCR_TDU_MTRIG_NUM;
+localparam int unsigned ALLTRIG_NUM = YCR_TDU_ALLTRIG_NUM;
 localparam int unsigned ALLTRIG_W   = $clog2(ALLTRIG_NUM+1);
 
 //------------------------------------------------------------------------------
@@ -119,15 +119,15 @@ localparam int unsigned ALLTRIG_W   = $clog2(ALLTRIG_NUM+1);
 
 // Write signals
 logic                                           csr_wr_req;
-logic [YCR1_TDU_DATA_W-1:0]                     csr_wr_data;
+logic [YCR_TDU_DATA_W-1:0]                     csr_wr_data;
 
 // Register select
 logic                                           csr_addr_tselect;
 logic [MTRIG_NUM-1:0]                           csr_addr_mcontrol;
 logic [MTRIG_NUM-1:0]                           csr_addr_tdata2;
-`ifdef YCR1_TDU_ICOUNT_EN
+`ifdef YCR_TDU_ICOUNT_EN
 logic                                           csr_addr_icount;
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
 
 // TDU CSRs
 //------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ logic [MTRIG_NUM-1:0]                           csr_mcontrol_exec_hit;
 logic [MTRIG_NUM-1:0]                           csr_mcontrol_ldst_hit;
 
 // ICOUNT register
-`ifdef YCR1_TDU_ICOUNT_EN
+`ifdef YCR_TDU_ICOUNT_EN
 logic                                           csr_icount_wr_req;
 logic                                           csr_icount_clk_en;
 logic                                           csr_icount_upd;
@@ -173,9 +173,9 @@ logic                                           csr_icount_action_ff;
 logic                                           csr_icount_action_next;
 logic                                           csr_icount_hit_ff;
 logic                                           csr_icount_hit_next;
-logic [YCR1_TDU_ICOUNT_COUNT_HI-YCR1_TDU_ICOUNT_COUNT_LO:0]
+logic [YCR_TDU_ICOUNT_COUNT_HI-YCR_TDU_ICOUNT_COUNT_LO:0]
                                                 csr_icount_count_ff;
-logic [YCR1_TDU_ICOUNT_COUNT_HI-YCR1_TDU_ICOUNT_COUNT_LO:0]
+logic [YCR_TDU_ICOUNT_COUNT_HI-YCR_TDU_ICOUNT_COUNT_LO:0]
                                                 csr_icount_count_next;
 logic                                           csr_icount_skip_ff;
 logic                                           csr_icount_skip_next;
@@ -184,11 +184,11 @@ logic                                           csr_icount_decr_en;
 logic                                           csr_icount_count_decr;
 logic                                           csr_icount_skip_dsbl;
 logic                                           csr_icount_hit;
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
 
 // TDATA2 register
 logic [MTRIG_NUM-1:0]                           csr_tdata2_upd;
-logic [MTRIG_NUM-1:0]                           csr_tdata2_ff [YCR1_TDU_DATA_W-1:0];
+logic [MTRIG_NUM-1:0]                           csr_tdata2_ff [YCR_TDU_DATA_W-1:0];
 
 //------------------------------------------------------------------------------
 // CSR read/write interface
@@ -197,75 +197,75 @@ logic [MTRIG_NUM-1:0]                           csr_tdata2_ff [YCR1_TDU_DATA_W-1
 // Read logic
 //------------------------------------------------------------------------------
 
-assign tdu2csr_resp_o = csr2tdu_req_i ? YCR1_CSR_RESP_OK : YCR1_CSR_RESP_ER;
+assign tdu2csr_resp_o = csr2tdu_req_i ? YCR_CSR_RESP_OK : YCR_CSR_RESP_ER;
 integer i;
 always_comb begin
     i = 0; // yosys latch warning fix
     tdu2csr_rdata_o = '0;
     if (csr2tdu_req_i) begin
         case (csr2tdu_addr_i)
-            YCR1_CSR_ADDR_TDU_OFFS_TSELECT: begin
+            YCR_CSR_ADDR_TDU_OFFS_TSELECT: begin
                 tdu2csr_rdata_o = {'0, csr_tselect_ff};
             end
-            YCR1_CSR_ADDR_TDU_OFFS_TDATA2 : begin
+            YCR_CSR_ADDR_TDU_OFFS_TDATA2 : begin
                 for(i = 0; i < MTRIG_NUM; i=i+1) begin // cp.4
                     if(csr_tselect_ff == ALLTRIG_W'(i)) begin
                         tdu2csr_rdata_o = csr_tdata2_ff[i];
                     end
                 end
             end
-            YCR1_CSR_ADDR_TDU_OFFS_TDATA1 : begin
+            YCR_CSR_ADDR_TDU_OFFS_TDATA1 : begin
                 for(i = 0; i < MTRIG_NUM; i=i+1) begin // cp.4
                     if(csr_tselect_ff == ALLTRIG_W'(i)) begin
-                        tdu2csr_rdata_o[YCR1_TDU_TDATA1_TYPE_HI:
-                                       YCR1_TDU_TDATA1_TYPE_LO]      = YCR1_TDU_MCONTROL_TYPE_VAL;
-                        tdu2csr_rdata_o[YCR1_TDU_TDATA1_DMODE]       = csr_mcontrol_dmode_ff[i];
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_MASKMAX_HI:
-                                       YCR1_TDU_MCONTROL_MASKMAX_LO] = YCR1_TDU_MCONTROL_MASKMAX_VAL;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_HIT]       = csr_mcontrol_hit_ff[i];
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_SELECT]    = YCR1_TDU_MCONTROL_SELECT_VAL;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_TIMING]    = YCR1_TDU_MCONTROL_TIMING_VAL;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_ACTION_HI:
-                                       YCR1_TDU_MCONTROL_ACTION_LO]  = {5'b0, csr_mcontrol_action_ff[i]};
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_CHAIN]     = 1'b0;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_MATCH_HI:
-                                       YCR1_TDU_MCONTROL_MATCH_LO]   = 4'b0;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_M]         = csr_mcontrol_m_ff[i];
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_RESERVEDA] = YCR1_TDU_MCONTROL_RESERVEDA_VAL;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_S]         = 1'b0;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_U]         = 1'b0;
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_EXECUTE]   = csr_mcontrol_exec_ff [i];
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_STORE]     = csr_mcontrol_store_ff[i];
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_LOAD]      = csr_mcontrol_load_ff [i];
+                        tdu2csr_rdata_o[YCR_TDU_TDATA1_TYPE_HI:
+                                       YCR_TDU_TDATA1_TYPE_LO]      = YCR_TDU_MCONTROL_TYPE_VAL;
+                        tdu2csr_rdata_o[YCR_TDU_TDATA1_DMODE]       = csr_mcontrol_dmode_ff[i];
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_MASKMAX_HI:
+                                       YCR_TDU_MCONTROL_MASKMAX_LO] = YCR_TDU_MCONTROL_MASKMAX_VAL;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_HIT]       = csr_mcontrol_hit_ff[i];
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_SELECT]    = YCR_TDU_MCONTROL_SELECT_VAL;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_TIMING]    = YCR_TDU_MCONTROL_TIMING_VAL;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_ACTION_HI:
+                                       YCR_TDU_MCONTROL_ACTION_LO]  = {5'b0, csr_mcontrol_action_ff[i]};
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_CHAIN]     = 1'b0;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_MATCH_HI:
+                                       YCR_TDU_MCONTROL_MATCH_LO]   = 4'b0;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_M]         = csr_mcontrol_m_ff[i];
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_RESERVEDA] = YCR_TDU_MCONTROL_RESERVEDA_VAL;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_S]         = 1'b0;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_U]         = 1'b0;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_EXECUTE]   = csr_mcontrol_exec_ff [i];
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_STORE]     = csr_mcontrol_store_ff[i];
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_LOAD]      = csr_mcontrol_load_ff [i];
                     end
                 end
-`ifdef YCR1_TDU_ICOUNT_EN
-                if(csr_tselect_ff == ALLTRIG_W'(YCR1_TDU_ALLTRIG_NUM - 1'b1)) begin
-                    tdu2csr_rdata_o[YCR1_TDU_TDATA1_TYPE_HI:
-                                   YCR1_TDU_TDATA1_TYPE_LO]    = YCR1_TDU_ICOUNT_TYPE_VAL;
-                    tdu2csr_rdata_o[YCR1_TDU_TDATA1_DMODE]     = csr_icount_dmode_ff;
-                    tdu2csr_rdata_o[YCR1_TDU_ICOUNT_HIT]       = csr_icount_hit_ff;
-                    tdu2csr_rdata_o[YCR1_TDU_ICOUNT_COUNT_HI:
-                                   YCR1_TDU_ICOUNT_COUNT_LO]   = csr_icount_count_ff;
-                    tdu2csr_rdata_o[YCR1_TDU_ICOUNT_U]         = 1'b0;
-                    tdu2csr_rdata_o[YCR1_TDU_ICOUNT_S]         = 1'b0;
-                    tdu2csr_rdata_o[YCR1_TDU_ICOUNT_M]         = csr_icount_m_ff;
-                    tdu2csr_rdata_o[YCR1_TDU_ICOUNT_ACTION_HI:
-                                   YCR1_TDU_ICOUNT_ACTION_LO]  = {5'b0, csr_icount_action_ff};
+`ifdef YCR_TDU_ICOUNT_EN
+                if(csr_tselect_ff == ALLTRIG_W'(YCR_TDU_ALLTRIG_NUM - 1'b1)) begin
+                    tdu2csr_rdata_o[YCR_TDU_TDATA1_TYPE_HI:
+                                   YCR_TDU_TDATA1_TYPE_LO]    = YCR_TDU_ICOUNT_TYPE_VAL;
+                    tdu2csr_rdata_o[YCR_TDU_TDATA1_DMODE]     = csr_icount_dmode_ff;
+                    tdu2csr_rdata_o[YCR_TDU_ICOUNT_HIT]       = csr_icount_hit_ff;
+                    tdu2csr_rdata_o[YCR_TDU_ICOUNT_COUNT_HI:
+                                   YCR_TDU_ICOUNT_COUNT_LO]   = csr_icount_count_ff;
+                    tdu2csr_rdata_o[YCR_TDU_ICOUNT_U]         = 1'b0;
+                    tdu2csr_rdata_o[YCR_TDU_ICOUNT_S]         = 1'b0;
+                    tdu2csr_rdata_o[YCR_TDU_ICOUNT_M]         = csr_icount_m_ff;
+                    tdu2csr_rdata_o[YCR_TDU_ICOUNT_ACTION_HI:
+                                   YCR_TDU_ICOUNT_ACTION_LO]  = {5'b0, csr_icount_action_ff};
                 end
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
             end
-            YCR1_CSR_ADDR_TDU_OFFS_TINFO : begin
+            YCR_CSR_ADDR_TDU_OFFS_TINFO : begin
                 for(i = 0; i < MTRIG_NUM; i=i+1) begin // cp.4
                     if(csr_tselect_ff == ALLTRIG_W'(i)) begin
-                        tdu2csr_rdata_o[YCR1_TDU_MCONTROL_TYPE_VAL] = 1'b1;
+                        tdu2csr_rdata_o[YCR_TDU_MCONTROL_TYPE_VAL] = 1'b1;
                     end
                 end
-`ifdef YCR1_TDU_ICOUNT_EN
-                if(csr_tselect_ff == ALLTRIG_W'(YCR1_TDU_ALLTRIG_NUM - 1'b1)) begin
-                    tdu2csr_rdata_o[YCR1_TDU_ICOUNT_TYPE_VAL] = 1'b1;
+`ifdef YCR_TDU_ICOUNT_EN
+                if(csr_tselect_ff == ALLTRIG_W'(YCR_TDU_ALLTRIG_NUM - 1'b1)) begin
+                    tdu2csr_rdata_o[YCR_TDU_ICOUNT_TYPE_VAL] = 1'b1;
                 end
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
             end
             default : begin
             end
@@ -281,15 +281,15 @@ always_comb begin
     csr_wr_data = '0;
 
     case (csr2tdu_cmd_i)
-        YCR1_CSR_CMD_WRITE: begin
+        YCR_CSR_CMD_WRITE: begin
             csr_wr_req  = 1'b1;
             csr_wr_data = csr2tdu_wdata_i;
         end
-        YCR1_CSR_CMD_SET  : begin
+        YCR_CSR_CMD_SET  : begin
             csr_wr_req  = |csr2tdu_wdata_i;
             csr_wr_data = tdu2csr_rdata_o | csr2tdu_wdata_i;
         end
-        YCR1_CSR_CMD_CLEAR: begin
+        YCR_CSR_CMD_CLEAR: begin
             csr_wr_req  = |csr2tdu_wdata_i;
             csr_wr_data = tdu2csr_rdata_o & ~csr2tdu_wdata_i;
         end
@@ -306,28 +306,28 @@ always_comb begin
     csr_addr_tselect  = 1'b0;
     csr_addr_tdata2   = '0;
     csr_addr_mcontrol = '0;
-`ifdef YCR1_TDU_ICOUNT_EN
+`ifdef YCR_TDU_ICOUNT_EN
     csr_addr_icount   = '0;
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
 
     if (csr2tdu_req_i) begin
         case (csr2tdu_addr_i)
-            YCR1_CSR_ADDR_TDU_OFFS_TSELECT: begin
+            YCR_CSR_ADDR_TDU_OFFS_TSELECT: begin
                 csr_addr_tselect = 1'b1;
             end
-            YCR1_CSR_ADDR_TDU_OFFS_TDATA1 : begin
+            YCR_CSR_ADDR_TDU_OFFS_TDATA1 : begin
                 for(k = 0; k < MTRIG_NUM; k=k+1) begin
                     if(csr_tselect_ff == ALLTRIG_W'(k)) begin
                         csr_addr_mcontrol[k] = 1'b1;
                     end
                 end
-`ifdef YCR1_TDU_ICOUNT_EN
-                if(csr_tselect_ff == ALLTRIG_W'(YCR1_TDU_ALLTRIG_NUM - 1'b1)) begin
+`ifdef YCR_TDU_ICOUNT_EN
+                if(csr_tselect_ff == ALLTRIG_W'(YCR_TDU_ALLTRIG_NUM - 1'b1)) begin
                     csr_addr_icount = 1'b1;
                 end
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
             end
-            YCR1_CSR_ADDR_TDU_OFFS_TDATA2 : begin
+            YCR_CSR_ADDR_TDU_OFFS_TDATA2 : begin
                 for(k = 0; k < MTRIG_NUM; k=k+1) begin // cp.4
                     if(csr_tselect_ff == ALLTRIG_W'(k) ) begin
                         csr_addr_tdata2[k] = 1'b1;
@@ -365,7 +365,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end
 end
 
-`ifdef YCR1_TDU_ICOUNT_EN
+`ifdef YCR_TDU_ICOUNT_EN
 // ICOUNT register
 //------------------------------------------------------------------------------
 // Provides a trigger that fires when the certain number of instructions has retired
@@ -403,12 +403,12 @@ assign csr_icount_skip_dsbl  = exu2tdu_imon_i.req & csr_icount_decr_en & csr_ico
 
 always_comb begin
     if (csr_icount_upd) begin
-        csr_icount_dmode_next  = csr_wr_data[YCR1_TDU_TDATA1_DMODE];
-        csr_icount_m_next      = csr_wr_data[YCR1_TDU_ICOUNT_M];
-        csr_icount_action_next = (csr_wr_data[YCR1_TDU_ICOUNT_ACTION_HI
-                                             :YCR1_TDU_ICOUNT_ACTION_LO] == 'b1);
-        csr_icount_hit_next    = csr_wr_data[YCR1_TDU_ICOUNT_HIT];
-        csr_icount_count_next  = csr_wr_data[YCR1_TDU_ICOUNT_COUNT_HI:YCR1_TDU_ICOUNT_COUNT_LO];
+        csr_icount_dmode_next  = csr_wr_data[YCR_TDU_TDATA1_DMODE];
+        csr_icount_m_next      = csr_wr_data[YCR_TDU_ICOUNT_M];
+        csr_icount_action_next = (csr_wr_data[YCR_TDU_ICOUNT_ACTION_HI
+                                             :YCR_TDU_ICOUNT_ACTION_LO] == 'b1);
+        csr_icount_hit_next    = csr_wr_data[YCR_TDU_ICOUNT_HIT];
+        csr_icount_count_next  = csr_wr_data[YCR_TDU_ICOUNT_COUNT_HI:YCR_TDU_ICOUNT_COUNT_LO];
     end else begin
         csr_icount_dmode_next  = csr_icount_dmode_ff;
         csr_icount_m_next      = csr_icount_m_ff;
@@ -422,10 +422,10 @@ always_comb begin
     end
 end
 
-assign csr_icount_skip_next = csr_icount_wr_req    ? csr_wr_data[YCR1_TDU_ICOUNT_M]
+assign csr_icount_skip_next = csr_icount_wr_req    ? csr_wr_data[YCR_TDU_ICOUNT_M]
                             : csr_icount_skip_dsbl ? 1'b0
                                                    : csr_icount_skip_ff;
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
 
 // MCONTROL registers
 //------------------------------------------------------------------------------
@@ -465,14 +465,14 @@ end
 
 always_comb begin
     if (csr_mcontrol_upd[trig]) begin
-        csr_mcontrol_dmode_next [trig] = csr_wr_data[YCR1_TDU_TDATA1_DMODE];
-        csr_mcontrol_m_next     [trig] = csr_wr_data[YCR1_TDU_MCONTROL_M];
-        csr_mcontrol_exec_next  [trig] = csr_wr_data[YCR1_TDU_MCONTROL_EXECUTE];
-        csr_mcontrol_load_next  [trig] = csr_wr_data[YCR1_TDU_MCONTROL_LOAD];
-        csr_mcontrol_store_next [trig] = csr_wr_data[YCR1_TDU_MCONTROL_STORE];
-        csr_mcontrol_action_next[trig] = (csr_wr_data[YCR1_TDU_MCONTROL_ACTION_HI
-                                                     :YCR1_TDU_MCONTROL_ACTION_LO] == 'b1);
-        csr_mcontrol_hit_next   [trig] = csr_wr_data[YCR1_TDU_MCONTROL_HIT];
+        csr_mcontrol_dmode_next [trig] = csr_wr_data[YCR_TDU_TDATA1_DMODE];
+        csr_mcontrol_m_next     [trig] = csr_wr_data[YCR_TDU_MCONTROL_M];
+        csr_mcontrol_exec_next  [trig] = csr_wr_data[YCR_TDU_MCONTROL_EXECUTE];
+        csr_mcontrol_load_next  [trig] = csr_wr_data[YCR_TDU_MCONTROL_LOAD];
+        csr_mcontrol_store_next [trig] = csr_wr_data[YCR_TDU_MCONTROL_STORE];
+        csr_mcontrol_action_next[trig] = (csr_wr_data[YCR_TDU_MCONTROL_ACTION_HI
+                                                     :YCR_TDU_MCONTROL_ACTION_LO] == 'b1);
+        csr_mcontrol_hit_next   [trig] = csr_wr_data[YCR_TDU_MCONTROL_HIT];
     end else begin
         csr_mcontrol_dmode_next [trig] = csr_mcontrol_dmode_ff [trig];
         csr_mcontrol_m_next     [trig] = csr_mcontrol_m_ff     [trig];
@@ -510,13 +510,13 @@ assign csr_icount_hit = ~tdu_dsbl_i & csr_icount_m_ff
                       ? exu2tdu_imon_i.vd & (csr_icount_count_ff == 14'b1) & ~csr_icount_skip_ff
                       : 1'b0;
 
-`ifndef YCR1_TDU_ICOUNT_EN
+`ifndef YCR_TDU_ICOUNT_EN
 assign tdu2exu_ibrkpt_match_o   = csr_mcontrol_exec_hit;
 assign tdu2exu_ibrkpt_exc_req_o = |csr_mcontrol_exec_hit;
 `else
 assign tdu2exu_ibrkpt_match_o   = {csr_icount_hit, csr_mcontrol_exec_hit};
 assign tdu2exu_ibrkpt_exc_req_o = |csr_mcontrol_exec_hit | csr_icount_hit;
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
 
 //------------------------------------------------------------------------------
 // TDU <-> LSU interface
@@ -535,11 +535,11 @@ assign csr_mcontrol_exec_hit[trig] = ~tdu_dsbl_i
 end
 endgenerate
 
-`ifndef YCR1_TDU_ICOUNT_EN
+`ifndef YCR_TDU_ICOUNT_EN
 assign tdu2lsu_ibrkpt_exc_req_o = |csr_mcontrol_exec_hit;
 `else
 assign tdu2lsu_ibrkpt_exc_req_o = |csr_mcontrol_exec_hit | csr_icount_hit;
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
 
 // Watchpoint logic
 //------------------------------------------------------------------------------
@@ -558,9 +558,9 @@ endgenerate
 assign tdu2lsu_dbrkpt_match_o   = csr_mcontrol_ldst_hit;
 assign tdu2lsu_dbrkpt_exc_req_o = |csr_mcontrol_ldst_hit;
 
-`ifndef YCR1_TDU_EN
+`ifndef YCR_TDU_EN
 assign tdu2lsu_brk_en_o = |csr_mcontrol_m_ff | csr_icount_m_ff;
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
 //------------------------------------------------------------------------------
 // TDU <-> HDU interface
@@ -572,12 +572,12 @@ always_comb begin
     for(j = 0; j < MTRIG_NUM; j=j+1) begin
         tdu2hdu_dmode_req_o |= (csr_mcontrol_action_ff[j] & exu2tdu_bp_retire_i[j]);
     end
-`ifdef YCR1_TDU_ICOUNT_EN
+`ifdef YCR_TDU_ICOUNT_EN
     tdu2hdu_dmode_req_o |= (csr_icount_action_ff & exu2tdu_bp_retire_i[ALLTRIG_NUM-1]);
-`endif // YCR1_TDU_ICOUNT_EN
+`endif // YCR_TDU_ICOUNT_EN
 end
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //------------------------------------------------------------------------------
 // Assertion
 //------------------------------------------------------------------------------
@@ -639,8 +639,8 @@ SVA_TDU_X_DMON : assert property (
     lsu2tdu_dmon_i.vd |-> !$isunknown({lsu2tdu_dmon_i})
     ) else $error("TDU Error: dmonitor is X");
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_pipe_tdu
+endmodule : ycr_pipe_tdu
 
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN

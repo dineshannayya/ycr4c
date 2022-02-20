@@ -20,7 +20,7 @@
 ////  Arbitor                                                     ////
 ////                                                              ////
 ////  This file is part of the YIFive cores project               ////
-////  https://github.com/dineshannayya/ycr1.git                   ////
+////  https://github.com/dineshannayya/ycr.git                   ////
 ////  http://www.opencores.org/cores/yifive/                      ////
 ////                                                              ////
 ////  Description                                                 ////
@@ -65,7 +65,7 @@
 //////////////////////////////////////////////////////////////////////
 
 
-module ycr1_arb(
+module ycr_arb(
 	input logic        clk, 
 	input logic        rstn, 
 	input logic [1:0]  req,  // Request

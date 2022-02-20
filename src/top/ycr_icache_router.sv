@@ -20,7 +20,7 @@
 ////  yifive Instruction memory router                                    ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Instruction cache router                                         ////
@@ -38,10 +38,10 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_memif.svh"
-`include "ycr1_arch_description.svh"
+`include "ycr_memif.svh"
+`include "ycr_arch_description.svh"
 
-module ycr1_icache_router (
+module ycr_icache_router (
     // Control signals
     input   logic                           rst_n,
     input   logic                           clk,
@@ -51,9 +51,9 @@ module ycr1_icache_router (
     input   logic                           imem_req,
     input   logic                           imem_cmd,
     input   logic [1:0]                     imem_width,
-    input   logic [`YCR1_IMEM_AWIDTH-1:0]   imem_addr,
-    input   logic [`YCR1_IMEM_BSIZE-1:0]    imem_bl,
-    output  logic [`YCR1_IMEM_DWIDTH-1:0]   imem_rdata,
+    input   logic [`YCR_IMEM_AWIDTH-1:0]   imem_addr,
+    input   logic [`YCR_IMEM_BSIZE-1:0]    imem_bl,
+    output  logic [`YCR_IMEM_DWIDTH-1:0]   imem_rdata,
     output  logic [1:0]                     imem_resp,
 
     // dmem interface
@@ -61,8 +61,8 @@ module ycr1_icache_router (
     input   logic                           dmem_req,
     input   logic                           dmem_cmd,
     input   logic [1:0]                     dmem_width,
-    input   logic [`YCR1_DMEM_AWIDTH-1:0]   dmem_addr,
-    output  logic [`YCR1_DMEM_DWIDTH-1:0]   dmem_rdata,
+    input   logic [`YCR_DMEM_AWIDTH-1:0]   dmem_addr,
+    output  logic [`YCR_DMEM_DWIDTH-1:0]   dmem_rdata,
     output  logic [1:0]                     dmem_resp,
 
 
@@ -71,20 +71,20 @@ module ycr1_icache_router (
     output  logic                           icache_req,
     output  logic                           icache_cmd,
     output  logic [1:0]                     icache_width,
-    output  logic [`YCR1_IMEM_AWIDTH-1:0]   icache_addr,
-    output  logic [`YCR1_IMEM_BSIZE-1:0]    icache_bl,
-    input   logic [`YCR1_IMEM_DWIDTH-1:0]   icache_rdata,
+    output  logic [`YCR_IMEM_AWIDTH-1:0]   icache_addr,
+    output  logic [`YCR_IMEM_BSIZE-1:0]    icache_bl,
+    input   logic [`YCR_IMEM_DWIDTH-1:0]   icache_rdata,
     input   logic [1:0]                     icache_resp
 
 );
 
 
-wire icache_ack = (icache_resp == YCR1_MEM_RESP_RDY_LOK);
+wire icache_ack = (icache_resp == YCR_MEM_RESP_RDY_LOK);
 
 // Arbitor to select between external wb vs uart wb
 wire [1:0] grnt;
 
-ycr1_arb u_arb(
+ycr_arb u_arb(
 	.clk      (clk                ), 
 	.rstn     (rst_n              ), 
 	.req      ({dmem_req,imem_req}), 
@@ -104,11 +104,11 @@ assign imem_rdata      = (grnt == 2'b00) ? icache_rdata   : 'h0;
 // Manipulate the propgation of last ack,
 // As Risc core support only ACK, So we are passing only ack towards core
 // we are using last ack to help in grant switching
-assign imem_resp       = (grnt == 2'b00) ? ((icache_resp == YCR1_MEM_RESP_RDY_LOK) ?  YCR1_MEM_RESP_RDY_OK : icache_resp)  : 'h0;
+assign imem_resp       = (grnt == 2'b00) ? ((icache_resp == YCR_MEM_RESP_RDY_LOK) ?  YCR_MEM_RESP_RDY_OK : icache_resp)  : 'h0;
 
 assign dmem_req_ack    = (grnt == 2'b01) ? icache_req_ack : 'h0;
 assign dmem_rdata      = (grnt == 2'b01) ? icache_rdata   : 'h0;
-assign dmem_resp       = (grnt == 2'b01) ? ((icache_resp == YCR1_MEM_RESP_RDY_LOK) ?  YCR1_MEM_RESP_RDY_OK : icache_resp)    : 'h0;
+assign dmem_resp       = (grnt == 2'b01) ? ((icache_resp == YCR_MEM_RESP_RDY_LOK) ?  YCR_MEM_RESP_RDY_OK : icache_resp)    : 'h0;
 
 
-endmodule : ycr1_icache_router
+endmodule : ycr_icache_router

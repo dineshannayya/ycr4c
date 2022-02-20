@@ -71,7 +71,7 @@
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 
-module ycr1_async_wbb 
+module ycr_async_wbb 
      #(parameter AW  = 32,
        parameter BW  = 4,
        parameter BL  = 10,

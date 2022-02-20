@@ -26,7 +26,7 @@
 ////  yifive WB header file                                               ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     WB header file                                                   ////
@@ -42,16 +42,16 @@
 ////             wishbone define added                                    ////
 //////////////////////////////////////////////////////////////////////////////
 
-`ifndef YCR1_WB_SVH
-`define YCR1_WB_SVH
+`ifndef YCR_WB_SVH
+`define YCR_WB_SVH
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-parameter YCR1_WB_WIDTH  = 32;
+parameter YCR_WB_WIDTH  = 32;
 
 // Encoding for DATA SIZE
-parameter logic [2:0] YCR1_DSIZE_8B    = 3'b000;
-parameter logic [2:0] YCR1_DSIZE_16B   = 3'b001;
-parameter logic [2:0] YCR1_DSIZE_32B   = 3'b010;
+parameter logic [2:0] YCR_DSIZE_8B    = 3'b000;
+parameter logic [2:0] YCR_DSIZE_16B   = 3'b001;
+parameter logic [2:0] YCR_DSIZE_32B   = 3'b010;
 
-`endif // YCR1_WB_SVH
+`endif // YCR_WB_SVH

@@ -20,7 +20,7 @@
 ////  yifive HART Debug Unit (HDU)                                        ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     HART Debug Unit (HDU)                                            ////
@@ -57,58 +57,58 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_DBG_EN
-`include "ycr1_arch_types.svh"
-`include "ycr1_riscv_isa_decoding.svh"
-`include "ycr1_hdu.svh"
+`ifdef YCR_DBG_EN
+`include "ycr_arch_types.svh"
+`include "ycr_riscv_isa_decoding.svh"
+`include "ycr_hdu.svh"
 
-module ycr1_pipe_hdu #(parameter HART_PBUF_INSTR_REGOUT_EN = 1'b1) (
+module ycr_pipe_hdu #(parameter HART_PBUF_INSTR_REGOUT_EN = 1'b1) (
     // Common signals
     input  logic                                        rst_n,                      // HDU reset
     input  logic                                        clk,                        // HDU clock
     input  logic                                        clk_en,                     // HDU clock enable
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
     input   logic                                       clk_pipe_en,                // Pipeline clock enable
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
     input  logic                                        pipe2hdu_rdc_qlfy_i,        // Pipeline RDC qualifier
 
     // HDU <-> CSR i/f
     input  logic                                        csr2hdu_req_i,              // CSR i/f request
-    input  type_ycr1_csr_cmd_sel_e                      csr2hdu_cmd_i,              // CSR i/f command
-    input  logic [YCR1_HDU_DEBUGCSR_ADDR_WIDTH-1:0]     csr2hdu_addr_i,             // CSR i/f address
-    input  logic [`YCR1_XLEN-1:0]                       csr2hdu_wdata_i,            // CSR i/f write data
-    output type_ycr1_csr_resp_e                         hdu2csr_resp_o,             // CSR i/f response
-    output logic [`YCR1_XLEN-1:0]                       hdu2csr_rdata_o,            // CSR i/f read data
+    input  type_ycr_csr_cmd_sel_e                      csr2hdu_cmd_i,              // CSR i/f command
+    input  logic [YCR_HDU_DEBUGCSR_ADDR_WIDTH-1:0]     csr2hdu_addr_i,             // CSR i/f address
+    input  logic [`YCR_XLEN-1:0]                       csr2hdu_wdata_i,            // CSR i/f write data
+    output type_ycr_csr_resp_e                         hdu2csr_resp_o,             // CSR i/f response
+    output logic [`YCR_XLEN-1:0]                       hdu2csr_rdata_o,            // CSR i/f read data
 
     // HDU <-> DM i/f
     // HART Run Control i/f
     input  logic                                        dm2hdu_cmd_req_i,           // DM-HART Command request
-    input  type_ycr1_hdu_dbgstates_e                    dm2hdu_cmd_i,               // DM-HART Command
+    input  type_ycr_hdu_dbgstates_e                    dm2hdu_cmd_i,               // DM-HART Command
     output logic                                        hdu2dm_cmd_resp_o,          // DM-HART Command response
     output logic                                        hdu2dm_cmd_rcode_o,         // DM-HART Command return code: 0 - Ok; 1 - Error
     output logic                                        hdu2dm_hart_event_o,        // DM-HART Event: 1 if HART debug state changed
-    output type_ycr1_hdu_hartstatus_s                   hdu2dm_hart_status_o,       // DM-HART Status
+    output type_ycr_hdu_hartstatus_s                   hdu2dm_hart_status_o,       // DM-HART Status
 
     // Program Buffer i/f
-    output logic [YCR1_HDU_PBUF_ADDR_WIDTH-1:0]         hdu2dm_pbuf_addr_o,         // Program Buffer address - so far request only for 1 instruction
-    input  logic [YCR1_HDU_CORE_INSTR_WIDTH-1:0]        dm2hdu_pbuf_instr_i,        // Program Buffer instruction
+    output logic [YCR_HDU_PBUF_ADDR_WIDTH-1:0]         hdu2dm_pbuf_addr_o,         // Program Buffer address - so far request only for 1 instruction
+    input  logic [YCR_HDU_CORE_INSTR_WIDTH-1:0]        dm2hdu_pbuf_instr_i,        // Program Buffer instruction
 
     // HART Abstract Data regs i/f
     output logic                                        hdu2dm_dreg_req_o,          // Abstract Data Register request
     output logic                                        hdu2dm_dreg_wr_o,           // Abstract Data Register write
-    output logic [`YCR1_XLEN-1:0]                       hdu2dm_dreg_wdata_o,        // Abstract Data Register write data
+    output logic [`YCR_XLEN-1:0]                       hdu2dm_dreg_wdata_o,        // Abstract Data Register write data
     input  logic                                        dm2hdu_dreg_resp_i,         // Abstract Data Register response
     input  logic                                        dm2hdu_dreg_fail_i,         // Abstract Data Register fail
-    input  logic [`YCR1_XLEN-1:0]                       dm2hdu_dreg_rdata_i,        // Abstract Data Register read data
+    input  logic [`YCR_XLEN-1:0]                       dm2hdu_dreg_rdata_i,        // Abstract Data Register read data
 
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
     // HDU <-> TDU interface
     output  logic                                       hdu2tdu_hwbrk_dsbl_o,       // Disables BRKM
     input   logic                                       tdu2hdu_dmode_req_i,        // Trigger Module requests transition to debug mode
     input   logic                                       exu2hdu_ibrkpt_hw_i,        // Hardware breakpoint on current instruction
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
     // HART Run Status
     input   logic                                       pipe2hdu_exu_busy_i,        // EXU busy
@@ -134,23 +134,23 @@ module ycr1_pipe_hdu #(parameter HART_PBUF_INSTR_REGOUT_EN = 1'b1) (
     output  logic                                       hdu2exu_dbg_run_start_o,    // First cycle of run state
 
     // PC interface
-    input  logic [`YCR1_XLEN-1:0]                       pipe2hdu_pc_curr_i,         // Current PC
-    output logic [`YCR1_XLEN-1:0]                       hdu2exu_dbg_new_pc_o,       // New PC for resume
+    input  logic [`YCR_XLEN-1:0]                       pipe2hdu_pc_curr_i,         // Current PC
+    output logic [`YCR_XLEN-1:0]                       hdu2exu_dbg_new_pc_o,       // New PC for resume
 
     // HDU <-> IFU i/f
     // Program Buffer Instruction interface
     input   logic                                       ifu2hdu_pbuf_instr_rdy_i,   // Program Buffer Instruction i/f ready
     output  logic                                       hdu2ifu_pbuf_instr_vd_o,    // Program Buffer Instruction valid
     output  logic                                       hdu2ifu_pbuf_instr_err_o,   // Program Buffer Instruction i/f error
-    output  logic [YCR1_HDU_CORE_INSTR_WIDTH-1:0]       hdu2ifu_pbuf_instr_o        // Program Buffer Instruction itself
+    output  logic [YCR_HDU_CORE_INSTR_WIDTH-1:0]       hdu2ifu_pbuf_instr_o        // Program Buffer Instruction itself
 );
 
 //------------------------------------------------------------------------------
 // Local Parameters
 //------------------------------------------------------------------------------
 
-localparam int unsigned YCR1_HDU_TIMEOUT       = 64;       // must be power of 2
-localparam int unsigned YCR1_HDU_TIMEOUT_WIDTH = $clog2(YCR1_HDU_TIMEOUT);
+localparam int unsigned YCR_HDU_TIMEOUT       = 64;       // must be power of 2
+localparam int unsigned YCR_HDU_TIMEOUT_WIDTH = $clog2(YCR_HDU_TIMEOUT);
 
 //------------------------------------------------------------------------------
 // Local Signals
@@ -168,8 +168,8 @@ logic                                               dm_cmd_dhalted;
 logic                                               dm_cmd_drun;
 
 // Debug state FSM signals
-type_ycr1_hdu_dbgstates_e                           dbg_state;
-type_ycr1_hdu_dbgstates_e                           dbg_state_next;
+type_ycr_hdu_dbgstates_e                           dbg_state;
+type_ycr_hdu_dbgstates_e                           dbg_state_next;
 logic                                               dbg_state_dhalted;
 logic                                               dbg_state_drun;
 logic                                               dbg_state_run;
@@ -193,19 +193,19 @@ logic                                               hart_cmd_req;
 // HART Run Control register
 logic                                               hart_runctrl_upd;
 logic                                               hart_runctrl_clr;
-type_ycr1_hdu_runctrl_s                             hart_runctrl;
+type_ycr_hdu_runctrl_s                             hart_runctrl;
 
 // HART halt request timeout counter signals
-logic [YCR1_HDU_TIMEOUT_WIDTH-1:0]                  halt_req_timeout_cnt;
-logic [YCR1_HDU_TIMEOUT_WIDTH-1:0]                  halt_req_timeout_cnt_next;
+logic [YCR_HDU_TIMEOUT_WIDTH-1:0]                  halt_req_timeout_cnt;
+logic [YCR_HDU_TIMEOUT_WIDTH-1:0]                  halt_req_timeout_cnt_next;
 logic                                               halt_req_timeout_cnt_en;
 logic                                               halt_req_timeout_flag;
 
 // HART Status signals
 //------------------------------------------------------------------------------
 
-type_ycr1_hdu_haltstatus_s                          hart_haltstatus;
-type_ycr1_hdu_haltcause_e                           hart_haltcause;
+type_ycr_hdu_haltstatus_s                          hart_haltstatus;
+type_ycr_hdu_haltcause_e                           hart_haltcause;
 
 logic                                               hart_halt_pnd;
 logic                                               hart_halt_ack;
@@ -215,9 +215,9 @@ logic                                               dmode_cause_sstep;
 logic                                               dmode_cause_except;
 logic                                               dmode_cause_ebreak;
 logic                                               dmode_cause_any;
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
 logic                                               dmode_cause_tmreq;
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
 // Program Buffer FSM
 //------------------------------------------------------------------------------
@@ -229,15 +229,15 @@ logic                                               pbuf_exc_inj_end;
 logic                                               pbuf_start_fetch;
 
 // PBUF FSM signals
-type_ycr1_hdu_pbufstates_e                          pbuf_fsm_curr;
-type_ycr1_hdu_pbufstates_e                          pbuf_fsm_next;
+type_ycr_hdu_pbufstates_e                          pbuf_fsm_curr;
+type_ycr_hdu_pbufstates_e                          pbuf_fsm_next;
 logic                                               pbuf_fsm_idle;
 logic                                               pbuf_fsm_fetch;
 logic                                               pbuf_fsm_excinj;
 
 // PBUF address signals
-logic [YCR1_HDU_PBUF_ADDR_WIDTH-1:0]                pbuf_addr_ff;
-logic [YCR1_HDU_PBUF_ADDR_WIDTH-1:0]                pbuf_addr_next;
+logic [YCR_HDU_PBUF_ADDR_WIDTH-1:0]                pbuf_addr_ff;
+logic [YCR_HDU_PBUF_ADDR_WIDTH-1:0]                pbuf_addr_next;
 logic                                               pbuf_addr_end;
 logic                                               pbuf_addr_next_vd;
 
@@ -249,33 +249,33 @@ logic                                               pbuf_instr_wait_latching;
 // CSRs write/read interface signals
 logic                                               csr_upd_on_halt;
 logic                                               csr_wr;
-logic [`YCR1_XLEN-1:0]                              csr_wr_data;
-logic [`YCR1_XLEN-1:0]                              csr_rd_data;
+logic [`YCR_XLEN-1:0]                              csr_wr_data;
+logic [`YCR_XLEN-1:0]                              csr_rd_data;
 
 // Debug Control and Status register (DCSR)
 logic                                               csr_dcsr_sel;
 logic                                               csr_dcsr_wr;
-type_ycr1_hdu_dcsr_s                                csr_dcsr_in;
-type_ycr1_hdu_dcsr_s                                csr_dcsr_out;
+type_ycr_hdu_dcsr_s                                csr_dcsr_in;
+type_ycr_hdu_dcsr_s                                csr_dcsr_out;
 logic                                               csr_dcsr_ebreakm;
 logic                                               csr_dcsr_stepie;
 logic                                               csr_dcsr_step;
-logic [YCR1_HDU_DCSR_CAUSE_BIT_L-
-       YCR1_HDU_DCSR_CAUSE_BIT_R:0]                 csr_dcsr_cause;
+logic [YCR_HDU_DCSR_CAUSE_BIT_L-
+       YCR_HDU_DCSR_CAUSE_BIT_R:0]                 csr_dcsr_cause;
 
 // Debug Program Counter register (DPC)
 logic                                               csr_dpc_sel;
 logic                                               csr_dpc_wr;
-logic [`YCR1_XLEN-1:0]                              csr_dpc_ff;
-logic [`YCR1_XLEN-1:0]                              csr_dpc_next;
-logic [`YCR1_XLEN-1:0]                              csr_dpc_out;
+logic [`YCR_XLEN-1:0]                              csr_dpc_ff;
+logic [`YCR_XLEN-1:0]                              csr_dpc_next;
+logic [`YCR_XLEN-1:0]                              csr_dpc_out;
 
 // Debug Scratch register 0 (DSCRATCH0)
 logic                                               csr_addr_dscratch0;
 logic                                               csr_dscratch0_sel;
 logic                                               csr_dscratch0_wr;
-logic [`YCR1_XLEN-1:0]                              csr_dscratch0_out;
-type_ycr1_csr_resp_e                                csr_dscratch0_resp;
+logic [`YCR_XLEN-1:0]                              csr_dscratch0_out;
+type_ycr_csr_resp_e                                csr_dscratch0_resp;
 
 //------------------------------------------------------------------------------
 // Debug state FSM logic
@@ -290,9 +290,9 @@ type_ycr1_csr_resp_e                                csr_dscratch0_resp;
 // FSM control logic
 //------------------------------------------------------------------------------
 
-assign dm_cmd_dhalted = (dm2hdu_cmd_i == YCR1_HDU_DBGSTATE_DHALTED);
-assign dm_cmd_run     = (dm2hdu_cmd_i == YCR1_HDU_DBGSTATE_RUN);
-assign dm_cmd_drun    = (dm2hdu_cmd_i == YCR1_HDU_DBGSTATE_DRUN);
+assign dm_cmd_dhalted = (dm2hdu_cmd_i == YCR_HDU_DBGSTATE_DHALTED);
+assign dm_cmd_run     = (dm2hdu_cmd_i == YCR_HDU_DBGSTATE_RUN);
+assign dm_cmd_drun    = (dm2hdu_cmd_i == YCR_HDU_DBGSTATE_DRUN);
 
 assign dm_dhalt_req   = dm2hdu_cmd_req_i & dm_cmd_dhalted;
 assign dm_run_req     = dm2hdu_cmd_req_i & (dm_cmd_run | dm_cmd_drun);
@@ -302,7 +302,7 @@ assign dm_run_req     = dm2hdu_cmd_req_i & (dm_cmd_run | dm_cmd_drun);
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        dbg_state <= YCR1_HDU_DBGSTATE_RESET;
+        dbg_state <= YCR_HDU_DBGSTATE_RESET;
     end else begin
         dbg_state <= dbg_state_next;
     end
@@ -310,42 +310,42 @@ end
 
 always_comb begin
     if (~pipe2hdu_rdc_qlfy_i) begin
-        dbg_state_next = YCR1_HDU_DBGSTATE_RESET;
+        dbg_state_next = YCR_HDU_DBGSTATE_RESET;
     end else begin
         case (dbg_state)
-            YCR1_HDU_DBGSTATE_RESET: begin
-                dbg_state_next = ~pipe2hdu_init_pc_i ? YCR1_HDU_DBGSTATE_RESET
-                               : dm_dhalt_req        ? YCR1_HDU_DBGSTATE_DHALTED
-                                                     : YCR1_HDU_DBGSTATE_RUN;
+            YCR_HDU_DBGSTATE_RESET: begin
+                dbg_state_next = ~pipe2hdu_init_pc_i ? YCR_HDU_DBGSTATE_RESET
+                               : dm_dhalt_req        ? YCR_HDU_DBGSTATE_DHALTED
+                                                     : YCR_HDU_DBGSTATE_RUN;
             end
-            YCR1_HDU_DBGSTATE_RUN: begin
-                dbg_state_next = dfsm_update         ? YCR1_HDU_DBGSTATE_DHALTED
-                                                     : YCR1_HDU_DBGSTATE_RUN;
+            YCR_HDU_DBGSTATE_RUN: begin
+                dbg_state_next = dfsm_update         ? YCR_HDU_DBGSTATE_DHALTED
+                                                     : YCR_HDU_DBGSTATE_RUN;
             end
-            YCR1_HDU_DBGSTATE_DHALTED: begin
-                dbg_state_next = ~dfsm_update        ? YCR1_HDU_DBGSTATE_DHALTED
-                               : dm_cmd_drun         ? YCR1_HDU_DBGSTATE_DRUN
-                                                     : YCR1_HDU_DBGSTATE_RUN;
+            YCR_HDU_DBGSTATE_DHALTED: begin
+                dbg_state_next = ~dfsm_update        ? YCR_HDU_DBGSTATE_DHALTED
+                               : dm_cmd_drun         ? YCR_HDU_DBGSTATE_DRUN
+                                                     : YCR_HDU_DBGSTATE_RUN;
             end
-            YCR1_HDU_DBGSTATE_DRUN: begin
-                dbg_state_next = dfsm_update         ? YCR1_HDU_DBGSTATE_DHALTED
-                                                     : YCR1_HDU_DBGSTATE_DRUN;
+            YCR_HDU_DBGSTATE_DRUN: begin
+                dbg_state_next = dfsm_update         ? YCR_HDU_DBGSTATE_DHALTED
+                                                     : YCR_HDU_DBGSTATE_DRUN;
             end
             default: begin
-`ifdef YCR1_XPROP_EN
-                dbg_state_next = YCR1_HDU_DBGSTATE_XXX;
-`else // YCR1_XPROP_EN
+`ifdef YCR_XPROP_EN
+                dbg_state_next = YCR_HDU_DBGSTATE_XXX;
+`else // YCR_XPROP_EN
                 dbg_state_next = dbg_state;
-`endif // YCR1_XPROP_EN
+`endif // YCR_XPROP_EN
             end
         endcase
     end
 end
 
-assign dbg_state_dhalted = (dbg_state == YCR1_HDU_DBGSTATE_DHALTED);
-assign dbg_state_drun    = (dbg_state == YCR1_HDU_DBGSTATE_DRUN);
-assign dbg_state_run     = (dbg_state == YCR1_HDU_DBGSTATE_RUN);
-assign dbg_state_reset   = (dbg_state == YCR1_HDU_DBGSTATE_RESET);
+assign dbg_state_dhalted = (dbg_state == YCR_HDU_DBGSTATE_DHALTED);
+assign dbg_state_drun    = (dbg_state == YCR_HDU_DBGSTATE_DRUN);
+assign dbg_state_run     = (dbg_state == YCR_HDU_DBGSTATE_RUN);
+assign dbg_state_reset   = (dbg_state == YCR_HDU_DBGSTATE_RESET);
 
 // FSM transition, update and event registers
 //------------------------------------------------------------------------------
@@ -373,20 +373,20 @@ always_comb begin
         dfsm_event_next  = 1'b1;
     end else begin
         case (dbg_state)
-            YCR1_HDU_DBGSTATE_RESET: begin
+            YCR_HDU_DBGSTATE_RESET: begin
                 dfsm_trans_next  = 1'b0;
                 dfsm_update_next = 1'b0;
                 dfsm_event_next  = pipe2hdu_init_pc_i & ~dm2hdu_cmd_req_i;
             end
 
-            YCR1_HDU_DBGSTATE_RUN,
-            YCR1_HDU_DBGSTATE_DRUN: begin
+            YCR_HDU_DBGSTATE_RUN,
+            YCR_HDU_DBGSTATE_DRUN: begin
                 dfsm_trans_next  = ~dfsm_update ? hart_halt_pnd : dfsm_trans;
                 dfsm_update_next = ~dfsm_update & hart_halt_ack;
                 dfsm_event_next  = dfsm_update;
             end
 
-            YCR1_HDU_DBGSTATE_DHALTED: begin
+            YCR_HDU_DBGSTATE_DHALTED: begin
                 dfsm_trans_next  = ~dfsm_update ? ~dfsm_trans & dm_run_req
                                                 : dfsm_trans;
                 dfsm_update_next = ~dfsm_update & dfsm_trans;
@@ -420,10 +420,10 @@ always_comb begin
         hart_cmd_req = 1'b0;
     end else begin
         case (dbg_state)
-            YCR1_HDU_DBGSTATE_RESET  : hart_cmd_req = dm2hdu_cmd_req_i;
-            YCR1_HDU_DBGSTATE_DHALTED: hart_cmd_req = (dfsm_update | dfsm_trans);
-            YCR1_HDU_DBGSTATE_RUN,
-            YCR1_HDU_DBGSTATE_DRUN   : hart_cmd_req = ~dfsm_update & dfsm_trans;
+            YCR_HDU_DBGSTATE_RESET  : hart_cmd_req = dm2hdu_cmd_req_i;
+            YCR_HDU_DBGSTATE_DHALTED: hart_cmd_req = (dfsm_update | dfsm_trans);
+            YCR_HDU_DBGSTATE_RUN,
+            YCR_HDU_DBGSTATE_DRUN   : hart_cmd_req = ~dfsm_update & dfsm_trans;
             default                  : hart_cmd_req = 'X;
         endcase
     end
@@ -436,13 +436,13 @@ assign hart_resume_req = (dm_cmd_run | dm_cmd_drun) & hart_cmd_req;
 //------------------------------------------------------------------------------
 
 assign hart_runctrl_clr = (dbg_state_run | dbg_state_drun)
-                        & (dbg_state_next == YCR1_HDU_DBGSTATE_DHALTED);
+                        & (dbg_state_next == YCR_HDU_DBGSTATE_DHALTED);
 assign hart_runctrl_upd = dbg_state_dhalted & dfsm_trans_next;
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_runctrl.irq_dsbl      <= 1'b0;
-        hart_runctrl.fetch_src     <= YCR1_HDU_FETCH_SRC_NORMAL;
+        hart_runctrl.fetch_src     <= YCR_HDU_FETCH_SRC_NORMAL;
         hart_runctrl.pc_advmt_dsbl <= 1'b0;
         hart_runctrl.hwbrkpt_dsbl  <= 1'b0;
         hart_runctrl.redirect      <= '0;
@@ -454,7 +454,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                 if (~dm_cmd_drun) begin
                     // Case : resume to RUN state
                     hart_runctrl.irq_dsbl        <= csr_dcsr_step ? ~csr_dcsr_stepie : 1'b0;
-                    hart_runctrl.fetch_src       <= YCR1_HDU_FETCH_SRC_NORMAL;
+                    hart_runctrl.fetch_src       <= YCR_HDU_FETCH_SRC_NORMAL;
                     hart_runctrl.pc_advmt_dsbl   <= 1'b0;
                     hart_runctrl.hwbrkpt_dsbl    <= 1'b0;
                     hart_runctrl.redirect.sstep  <= csr_dcsr_step;
@@ -462,7 +462,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                 end else begin
                     // Case : resume to DRUN state
                     hart_runctrl.irq_dsbl        <= 1'b1;
-                    hart_runctrl.fetch_src       <= YCR1_HDU_FETCH_SRC_PBUF;
+                    hart_runctrl.fetch_src       <= YCR_HDU_FETCH_SRC_PBUF;
                     hart_runctrl.pc_advmt_dsbl   <= 1'b1;
                     hart_runctrl.hwbrkpt_dsbl    <= 1'b1;
                     hart_runctrl.redirect.sstep  <= 1'b0;
@@ -511,20 +511,20 @@ assign halt_req_timeout_flag = ~|halt_req_timeout_cnt;
 assign dmode_cause_sstep  = hart_runctrl.redirect.sstep & pipe2hdu_instret_i;
 assign dmode_cause_except = dbg_state_drun & pipe2hdu_exu_exc_req_i
                           & ~pipe2hdu_brkpt_i
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
                           & ~exu2hdu_ibrkpt_hw_i
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
                           ;
 assign dmode_cause_ebreak = hart_runctrl.redirect.ebreak & pipe2hdu_brkpt_i;
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
 assign dmode_cause_tmreq  = tdu2hdu_dmode_req_i & exu2hdu_ibrkpt_hw_i;
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
 assign dmode_cause_any = dmode_cause_sstep | dmode_cause_ebreak | dmode_cause_except
                        | hart_halt_req
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
                        | dmode_cause_tmreq
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
                        ;
 
 // HART halt cause encoder
@@ -532,13 +532,13 @@ assign dmode_cause_any = dmode_cause_sstep | dmode_cause_ebreak | dmode_cause_ex
 
 always_comb begin
     case (1'b1)
-`ifdef YCR1_TDU_EN
-        dmode_cause_tmreq   : hart_haltcause = YCR1_HDU_HALTCAUSE_TMREQ;
-`endif // YCR1_TDU_EN
-        dmode_cause_ebreak  : hart_haltcause = YCR1_HDU_HALTCAUSE_EBREAK;
-        hart_halt_req       : hart_haltcause = YCR1_HDU_HALTCAUSE_DMREQ;
-        dmode_cause_sstep   : hart_haltcause = YCR1_HDU_HALTCAUSE_SSTEP;
-        default             : hart_haltcause = YCR1_HDU_HALTCAUSE_NONE;
+`ifdef YCR_TDU_EN
+        dmode_cause_tmreq   : hart_haltcause = YCR_HDU_HALTCAUSE_TMREQ;
+`endif // YCR_TDU_EN
+        dmode_cause_ebreak  : hart_haltcause = YCR_HDU_HALTCAUSE_EBREAK;
+        hart_halt_req       : hart_haltcause = YCR_HDU_HALTCAUSE_DMREQ;
+        dmode_cause_sstep   : hart_haltcause = YCR_HDU_HALTCAUSE_SSTEP;
+        default             : hart_haltcause = YCR_HDU_HALTCAUSE_NONE;
     endcase
 end
 
@@ -576,15 +576,15 @@ assign hart_halt_ack = ~hdu2exu_dbg_halted_o
 //------------------------------------------------------------------------------
 
 assign ifu_handshake_done = hdu2ifu_pbuf_instr_vd_o & ifu2hdu_pbuf_instr_rdy_i;
-assign pbuf_addr_end      = (pbuf_addr_ff == (YCR1_HDU_PBUF_ADDR_SPAN-1));
+assign pbuf_addr_end      = (pbuf_addr_ff == (YCR_HDU_PBUF_ADDR_SPAN-1));
 
-assign pbuf_start_fetch = dbg_state_dhalted      & (dbg_state_next == YCR1_HDU_DBGSTATE_DRUN);
+assign pbuf_start_fetch = dbg_state_dhalted      & (dbg_state_next == YCR_HDU_DBGSTATE_DRUN);
 assign pbuf_exc_inj_req = ifu_handshake_done     & pbuf_addr_end;
 assign pbuf_exc_inj_end = pipe2hdu_exu_exc_req_i | ifu_handshake_done;
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        pbuf_fsm_curr <= YCR1_HDU_PBUFSTATE_IDLE;
+        pbuf_fsm_curr <= YCR_HDU_PBUFSTATE_IDLE;
     end else if(clk_en) begin
         pbuf_fsm_curr <= pbuf_fsm_next;
     end
@@ -592,29 +592,29 @@ end
 
 always_comb begin
     case (pbuf_fsm_curr)
-        YCR1_HDU_PBUFSTATE_IDLE: begin
-            pbuf_fsm_next = pbuf_start_fetch       ? YCR1_HDU_PBUFSTATE_FETCH
-                                                   : YCR1_HDU_PBUFSTATE_IDLE;
+        YCR_HDU_PBUFSTATE_IDLE: begin
+            pbuf_fsm_next = pbuf_start_fetch       ? YCR_HDU_PBUFSTATE_FETCH
+                                                   : YCR_HDU_PBUFSTATE_IDLE;
         end
-        YCR1_HDU_PBUFSTATE_FETCH: begin
-            pbuf_fsm_next = pipe2hdu_exu_exc_req_i ? YCR1_HDU_PBUFSTATE_WAIT4END
-                          : pbuf_exc_inj_req       ? YCR1_HDU_PBUFSTATE_EXCINJECT
-                                                   : YCR1_HDU_PBUFSTATE_FETCH;
+        YCR_HDU_PBUFSTATE_FETCH: begin
+            pbuf_fsm_next = pipe2hdu_exu_exc_req_i ? YCR_HDU_PBUFSTATE_WAIT4END
+                          : pbuf_exc_inj_req       ? YCR_HDU_PBUFSTATE_EXCINJECT
+                                                   : YCR_HDU_PBUFSTATE_FETCH;
         end
-        YCR1_HDU_PBUFSTATE_EXCINJECT: begin
-            pbuf_fsm_next = pbuf_exc_inj_end       ? YCR1_HDU_PBUFSTATE_WAIT4END
-                                                   : YCR1_HDU_PBUFSTATE_EXCINJECT;
+        YCR_HDU_PBUFSTATE_EXCINJECT: begin
+            pbuf_fsm_next = pbuf_exc_inj_end       ? YCR_HDU_PBUFSTATE_WAIT4END
+                                                   : YCR_HDU_PBUFSTATE_EXCINJECT;
         end
-        YCR1_HDU_PBUFSTATE_WAIT4END: begin
-            pbuf_fsm_next = hdu2exu_dbg_halted_o   ? YCR1_HDU_PBUFSTATE_IDLE
-                                                   : YCR1_HDU_PBUFSTATE_WAIT4END;
+        YCR_HDU_PBUFSTATE_WAIT4END: begin
+            pbuf_fsm_next = hdu2exu_dbg_halted_o   ? YCR_HDU_PBUFSTATE_IDLE
+                                                   : YCR_HDU_PBUFSTATE_WAIT4END;
         end
     endcase
 end
 
-assign pbuf_fsm_idle   = (pbuf_fsm_curr == YCR1_HDU_PBUFSTATE_IDLE);
-assign pbuf_fsm_fetch  = (pbuf_fsm_curr == YCR1_HDU_PBUFSTATE_FETCH);
-assign pbuf_fsm_excinj = (pbuf_fsm_curr == YCR1_HDU_PBUFSTATE_EXCINJECT);
+assign pbuf_fsm_idle   = (pbuf_fsm_curr == YCR_HDU_PBUFSTATE_IDLE);
+assign pbuf_fsm_fetch  = (pbuf_fsm_curr == YCR_HDU_PBUFSTATE_FETCH);
+assign pbuf_fsm_excinj = (pbuf_fsm_curr == YCR_HDU_PBUFSTATE_EXCINJECT);
 
 // Program Buffer address register
 //------------------------------------------------------------------------------
@@ -654,7 +654,7 @@ end endgenerate
 //------------------------------------------------------------------------------
 
 assign csr_upd_on_halt = (dbg_state_reset | dbg_state_run)
-                       & (dbg_state_next == YCR1_HDU_DBGSTATE_DHALTED);
+                       & (dbg_state_next == YCR_HDU_DBGSTATE_DHALTED);
 
 // CSRs select logic
 //------------------------------------------------------------------------------
@@ -667,9 +667,9 @@ always_comb begin : csr_if_regsel
 
     if (csr2hdu_req_i) begin
         case (csr2hdu_addr_i)
-            YCR1_HDU_DBGCSR_OFFS_DCSR     : csr_dcsr_sel      = 1'b1;
-            YCR1_HDU_DBGCSR_OFFS_DPC      : csr_dpc_sel       = 1'b1;
-            YCR1_HDU_DBGCSR_OFFS_DSCRATCH0: csr_dscratch0_sel = 1'b1;
+            YCR_HDU_DBGCSR_OFFS_DCSR     : csr_dcsr_sel      = 1'b1;
+            YCR_HDU_DBGCSR_OFFS_DPC      : csr_dpc_sel       = 1'b1;
+            YCR_HDU_DBGCSR_OFFS_DSCRATCH0: csr_dscratch0_sel = 1'b1;
             default : begin
                                             csr_dcsr_sel      = 1'bX;
                                             csr_dpc_sel       = 1'bX;
@@ -694,9 +694,9 @@ always_comb begin : csr_if_write
 
     if (csr2hdu_req_i) begin
         case (csr2hdu_cmd_i)
-            YCR1_CSR_CMD_WRITE : csr_wr_data = csr2hdu_wdata_i;
-            YCR1_CSR_CMD_SET   : csr_wr_data = csr_rd_data | csr2hdu_wdata_i;
-            YCR1_CSR_CMD_CLEAR : csr_wr_data = csr_rd_data & (~csr2hdu_wdata_i);
+            YCR_CSR_CMD_WRITE : csr_wr_data = csr2hdu_wdata_i;
+            YCR_CSR_CMD_SET   : csr_wr_data = csr_rd_data | csr2hdu_wdata_i;
+            YCR_CSR_CMD_CLEAR : csr_wr_data = csr_rd_data & (~csr2hdu_wdata_i);
             default            : csr_wr_data = 'X;
         endcase
     end
@@ -712,7 +712,7 @@ always_comb begin
 
     csr_dcsr_out                = '0;
     if (csr_dcsr_sel) begin
-        csr_dcsr_out.xdebugver  = YCR1_HDU_DEBUGCSR_DCSR_XDEBUGVER;
+        csr_dcsr_out.xdebugver  = YCR_HDU_DEBUGCSR_DCSR_XDEBUGVER;
         csr_dcsr_out.ebreakm    = csr_dcsr_ebreakm;
         csr_dcsr_out.stepie     = csr_dcsr_stepie;
         csr_dcsr_out.step       = csr_dcsr_step;
@@ -769,8 +769,8 @@ assign csr_dpc_out  = csr_dpc_sel     ? csr_dpc_ff : '0;
 //------------------------------------------------------------------------------
 
 assign csr_dscratch0_resp = (~dm2hdu_dreg_resp_i | dm2hdu_dreg_fail_i)
-                          ? YCR1_CSR_RESP_ER
-                          : YCR1_CSR_RESP_OK;
+                          ? YCR_CSR_RESP_ER
+                          : YCR_CSR_RESP_OK;
 assign csr_dscratch0_out  = csr_dscratch0_sel ? dm2hdu_dreg_rdata_i : '0;
 
 //------------------------------------------------------------------------------
@@ -784,7 +784,7 @@ always_comb begin
     hdu2dm_hart_status_o           = '0;
     hdu2dm_hart_status_o.dbg_state = dbg_state;
     hdu2dm_hart_status_o.except    = dbg_state_dhalted & hart_haltstatus.except;
-    hdu2dm_hart_status_o.ebreak    = dbg_state_dhalted & (hart_haltstatus.cause == YCR1_HDU_HALTCAUSE_EBREAK);
+    hdu2dm_hart_status_o.ebreak    = dbg_state_dhalted & (hart_haltstatus.cause == YCR_HDU_HALTCAUSE_EBREAK);
 end
 
 assign hdu2dm_cmd_rcode_o = dbg_state_reset
@@ -795,19 +795,19 @@ always_comb begin
     hdu2dm_cmd_resp_o   = 1'b0;
 
     case (dbg_state)
-        YCR1_HDU_DBGSTATE_RESET: begin
+        YCR_HDU_DBGSTATE_RESET: begin
             hdu2dm_cmd_resp_o  = pipe2hdu_rdc_qlfy_i & pipe2hdu_init_pc_i & dm2hdu_cmd_req_i;
         end
 
-        YCR1_HDU_DBGSTATE_RUN: begin
+        YCR_HDU_DBGSTATE_RUN: begin
             hdu2dm_cmd_resp_o  = pipe2hdu_rdc_qlfy_i & dfsm_update & dm2hdu_cmd_req_i;
         end
 
-        YCR1_HDU_DBGSTATE_DHALTED: begin
+        YCR_HDU_DBGSTATE_DHALTED: begin
             hdu2dm_cmd_resp_o  = pipe2hdu_rdc_qlfy_i ? dfsm_update : dm2hdu_cmd_req_i;
         end
 
-        YCR1_HDU_DBGSTATE_DRUN: begin
+        YCR_HDU_DBGSTATE_DRUN: begin
             hdu2dm_cmd_resp_o  = (~pipe2hdu_rdc_qlfy_i | dfsm_update) & dm2hdu_cmd_req_i;
         end
 
@@ -826,13 +826,13 @@ assign hdu2dm_dreg_wdata_o = csr_wr_data;
 // HDU <-> EXU interface
 //------------------------------------------------------------------------------
 
-assign hdu2exu_dbg_halted_o    = (dbg_state_next == YCR1_HDU_DBGSTATE_DHALTED)
+assign hdu2exu_dbg_halted_o    = (dbg_state_next == YCR_HDU_DBGSTATE_DHALTED)
                                | (~pipe2hdu_rdc_qlfy_i & ~dbg_state_run);
 assign hdu2exu_dbg_run_start_o = dbg_state_dhalted & pipe2hdu_rdc_qlfy_i & dfsm_update;
 assign hdu2exu_dbg_halt2run_o  = hdu2exu_dbg_halted_o & hart_resume_req
-`ifdef YCR1_CLKCTRL_EN
+`ifdef YCR_CLKCTRL_EN
                                & clk_pipe_en
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN
                                ;
 assign hdu2exu_dbg_run2halt_o  = hart_halt_ack;
 
@@ -841,9 +841,9 @@ assign hdu2exu_irq_dsbl_o      = hart_runctrl.irq_dsbl;
 assign hdu2exu_pc_advmt_dsbl_o = hart_runctrl.pc_advmt_dsbl;
 // No change in arch. state if dmode caused by breakpoint
 assign hdu2exu_no_commit_o     = dmode_cause_ebreak
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
                                | dmode_cause_tmreq
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
                                ;
 assign hdu2exu_dmode_sstep_en_o = hart_runctrl.redirect.sstep;
 assign hdu2exu_dbg_new_pc_o     = csr_dpc_ff;
@@ -868,23 +868,23 @@ end endgenerate
 // HDU <-> CSR interface
 //------------------------------------------------------------------------------
 
-assign csr_addr_dscratch0 = (csr2hdu_addr_i == YCR1_HDU_DBGCSR_OFFS_DSCRATCH0);
+assign csr_addr_dscratch0 = (csr2hdu_addr_i == YCR_HDU_DBGCSR_OFFS_DSCRATCH0);
 
-assign hdu2csr_resp_o  = ~dbg_state_drun    ? YCR1_CSR_RESP_ER
+assign hdu2csr_resp_o  = ~dbg_state_drun    ? YCR_CSR_RESP_ER
                        : csr_addr_dscratch0 ? csr_dscratch0_resp
-                       : csr2hdu_req_i      ? YCR1_CSR_RESP_OK
-                                            : YCR1_CSR_RESP_ER;
+                       : csr2hdu_req_i      ? YCR_CSR_RESP_OK
+                                            : YCR_CSR_RESP_ER;
 assign hdu2csr_rdata_o = csr_rd_data;
 
-`ifdef YCR1_TDU_EN
+`ifdef YCR_TDU_EN
 //------------------------------------------------------------------------------
 // HDU <-> TDU interface
 //------------------------------------------------------------------------------
 
 assign hdu2tdu_hwbrk_dsbl_o = hart_runctrl.hwbrkpt_dsbl;
-`endif // YCR1_TDU_EN
+`endif // YCR_TDU_EN
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -926,8 +926,8 @@ SVA_HDU_XCHECK_HART_INTF :
     )
     else $error("HDU Error: HART i/f is in X state");
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_pipe_hdu
+endmodule : ycr_pipe_hdu
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN

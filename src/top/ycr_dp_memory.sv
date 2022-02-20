@@ -20,7 +20,7 @@
 ////  yifive dual port memory                                             ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Dual-port synchronous memory with byte enable inputs             ////
@@ -38,38 +38,38 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_TCM_EN
-module ycr1_dp_memory
+`ifdef YCR_TCM_EN
+module ycr_dp_memory
 #(
-    parameter YCR1_WIDTH    = 32,
-    parameter YCR1_SIZE     = `YCR1_IMEM_AWIDTH'h00010000,
-    parameter YCR1_NBYTES   = YCR1_WIDTH / 8
+    parameter YCR_WIDTH    = 32,
+    parameter YCR_SIZE     = `YCR_IMEM_AWIDTH'h00010000,
+    parameter YCR_NBYTES   = YCR_WIDTH / 8
 )
 (
     input   logic                           clk,
     // Port A
     input   logic                           rena,
-    input   logic [$clog2(YCR1_SIZE)-1:2]   addra,
-    output  logic [YCR1_WIDTH-1:0]          qa,
+    input   logic [$clog2(YCR_SIZE)-1:2]   addra,
+    output  logic [YCR_WIDTH-1:0]          qa,
     // Port B
     input   logic                           renb,
     input   logic                           wenb,
-    input   logic [YCR1_NBYTES-1:0]         webb,
-    input   logic [$clog2(YCR1_SIZE)-1:2]   addrb,
-    input   logic [YCR1_WIDTH-1:0]          datab,
-    output  logic [YCR1_WIDTH-1:0]          qb
+    input   logic [YCR_NBYTES-1:0]         webb,
+    input   logic [$clog2(YCR_SIZE)-1:2]   addrb,
+    input   logic [YCR_WIDTH-1:0]          datab,
+    output  logic [YCR_WIDTH-1:0]          qb
 );
 
-`ifdef YCR1_TRGT_FPGA_INTEL
+`ifdef YCR_TRGT_FPGA_INTEL
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
- `ifdef YCR1_TRGT_FPGA_INTEL_MAX10
-(* ramstyle = "M9K" *)    logic [YCR1_NBYTES-1:0][7:0]  memory_array  [0:(YCR1_SIZE/YCR1_NBYTES)-1];
- `elsif YCR1_TRGT_FPGA_INTEL_ARRIAV
-(* ramstyle = "M10K" *)   logic [YCR1_NBYTES-1:0][7:0]  memory_array  [0:(YCR1_SIZE/YCR1_NBYTES)-1];
+ `ifdef YCR_TRGT_FPGA_INTEL_MAX10
+(* ramstyle = "M9K" *)    logic [YCR_NBYTES-1:0][7:0]  memory_array  [0:(YCR_SIZE/YCR_NBYTES)-1];
+ `elsif YCR_TRGT_FPGA_INTEL_ARRIAV
+(* ramstyle = "M10K" *)   logic [YCR_NBYTES-1:0][7:0]  memory_array  [0:(YCR_SIZE/YCR_NBYTES)-1];
  `endif
 logic [3:0] wenbb;
 //-------------------------------------------------------------------------------
@@ -100,19 +100,19 @@ always_ff @(posedge clk) begin
     qa <= memory_array[addra];
 end
 
-`else // YCR1_TRGT_FPGA_INTEL
+`else // YCR_TRGT_FPGA_INTEL
 
-// CASE: OTHERS - YCR1_TRGT_FPGA_XILINX, SIMULATION, ASIC etc
+// CASE: OTHERS - YCR_TRGT_FPGA_XILINX, SIMULATION, ASIC etc
 
-localparam int unsigned RAM_SIZE_WORDS = YCR1_SIZE/YCR1_NBYTES;
+localparam int unsigned RAM_SIZE_WORDS = YCR_SIZE/YCR_NBYTES;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
- `ifdef YCR1_TRGT_FPGA_XILINX
-(* ram_style = "block" *)  logic  [YCR1_WIDTH-1:0]  ram_block  [RAM_SIZE_WORDS-1:0];
+ `ifdef YCR_TRGT_FPGA_XILINX
+(* ram_style = "block" *)  logic  [YCR_WIDTH-1:0]  ram_block  [RAM_SIZE_WORDS-1:0];
  `else  // ASIC or SIMULATION
-logic  [YCR1_WIDTH-1:0]  ram_block  [RAM_SIZE_WORDS-1:0];
+logic  [YCR_WIDTH-1:0]  ram_block  [RAM_SIZE_WORDS-1:0];
  `endif
 //-------------------------------------------------------------------------------
 // Port A memory behavioral description
@@ -128,7 +128,7 @@ end
 //-------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
     if (wenb) begin
-        for (int i=0; i<YCR1_NBYTES; i++) begin
+        for (int i=0; i<YCR_NBYTES; i++) begin
             if (webb[i]) begin
                 ram_block[addrb][i*8 +: 8] <= datab[i*8 +: 8];
             end
@@ -139,8 +139,8 @@ always_ff @(posedge clk) begin
     end
 end
 
-`endif // YCR1_TRGT_FPGA_INTEL
+`endif // YCR_TRGT_FPGA_INTEL
 
-endmodule : ycr1_dp_memory
+endmodule : ycr_dp_memory
 
-`endif // YCR1_TCM_EN
+`endif // YCR_TCM_EN

@@ -1,27 +1,27 @@
-/// @file       <ycr1_memory_tb_ahb.sv>
+/// @file       <ycr_memory_tb_ahb.sv>
 /// @brief      AHB memory testbench
 ///
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_ahb.svh"
-`include "ycr1_ipic.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_ahb.svh"
+`include "ycr_ipic.svh"
 
-module ycr1_memory_tb_ahb #(
-`ifdef YCR1_TCM_EN
-    parameter YCR1_MEM_POWER_SIZE  = 16
+module ycr_memory_tb_ahb #(
+`ifdef YCR_TCM_EN
+    parameter YCR_MEM_POWER_SIZE  = 16
 `else
-    parameter YCR1_MEM_POWER_SIZE  = 23 // Memory sized increased for non TCM Mode
+    parameter YCR_MEM_POWER_SIZE  = 23 // Memory sized increased for non TCM Mode
 `endif
 )
 (
     // Control
     input   logic                                   rst_n,
     input   logic                                   clk,
-`ifdef YCR1_IPIC_EN
-    output  logic  [YCR1_IRQ_LINES_NUM-1:0]         irq_lines,
-`else // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+    output  logic  [YCR_IRQ_LINES_NUM-1:0]         irq_lines,
+`else // YCR_IPIC_EN
     output  logic                                   ext_irq,
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     output  logic                                   soft_irq,
     input   integer                                 imem_req_ack_stall_in,
     input   integer                                 dmem_req_ack_stall_in,
@@ -31,9 +31,9 @@ module ycr1_memory_tb_ahb #(
     // input   logic   [2:0]                           imem_hburst,
     input   logic   [2:0]                           imem_hsize,
     input   logic   [1:0]                           imem_htrans,
-    input   logic   [YCR1_AHB_WIDTH-1:0]            imem_haddr,
+    input   logic   [YCR_AHB_WIDTH-1:0]            imem_haddr,
     output  logic                                   imem_hready,
-    output  logic   [YCR1_AHB_WIDTH-1:0]            imem_hrdata,
+    output  logic   [YCR_AHB_WIDTH-1:0]            imem_hrdata,
     output  logic                                   imem_hresp,
 
     // Memory Interface
@@ -41,11 +41,11 @@ module ycr1_memory_tb_ahb #(
     // input   logic   [2:0]                           dmem_hburst,
     input   logic   [2:0]                           dmem_hsize,
     input   logic   [1:0]                           dmem_htrans,
-    input   logic   [YCR1_AHB_WIDTH-1:0]            dmem_haddr,
+    input   logic   [YCR_AHB_WIDTH-1:0]            dmem_haddr,
     input   logic                                   dmem_hwrite,
-    input   logic   [YCR1_AHB_WIDTH-1:0]            dmem_hwdata,
+    input   logic   [YCR_AHB_WIDTH-1:0]            dmem_hwdata,
     output  logic                                   dmem_hready,
-    output  logic   [YCR1_AHB_WIDTH-1:0]            dmem_hrdata,
+    output  logic   [YCR_AHB_WIDTH-1:0]            dmem_hrdata,
     output  logic                                   dmem_hresp
 );
 
@@ -53,26 +53,26 @@ module ycr1_memory_tb_ahb #(
 // Local Types
 //-------------------------------------------------------------------------------
 typedef enum logic {
-    YCR1_AHB_STATE_IDLE = 1'b0,
-    YCR1_AHB_STATE_DATA = 1'b1,
-    YCR1_AHB_STATE_ERR  = 1'bx
-} type_ycr1_ahb_state_e;
+    YCR_AHB_STATE_IDLE = 1'b0,
+    YCR_AHB_STATE_DATA = 1'b1,
+    YCR_AHB_STATE_ERR  = 1'bx
+} type_ycr_ahb_state_e;
 
 //-------------------------------------------------------------------------------
 // Memory definition
 //-------------------------------------------------------------------------------
-logic [7:0]                             memory [0:2**YCR1_MEM_POWER_SIZE-1];
-`ifdef YCR1_IPIC_EN
-logic [YCR1_IRQ_LINES_NUM-1:0]          irq_lines_reg;
-`else // YCR1_IPIC_EN
+logic [7:0]                             memory [0:2**YCR_MEM_POWER_SIZE-1];
+`ifdef YCR_IPIC_EN
+logic [YCR_IRQ_LINES_NUM-1:0]          irq_lines_reg;
+`else // YCR_IPIC_EN
 logic                                   ext_irq_reg;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 logic                                   soft_irq_reg;
-logic [7:0]                             mirage [0:2**YCR1_MEM_POWER_SIZE-1];
+logic [7:0]                             mirage [0:2**YCR_MEM_POWER_SIZE-1];
 bit                                     mirage_en;
 bit                                     mirage_rangeen;
-bit [YCR1_AHB_WIDTH-1:0]                mirage_adrlo = '1;
-bit [YCR1_AHB_WIDTH-1:0]                mirage_adrhi = '1;
+bit [YCR_AHB_WIDTH-1:0]                mirage_adrlo = '1;
+bit [YCR_AHB_WIDTH-1:0]                mirage_adrhi = '1;
 
 `ifdef VERILATOR
 logic [255:0]                           test_file;
@@ -84,17 +84,17 @@ bit                                     test_file_init;
 //-------------------------------------------------------------------------------
 // Local functions
 //-------------------------------------------------------------------------------
-function logic [YCR1_AHB_WIDTH-1:0] ycr1_read_mem(
-    logic   [YCR1_AHB_WIDTH-1:0]    addr,
+function logic [YCR_AHB_WIDTH-1:0] ycr_read_mem(
+    logic   [YCR_AHB_WIDTH-1:0]    addr,
     logic   [3:0]                   r_be,
     logic   [3:0]                   w_hazard,
-    logic   [YCR1_AHB_WIDTH-1:0]    w_data,
+    logic   [YCR_AHB_WIDTH-1:0]    w_data,
     bit                             mirage_en
 );
-    logic [YCR1_AHB_WIDTH-1:0]      tmp;
-    logic [YCR1_MEM_POWER_SIZE-1:0] addr_mirage;
+    logic [YCR_AHB_WIDTH-1:0]      tmp;
+    logic [YCR_MEM_POWER_SIZE-1:0] addr_mirage;
 begin
-    ycr1_read_mem = 'x;
+    ycr_read_mem = 'x;
 
     if(~mirage_en) begin
         for (int unsigned i=0; i<4; ++i) begin
@@ -117,15 +117,15 @@ begin
     end
     return tmp;
 end
-endfunction : ycr1_read_mem
+endfunction : ycr_read_mem
 
-function void ycr1_write_mem(
-    logic   [YCR1_AHB_WIDTH-1:0]    addr,
+function void ycr_write_mem(
+    logic   [YCR_AHB_WIDTH-1:0]    addr,
     logic   [3:0]                   w_be,
-    logic   [YCR1_AHB_WIDTH-1:0]    data,
+    logic   [YCR_AHB_WIDTH-1:0]    data,
     bit                             mirage_en
 );
-    logic [YCR1_MEM_POWER_SIZE-1:0] addr_mirage;
+    logic [YCR_MEM_POWER_SIZE-1:0] addr_mirage;
 begin
     for (int unsigned i=0; i<4; ++i) begin
         if (w_be[i]) begin
@@ -138,55 +138,55 @@ begin
         end
     end
 end
-endfunction : ycr1_write_mem
+endfunction : ycr_write_mem
 
-function logic [3:0] ycr1_be_form(
+function logic [3:0] ycr_be_form(
     input   logic [1:0]     offset,
     input   logic [1:0]     hsize
 );
     logic [3:0]     tmp;
 begin
     case (hsize)
-        YCR1_HSIZE_8B : begin
+        YCR_HSIZE_8B : begin
             tmp = 4'b0001 << offset;
         end
-        YCR1_HSIZE_16B : begin
+        YCR_HSIZE_16B : begin
             tmp = 4'b0011 << offset;
         end
-        YCR1_HSIZE_32B : begin
+        YCR_HSIZE_32B : begin
             tmp = 4'b1111;
         end
     endcase
     return tmp;
 end
-endfunction : ycr1_be_form
+endfunction : ycr_be_form
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
 // IMEM access
-type_ycr1_ahb_state_e           imem_ahb_state;
-logic   [YCR1_AHB_WIDTH-1:0]    imem_ahb_addr;
-logic   [YCR1_AHB_WIDTH-1:0]    imem_req_ack_stall;
+type_ycr_ahb_state_e           imem_ahb_state;
+logic   [YCR_AHB_WIDTH-1:0]    imem_ahb_addr;
+logic   [YCR_AHB_WIDTH-1:0]    imem_req_ack_stall;
 bit                             imem_req_ack_rnd;
 logic                           imem_req_ack;
 logic                           imem_req_ack_nc;
 logic   [3:0]                   imem_be;
-logic   [YCR1_AHB_WIDTH-1:0]    imem_hrdata_l;
+logic   [YCR_AHB_WIDTH-1:0]    imem_hrdata_l;
 logic   [3:0]                   imem_wr_hazard;
 
 // DMEM access
-logic   [YCR1_AHB_WIDTH-1:0]    dmem_req_ack_stall;
+logic   [YCR_AHB_WIDTH-1:0]    dmem_req_ack_stall;
 bit                             dmem_req_ack_rnd;
 logic                           dmem_req_ack;
 logic                           dmem_req_ack_nc;
 logic   [3:0]                   dmem_be;
-type_ycr1_ahb_state_e           dmem_ahb_state;
-logic   [YCR1_AHB_WIDTH-1:0]    dmem_ahb_addr;
+type_ycr_ahb_state_e           dmem_ahb_state;
+logic   [YCR_AHB_WIDTH-1:0]    dmem_ahb_addr;
 logic                           dmem_ahb_wr;
 logic   [2:0]                   dmem_ahb_size;
 logic   [3:0]                   dmem_ahb_be;
-logic   [YCR1_AHB_WIDTH-1:0]    dmem_hrdata_l;
+logic   [YCR_AHB_WIDTH-1:0]    dmem_hrdata_l;
 logic   [3:0]                   dmem_wr_hazard;
 
 //-------------------------------------------------------------------------------
@@ -212,41 +212,41 @@ assign imem_req_ack = (imem_req_ack_stall == 32'd0) ?  imem_req_ack_rnd : imem_r
 //-------------------------------------------------------------------------------
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        imem_ahb_state <= YCR1_AHB_STATE_IDLE;
+        imem_ahb_state <= YCR_AHB_STATE_IDLE;
     end else begin
         case (imem_ahb_state)
-            YCR1_AHB_STATE_IDLE : begin
+            YCR_AHB_STATE_IDLE : begin
                 if (imem_req_ack) begin
                     case (imem_htrans)
-                        YCR1_HTRANS_IDLE : begin
-                            imem_ahb_state <= YCR1_AHB_STATE_IDLE;
+                        YCR_HTRANS_IDLE : begin
+                            imem_ahb_state <= YCR_AHB_STATE_IDLE;
                         end
-                        YCR1_HTRANS_NONSEQ : begin
-                            imem_ahb_state <= YCR1_AHB_STATE_DATA;
+                        YCR_HTRANS_NONSEQ : begin
+                            imem_ahb_state <= YCR_AHB_STATE_DATA;
                         end
                         default : begin
-                            imem_ahb_state <= YCR1_AHB_STATE_ERR;
+                            imem_ahb_state <= YCR_AHB_STATE_ERR;
                         end
                     endcase
                 end
             end
-            YCR1_AHB_STATE_DATA : begin
+            YCR_AHB_STATE_DATA : begin
                 if (imem_req_ack) begin
                     case (imem_htrans)
-                        YCR1_HTRANS_IDLE : begin
-                            imem_ahb_state <= YCR1_AHB_STATE_IDLE;
+                        YCR_HTRANS_IDLE : begin
+                            imem_ahb_state <= YCR_AHB_STATE_IDLE;
                         end
-                        YCR1_HTRANS_NONSEQ : begin
-                            imem_ahb_state <= YCR1_AHB_STATE_DATA;
+                        YCR_HTRANS_NONSEQ : begin
+                            imem_ahb_state <= YCR_AHB_STATE_DATA;
                         end
                         default : begin
-                            imem_ahb_state <= YCR1_AHB_STATE_ERR;
+                            imem_ahb_state <= YCR_AHB_STATE_ERR;
                         end
                     endcase
                 end
             end
             default : begin
-                imem_ahb_state <= YCR1_AHB_STATE_ERR;
+                imem_ahb_state <= YCR_AHB_STATE_ERR;
             end
         endcase
     end
@@ -255,8 +255,8 @@ end
 //-------------------------------------------------------------------------------
 // Address data generation
 //-------------------------------------------------------------------------------
-assign imem_be = ycr1_be_form(2'b00, imem_hsize);
-assign imem_wr_hazard = (dmem_ahb_wr & (imem_haddr[YCR1_AHB_WIDTH-1:2] == dmem_ahb_addr[YCR1_AHB_WIDTH-1:2])) ? imem_be & dmem_ahb_be : '0;
+assign imem_be = ycr_be_form(2'b00, imem_hsize);
+assign imem_wr_hazard = (dmem_ahb_wr & (imem_haddr[YCR_AHB_WIDTH-1:2] == dmem_ahb_addr[YCR_AHB_WIDTH-1:2])) ? imem_be & dmem_ahb_be : '0;
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
@@ -264,17 +264,17 @@ always_ff @(negedge rst_n, posedge clk) begin
         imem_hrdata_l  <= 'x;
     end else begin
         case (imem_ahb_state)
-            YCR1_AHB_STATE_IDLE : begin
+            YCR_AHB_STATE_IDLE : begin
                 if (imem_req_ack) begin
                     case (imem_htrans)
-                        YCR1_HTRANS_IDLE : begin
+                        YCR_HTRANS_IDLE : begin
                         end
-                        YCR1_HTRANS_NONSEQ : begin
+                        YCR_HTRANS_NONSEQ : begin
                             imem_ahb_addr  <= imem_haddr;
                             if(mirage_rangeen & imem_haddr>=mirage_adrlo & imem_haddr<mirage_adrhi)
-                                imem_hrdata_l <= ycr1_read_mem({imem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b1);
+                                imem_hrdata_l <= ycr_read_mem({imem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b1);
                             else
-                                imem_hrdata_l <= ycr1_read_mem({imem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b0);
+                                imem_hrdata_l <= ycr_read_mem({imem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b0);
                         end
                         default : begin
                             imem_ahb_addr  <= 'x;
@@ -283,19 +283,19 @@ always_ff @(negedge rst_n, posedge clk) begin
                     endcase
                 end
             end
-            YCR1_AHB_STATE_DATA : begin
+            YCR_AHB_STATE_DATA : begin
                 if (imem_req_ack) begin
                     case (imem_htrans)
-                        YCR1_HTRANS_IDLE : begin
+                        YCR_HTRANS_IDLE : begin
                             imem_ahb_addr  <= 'x;
                             imem_hrdata_l  <= 'x;
                         end
-                        YCR1_HTRANS_NONSEQ : begin
+                        YCR_HTRANS_NONSEQ : begin
                             imem_ahb_addr  <= imem_haddr;
                             if(mirage_rangeen & imem_haddr>=mirage_adrlo & imem_haddr<mirage_adrhi)
-                                imem_hrdata_l <= ycr1_read_mem({imem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b1);
+                                imem_hrdata_l <= ycr_read_mem({imem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b1);
                             else
-                                imem_hrdata_l <= ycr1_read_mem({imem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b0);
+                                imem_hrdata_l <= ycr_read_mem({imem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b0);
                         end
                         default : begin
                             imem_ahb_addr  <= 'x;
@@ -317,19 +317,19 @@ end
 //-------------------------------------------------------------------------------
 always_comb begin
     imem_hready = 1'b0;
-    imem_hresp  = YCR1_HRESP_ERROR;
+    imem_hresp  = YCR_HRESP_ERROR;
     imem_hrdata = 'x;
     case (imem_ahb_state)
-        YCR1_AHB_STATE_IDLE : begin
+        YCR_AHB_STATE_IDLE : begin
             if (imem_req_ack) begin
                 imem_hready = 1'b1;
             end
         end
-        YCR1_AHB_STATE_DATA : begin
+        YCR_AHB_STATE_DATA : begin
             if (imem_req_ack) begin
                 imem_hready = 1'b1;
 
-                imem_hresp  = YCR1_HRESP_OKAY;
+                imem_hresp  = YCR_HRESP_OKAY;
                 imem_hrdata = imem_hrdata_l;
             end
         end
@@ -361,53 +361,53 @@ assign dmem_req_ack = (dmem_req_ack_stall == 32'd0) ?  dmem_req_ack_rnd : dmem_r
 //-------------------------------------------------------------------------------
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        dmem_ahb_state <= YCR1_AHB_STATE_IDLE;
+        dmem_ahb_state <= YCR_AHB_STATE_IDLE;
     end else begin
         case (dmem_ahb_state)
-            YCR1_AHB_STATE_IDLE : begin
+            YCR_AHB_STATE_IDLE : begin
                 if (dmem_req_ack) begin
                     case (dmem_htrans)
-                        YCR1_HTRANS_IDLE : begin
-                            dmem_ahb_state <= YCR1_AHB_STATE_IDLE;
+                        YCR_HTRANS_IDLE : begin
+                            dmem_ahb_state <= YCR_AHB_STATE_IDLE;
                         end
-                        YCR1_HTRANS_NONSEQ : begin
-                            dmem_ahb_state    <= YCR1_AHB_STATE_DATA;
+                        YCR_HTRANS_NONSEQ : begin
+                            dmem_ahb_state    <= YCR_AHB_STATE_DATA;
                         end
                         default : begin
-                            dmem_ahb_state    <= YCR1_AHB_STATE_ERR;
+                            dmem_ahb_state    <= YCR_AHB_STATE_ERR;
                         end
                     endcase
                 end
             end
-            YCR1_AHB_STATE_DATA : begin
+            YCR_AHB_STATE_DATA : begin
                 if (dmem_req_ack) begin
                     case (dmem_htrans)
-                        YCR1_HTRANS_IDLE : begin
-                            dmem_ahb_state    <= YCR1_AHB_STATE_IDLE;
+                        YCR_HTRANS_IDLE : begin
+                            dmem_ahb_state    <= YCR_AHB_STATE_IDLE;
                         end
-                        YCR1_HTRANS_NONSEQ : begin
+                        YCR_HTRANS_NONSEQ : begin
                             if (~dmem_hwrite) begin
                                 case (dmem_haddr)
-                                    YCR1_SIM_SOFT_IRQ_ADDR,
-                                    YCR1_SIM_EXT_IRQ_ADDR
+                                    YCR_SIM_SOFT_IRQ_ADDR,
+                                    YCR_SIM_EXT_IRQ_ADDR
                                     : begin
-                                        // Skip access, switch to YCR1_AHB_STATE_IDLE
-                                        dmem_ahb_state    <= YCR1_AHB_STATE_IDLE;
+                                        // Skip access, switch to YCR_AHB_STATE_IDLE
+                                        dmem_ahb_state    <= YCR_AHB_STATE_IDLE;
                                     end
                                     default : begin
-                                        dmem_ahb_state    <= YCR1_AHB_STATE_DATA;
+                                        dmem_ahb_state    <= YCR_AHB_STATE_DATA;
                                     end
                                 endcase
                             end
                         end
                         default : begin
-                            dmem_ahb_state    <= YCR1_AHB_STATE_ERR;
+                            dmem_ahb_state    <= YCR_AHB_STATE_ERR;
                         end
                     endcase
                 end
             end
             default : begin
-                dmem_ahb_state    <= YCR1_AHB_STATE_ERR;
+                dmem_ahb_state    <= YCR_AHB_STATE_ERR;
             end
         endcase
     end
@@ -416,22 +416,22 @@ end
 //-------------------------------------------------------------------------------
 // Address command latch
 //-------------------------------------------------------------------------------
-assign dmem_be = ycr1_be_form(dmem_haddr[1:0], dmem_hsize);
-assign dmem_wr_hazard = (dmem_ahb_wr & (dmem_haddr[YCR1_AHB_WIDTH-1:2] == dmem_ahb_addr[YCR1_AHB_WIDTH-1:2])) ? dmem_be & dmem_ahb_be : '0;
+assign dmem_be = ycr_be_form(dmem_haddr[1:0], dmem_hsize);
+assign dmem_wr_hazard = (dmem_ahb_wr & (dmem_haddr[YCR_AHB_WIDTH-1:2] == dmem_ahb_addr[YCR_AHB_WIDTH-1:2])) ? dmem_be & dmem_ahb_be : '0;
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         dmem_ahb_addr  <= 'x;
         dmem_ahb_wr    <= 1'b0;
-        dmem_ahb_size  <= YCR1_HSIZE_ERR;
+        dmem_ahb_size  <= YCR_HSIZE_ERR;
         dmem_ahb_be    <= '0;
     end else begin
         case (dmem_ahb_state)
-            YCR1_AHB_STATE_IDLE : begin
+            YCR_AHB_STATE_IDLE : begin
                 if (dmem_req_ack) begin
                     case (dmem_htrans)
-                        YCR1_HTRANS_IDLE : begin
+                        YCR_HTRANS_IDLE : begin
                         end
-                        YCR1_HTRANS_NONSEQ : begin
+                        YCR_HTRANS_NONSEQ : begin
                             dmem_ahb_addr <= dmem_haddr;
                             dmem_ahb_wr   <= dmem_hwrite;
                             dmem_ahb_size <= dmem_hsize;
@@ -439,29 +439,29 @@ always_ff @(negedge rst_n, posedge clk) begin
                             if (~dmem_hwrite) begin
                                 case (dmem_haddr)
                                     // Reading Soft IRQ value
-                                    YCR1_SIM_SOFT_IRQ_ADDR : begin
+                                    YCR_SIM_SOFT_IRQ_ADDR : begin
                                         dmem_hrdata_l <= '0;
                                         dmem_hrdata_l[0] <= soft_irq_reg;
                                     end
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
                                     // Reading IRQ Lines values
-                                    YCR1_SIM_EXT_IRQ_ADDR : begin
+                                    YCR_SIM_EXT_IRQ_ADDR : begin
                                         dmem_hrdata_l <= '0;
-                                        dmem_hrdata_l[YCR1_IRQ_LINES_NUM-1:0] <= irq_lines_reg;
+                                        dmem_hrdata_l[YCR_IRQ_LINES_NUM-1:0] <= irq_lines_reg;
                                     end
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
                                     // Reading External IRQ value
-                                    YCR1_SIM_EXT_IRQ_ADDR : begin
+                                    YCR_SIM_EXT_IRQ_ADDR : begin
                                         dmem_hrdata_l <= '0;
                                         dmem_hrdata_l[0] <= ext_irq_reg;
                                     end
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
                                     // Regular read operation
                                     default : begin
                                         if(mirage_rangeen & dmem_haddr>=mirage_adrlo & dmem_haddr<mirage_adrhi)
-                                            dmem_hrdata_l <= ycr1_read_mem({dmem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b1);
+                                            dmem_hrdata_l <= ycr_read_mem({dmem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b1);
                                         else
-                                            dmem_hrdata_l <= ycr1_read_mem({dmem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b0);
+                                            dmem_hrdata_l <= ycr_read_mem({dmem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b0);
                                     end
                                 endcase
                             end
@@ -469,37 +469,37 @@ always_ff @(negedge rst_n, posedge clk) begin
                         default : begin
                             dmem_ahb_addr  <= 'x;
                             dmem_ahb_wr    <= 'x;
-                            dmem_ahb_size  <= YCR1_HSIZE_ERR;
+                            dmem_ahb_size  <= YCR_HSIZE_ERR;
                             dmem_hrdata_l  <= 'x;
                         end
                     endcase
                 end
             end
-            YCR1_AHB_STATE_DATA : begin
+            YCR_AHB_STATE_DATA : begin
                 if (dmem_req_ack) begin
                     case (dmem_htrans)
-                        YCR1_HTRANS_IDLE : begin
+                        YCR_HTRANS_IDLE : begin
                             dmem_ahb_addr     <= 'x;
                             dmem_ahb_wr       <= 1'b0;
-                            dmem_ahb_size     <= YCR1_HSIZE_ERR;
+                            dmem_ahb_size     <= YCR_HSIZE_ERR;
                         end
-                        YCR1_HTRANS_NONSEQ : begin
+                        YCR_HTRANS_NONSEQ : begin
                             dmem_ahb_addr <= dmem_haddr;
                             dmem_ahb_wr   <= dmem_hwrite;
                             dmem_ahb_size <= dmem_hsize;
                             dmem_ahb_be   <= dmem_be;
                             if (~dmem_hwrite) begin
                                 case (dmem_haddr)
-                                    YCR1_SIM_SOFT_IRQ_ADDR,
-                                    YCR1_SIM_EXT_IRQ_ADDR
+                                    YCR_SIM_SOFT_IRQ_ADDR,
+                                    YCR_SIM_EXT_IRQ_ADDR
                                     : begin
-                                        // Skip access, switch to YCR1_AHB_STATE_IDLE
+                                        // Skip access, switch to YCR_AHB_STATE_IDLE
                                     end
                                     default : begin
                                         if(mirage_rangeen & dmem_haddr>=mirage_adrlo & dmem_haddr<mirage_adrhi)
-                                            dmem_hrdata_l <= ycr1_read_mem({dmem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b1);
+                                            dmem_hrdata_l <= ycr_read_mem({dmem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b1);
                                         else
-                                            dmem_hrdata_l <= ycr1_read_mem({dmem_haddr[YCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b0);
+                                            dmem_hrdata_l <= ycr_read_mem({dmem_haddr[YCR_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b0);
                                     end
                                 endcase
                             end
@@ -507,7 +507,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                         default : begin
                             dmem_ahb_addr  <= 'x;
                             dmem_ahb_wr    <= 'x;
-                            dmem_ahb_size  <= YCR1_HSIZE_ERR;
+                            dmem_ahb_size  <= YCR_HSIZE_ERR;
                             dmem_ahb_be    <= 'x;
                             dmem_hrdata_l  <= 'x;
                         end
@@ -517,7 +517,7 @@ always_ff @(negedge rst_n, posedge clk) begin
             default : begin
                 dmem_ahb_addr  <= 'x;
                 dmem_ahb_wr    <= 'x;
-                dmem_ahb_size  <= YCR1_HSIZE_ERR;
+                dmem_ahb_size  <= YCR_HSIZE_ERR;
                 dmem_hrdata_l  <= 'x;
             end
         endcase
@@ -529,18 +529,18 @@ end
 //-------------------------------------------------------------------------------
 always_comb begin
     dmem_hready = 1'b0;
-    dmem_hresp  = YCR1_HRESP_ERROR;
+    dmem_hresp  = YCR_HRESP_ERROR;
     dmem_hrdata = 'x;
     case (dmem_ahb_state)
-        YCR1_AHB_STATE_IDLE : begin
+        YCR_AHB_STATE_IDLE : begin
             if (dmem_req_ack) begin
                 dmem_hready = 1'b1;
             end
         end
-        YCR1_AHB_STATE_DATA : begin
+        YCR_AHB_STATE_DATA : begin
             if (dmem_req_ack) begin
                 dmem_hready = 1'b1;
-                dmem_hresp  = YCR1_HRESP_OKAY;
+                dmem_hresp  = YCR_HRESP_OKAY;
                 if (~dmem_ahb_wr) begin
                     dmem_hrdata = dmem_hrdata_l;
                 end
@@ -557,51 +557,51 @@ end
 always @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         soft_irq_reg   <= '0;
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
         irq_lines_reg  <= '0;
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
         ext_irq_reg    <= '0;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
         if (test_file_init) $readmemh(test_file, memory);
     end else begin
-        if ((dmem_ahb_state == YCR1_AHB_STATE_DATA) & dmem_req_ack & dmem_ahb_wr) begin
+        if ((dmem_ahb_state == YCR_AHB_STATE_DATA) & dmem_req_ack & dmem_ahb_wr) begin
             case (dmem_ahb_addr)
                 // Printing character in the simulation console
-                YCR1_SIM_PRINT_ADDR : begin
+                YCR_SIM_PRINT_ADDR : begin
                     $write("%c", dmem_hwdata[7:0]);
                 end
                 // Writing Soft IRQ value
-                YCR1_SIM_SOFT_IRQ_ADDR : begin
+                YCR_SIM_SOFT_IRQ_ADDR : begin
                     soft_irq_reg <= dmem_hwdata[0];
                 end
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
                 // Writing IRQ Lines values
-                YCR1_SIM_EXT_IRQ_ADDR : begin
-                    irq_lines_reg <= dmem_hwdata[YCR1_IRQ_LINES_NUM-1:0];
+                YCR_SIM_EXT_IRQ_ADDR : begin
+                    irq_lines_reg <= dmem_hwdata[YCR_IRQ_LINES_NUM-1:0];
                 end
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
                 // Writing External IRQ value
-                YCR1_SIM_EXT_IRQ_ADDR : begin
+                YCR_SIM_EXT_IRQ_ADDR : begin
                     ext_irq_reg <= dmem_hwdata[0];
                 end
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
                 // Regular write operation
                 default : begin
                     if(mirage_rangeen & dmem_ahb_addr>=mirage_adrlo & dmem_ahb_addr<mirage_adrhi)
-                        ycr1_write_mem({dmem_ahb_addr[YCR1_AHB_WIDTH-1:2], 2'b00}, dmem_ahb_be, dmem_hwdata, 1'b1);
+                        ycr_write_mem({dmem_ahb_addr[YCR_AHB_WIDTH-1:2], 2'b00}, dmem_ahb_be, dmem_hwdata, 1'b1);
                     else
-                        ycr1_write_mem({dmem_ahb_addr[YCR1_AHB_WIDTH-1:2], 2'b00}, dmem_ahb_be, dmem_hwdata, 1'b0);
+                        ycr_write_mem({dmem_ahb_addr[YCR_AHB_WIDTH-1:2], 2'b00}, dmem_ahb_be, dmem_hwdata, 1'b0);
                 end
             endcase
         end
     end
 end
 
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
 assign irq_lines = irq_lines_reg;
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
 assign ext_irq = ext_irq_reg;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 assign soft_irq = soft_irq_reg;
 
-endmodule : ycr1_memory_tb_ahb
+endmodule : ycr_memory_tb_ahb

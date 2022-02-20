@@ -20,7 +20,7 @@
 ////  yifive 32x32 Multiplier with 8 stage pipe line                      ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////    32x32 Multiplier with 8 stage pipe line for timing reason         ////
@@ -40,7 +40,7 @@
 ////              increment in higer bits                                 ////
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
-module ycr1_pipe_mul (
+module ycr_pipe_mul (
 	input   logic        clk, 
 	input   logic        rstn, 
 	input   logic        data_valid,   // input valid

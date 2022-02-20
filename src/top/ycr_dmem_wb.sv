@@ -20,7 +20,7 @@
 ////  yifive Wishbone interface for Data memory                           ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     integrated wishbone i/f to data  memory                          ////
@@ -44,10 +44,10 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_wb.svh"
-`include "ycr1_memif.svh"
+`include "ycr_wb.svh"
+`include "ycr_memif.svh"
 
-module ycr1_dmem_wb (
+module ycr_dmem_wb (
     // Control Signals
     input   logic                           core_rst_n, // core reset
     input   logic                           core_clk,   // Core clock
@@ -57,20 +57,20 @@ module ycr1_dmem_wb (
     input   logic                           dmem_req,
     input   logic                           dmem_cmd,
     input   logic [1:0]                     dmem_width,
-    input   logic   [YCR1_WB_WIDTH-1:0]     dmem_addr,
-    input   logic   [YCR1_WB_WIDTH-1:0]     dmem_wdata,
-    output  logic   [YCR1_WB_WIDTH-1:0]     dmem_rdata,
+    input   logic   [YCR_WB_WIDTH-1:0]     dmem_addr,
+    input   logic   [YCR_WB_WIDTH-1:0]     dmem_wdata,
+    output  logic   [YCR_WB_WIDTH-1:0]     dmem_rdata,
     output  logic [1:0]                     dmem_resp,
 
     // WB Interface
     input   logic                           wb_rst_n,   // wishbone reset
     input   logic                           wb_clk,     // wishbone clock
     output  logic                           wbd_stb_o, // strobe/request
-    output  logic   [YCR1_WB_WIDTH-1:0]     wbd_adr_o, // address
+    output  logic   [YCR_WB_WIDTH-1:0]     wbd_adr_o, // address
     output  logic                           wbd_we_o,  // write
-    output  logic   [YCR1_WB_WIDTH-1:0]     wbd_dat_o, // data output
+    output  logic   [YCR_WB_WIDTH-1:0]     wbd_dat_o, // data output
     output  logic   [3:0]                   wbd_sel_o, // byte enable
-    input   logic   [YCR1_WB_WIDTH-1:0]     wbd_dat_i, // data input
+    input   logic   [YCR_WB_WIDTH-1:0]     wbd_dat_i, // data input
     input   logic                           wbd_ack_i, // acknowlegement
     input   logic                           wbd_err_i  // error
 
@@ -88,54 +88,54 @@ typedef struct packed {
     logic [3:0]                     hbel;
     logic                           hwrite;
     logic   [2:0]                   hwidth;
-    logic   [YCR1_WB_WIDTH-1:0]     haddr;
-    logic   [YCR1_WB_WIDTH-1:0]     hwdata;
-} type_ycr1_req_fifo_s;
+    logic   [YCR_WB_WIDTH-1:0]     haddr;
+    logic   [YCR_WB_WIDTH-1:0]     hwdata;
+} type_ycr_req_fifo_s;
 
 
 typedef struct packed {
     logic                           hresp;
     logic   [2:0]                   hwidth;
     logic   [1:0]                   haddr;
-    logic   [YCR1_WB_WIDTH-1:0]    hrdata;
-} type_ycr1_resp_fifo_s;
+    logic   [YCR_WB_WIDTH-1:0]    hrdata;
+} type_ycr_resp_fifo_s;
 
 //-------------------------------------------------------------------------------
 // Local functions
 //-------------------------------------------------------------------------------
-function automatic logic   [2:0] ycr1_conv_mem2wb_width (
+function automatic logic   [2:0] ycr_conv_mem2wb_width (
     input   logic [1:0]              dmem_width
 );
     logic   [2:0]   tmp;
 begin
     case (dmem_width)
-        YCR1_MEM_WIDTH_BYTE : begin
-            tmp = YCR1_DSIZE_8B;
+        YCR_MEM_WIDTH_BYTE : begin
+            tmp = YCR_DSIZE_8B;
         end
-        YCR1_MEM_WIDTH_HWORD : begin
-            tmp = YCR1_DSIZE_16B;
+        YCR_MEM_WIDTH_HWORD : begin
+            tmp = YCR_DSIZE_16B;
         end
-        YCR1_MEM_WIDTH_WORD : begin
-            tmp = YCR1_DSIZE_32B;
+        YCR_MEM_WIDTH_WORD : begin
+            tmp = YCR_DSIZE_32B;
         end
         default : begin
-            tmp = YCR1_DSIZE_32B;
+            tmp = YCR_DSIZE_32B;
         end
     endcase
-    ycr1_conv_mem2wb_width =  tmp; // cp.11
+    ycr_conv_mem2wb_width =  tmp; // cp.11
 end
 endfunction
 
-function automatic logic[YCR1_WB_WIDTH-1:0] ycr1_conv_mem2wb_wdata (
+function automatic logic[YCR_WB_WIDTH-1:0] ycr_conv_mem2wb_wdata (
     input   logic   [1:0]                   dmem_addr,
     input   logic [1:0]                     dmem_width,
-    input   logic   [YCR1_WB_WIDTH-1:0]    dmem_wdata
+    input   logic   [YCR_WB_WIDTH-1:0]    dmem_wdata
 );
-    logic   [YCR1_WB_WIDTH-1:0]  tmp;
+    logic   [YCR_WB_WIDTH-1:0]  tmp;
 begin
     tmp = 'x;
     case (dmem_width)
-        YCR1_MEM_WIDTH_BYTE : begin
+        YCR_MEM_WIDTH_BYTE : begin
             case (dmem_addr)
                 2'b00 : begin
                     tmp[7:0]   = dmem_wdata[7:0];
@@ -153,7 +153,7 @@ begin
                 end
             endcase
         end
-        YCR1_MEM_WIDTH_HWORD : begin
+        YCR_MEM_WIDTH_HWORD : begin
             case (dmem_addr[1])
                 1'b0 : begin
                     tmp[15:0]  = dmem_wdata[15:0];
@@ -165,26 +165,26 @@ begin
                 end
             endcase
         end
-        YCR1_MEM_WIDTH_WORD : begin
+        YCR_MEM_WIDTH_WORD : begin
             tmp = dmem_wdata;
         end
         default : begin
         end
     endcase
-    ycr1_conv_mem2wb_wdata = tmp;
+    ycr_conv_mem2wb_wdata = tmp;
 end
 endfunction
 
-function automatic logic[YCR1_WB_WIDTH-1:0] ycr1_conv_wb2mem_rdata (
+function automatic logic[YCR_WB_WIDTH-1:0] ycr_conv_wb2mem_rdata (
     input   logic [1:0]                 hwidth,
     input   logic [1:0]                 haddr,
-    input   logic [YCR1_WB_WIDTH-1:0]  hrdata
+    input   logic [YCR_WB_WIDTH-1:0]  hrdata
 );
-    logic   [YCR1_WB_WIDTH-1:0]  tmp;
+    logic   [YCR_WB_WIDTH-1:0]  tmp;
 begin
     tmp = 'x;
     case (hwidth)
-        YCR1_DSIZE_8B : begin
+        YCR_DSIZE_8B : begin
             case (haddr)
                 2'b00 : tmp[7:0] = hrdata[7:0];
                 2'b01 : tmp[7:0] = hrdata[15:8];
@@ -194,7 +194,7 @@ begin
                 end
             endcase
         end
-        YCR1_DSIZE_16B : begin
+        YCR_DSIZE_16B : begin
             case (haddr[1])
                 1'b0 : tmp[15:0] = hrdata[15:0];
                 1'b1 : tmp[15:0] = hrdata[31:16];
@@ -202,13 +202,13 @@ begin
                 end
             endcase
         end
-        YCR1_DSIZE_32B : begin
+        YCR_DSIZE_32B : begin
             tmp = hrdata;
         end
         default : begin
         end
     endcase
-    ycr1_conv_wb2mem_rdata = tmp;
+    ycr_conv_wb2mem_rdata = tmp;
 end
 endfunction
 
@@ -229,22 +229,22 @@ logic                                       resp_fifo_full;
 //-------------------------------------------------------------------------------
 // REQ_FIFO (CORE to WB)
 //-------------------------------------------------------------------------------
-wire	                 hwrite_in = (dmem_cmd == YCR1_MEM_CMD_WR);
-wire [2:0]               hwidth_in = ycr1_conv_mem2wb_width(dmem_width);
-wire [YCR1_WB_WIDTH-1:0] haddr_in  = dmem_addr;
-wire [YCR1_WB_WIDTH-1:0] hwdata_in = ycr1_conv_mem2wb_wdata(dmem_addr[1:0], dmem_width, dmem_wdata);
+wire	                 hwrite_in = (dmem_cmd == YCR_MEM_CMD_WR);
+wire [2:0]               hwidth_in = ycr_conv_mem2wb_width(dmem_width);
+wire [YCR_WB_WIDTH-1:0] haddr_in  = dmem_addr;
+wire [YCR_WB_WIDTH-1:0] hwdata_in = ycr_conv_mem2wb_wdata(dmem_addr[1:0], dmem_width, dmem_wdata);
 
 reg  [3:0]              hbel_in; // byte select
 always_comb begin
 	hbel_in = 0;
     case (hwidth_in)
-        YCR1_DSIZE_8B : begin
+        YCR_DSIZE_8B : begin
             hbel_in = 4'b0001 << haddr_in[1:0];
         end
-        YCR1_DSIZE_16B : begin
+        YCR_DSIZE_16B : begin
             hbel_in = 4'b0011 << haddr_in[1:0];
         end
-        YCR1_DSIZE_32B : begin
+        YCR_DSIZE_32B : begin
             hbel_in = 4'b1111;
         end
     endcase
@@ -254,8 +254,8 @@ end
 //-------------------------------------------------------------------------------
 // REQ_FIFO (WB to CORE)
 //-------------------------------------------------------------------------------
-type_ycr1_req_fifo_s    req_fifo_din;
-type_ycr1_req_fifo_s    req_fifo_dout;
+type_ycr_req_fifo_s    req_fifo_din;
+type_ycr_req_fifo_s    req_fifo_dout;
 
 
 assign dmem_req_ack        = ~req_fifo_full;
@@ -270,7 +270,7 @@ assign req_fifo_din.hwdata =  hwdata_in;
 
 
  async_fifo #(
-      .W(YCR1_WB_WIDTH+YCR1_WB_WIDTH+3+1+4), // Data Width
+      .W(YCR_WB_WIDTH+YCR_WB_WIDTH+3+1+4), // Data Width
       .DP(4),            // FIFO DEPTH
       .WR_FAST(1),       // We need FF'ed Full
       .RD_FAST(1)        // We need FF'ed Empty
@@ -313,8 +313,8 @@ assign wbd_sel_o    = (req_fifo_empty) ? 'h0 : req_fifo_dout.hbel;
 //-------------------------------------------------------------------------------
 // Response path - Used by Read path logic
 //-------------------------------------------------------------------------------
-type_ycr1_resp_fifo_s                       resp_fifo_din;
-type_ycr1_resp_fifo_s                       resp_fifo_dout;
+type_ycr_resp_fifo_s                       resp_fifo_din;
+type_ycr_resp_fifo_s                       resp_fifo_dout;
 
 
 assign  resp_fifo_din.hresp  = (wbd_err_i) ? 1'b0 : 1'b1;
@@ -323,7 +323,7 @@ assign  resp_fifo_din.haddr  = req_fifo_dout.haddr[1:0];
 assign  resp_fifo_din.hrdata = (wbd_we_o) ? 'h0: wbd_dat_i;
 
  async_fifo #(
-      .W(YCR1_WB_WIDTH+2+3+1), // Data Width
+      .W(YCR_WB_WIDTH+2+3+1), // Data Width
       .DP(4),            // FIFO DEPTH
       .WR_FAST(1),       // We need FF'ed Full
       .RD_FAST(1)        // We need FF'ed Empty
@@ -353,16 +353,16 @@ always_ff @(posedge core_clk, negedge core_rst_n) begin
       dmem_rdata <= '0;
       dmem_resp <= '0;
    end else begin
-      dmem_rdata <= (resp_fifo_rd) ? ycr1_conv_wb2mem_rdata(resp_fifo_dout.hwidth, resp_fifo_dout.haddr, resp_fifo_dout.hrdata) : 'h0;
+      dmem_rdata <= (resp_fifo_rd) ? ycr_conv_wb2mem_rdata(resp_fifo_dout.hwidth, resp_fifo_dout.haddr, resp_fifo_dout.hrdata) : 'h0;
       dmem_resp  <= (resp_fifo_rd)
                           ? (resp_fifo_dout.hresp == 1'b1)
-                              ? YCR1_MEM_RESP_RDY_OK
-                              : YCR1_MEM_RESP_RDY_ER
-                          : YCR1_MEM_RESP_NOTRDY ;
+                              ? YCR_MEM_RESP_RDY_OK
+                              : YCR_MEM_RESP_RDY_ER
+                          : YCR_MEM_RESP_NOTRDY ;
    end
 end
 
 
 
 
-endmodule : ycr1_dmem_wb
+endmodule : ycr_dmem_wb

@@ -20,7 +20,7 @@
 ////  yifive Integrated Programmable Interrupt Controller (IPIC)          ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Integrated Programmable Interrupt Controller (IPIC)              ////
@@ -63,27 +63,27 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
 
-`include "ycr1_ipic.svh"
+`include "ycr_ipic.svh"
 
-module ycr1_ipic
+module ycr_ipic
 (
     // Common
     input   logic                                   rst_n,                  // IPIC reset
     input   logic                                   clk,                    // IPIC clock
 
     // External Interrupt lines
-    input   logic [YCR1_IRQ_LINES_NUM-1:0]          soc2ipic_irq_lines_i,   // External IRQ lines
+    input   logic [YCR_IRQ_LINES_NUM-1:0]          soc2ipic_irq_lines_i,   // External IRQ lines
 
     // CSR <-> IPIC interface
     input   logic                                   csr2ipic_r_req_i,       // IPIC read request
     input   logic                                   csr2ipic_w_req_i,       // IPIC write request
     input   logic [2:0]                             csr2ipic_addr_i,        // IPIC address
-    input   logic [`YCR1_XLEN-1:0]                  csr2ipic_wdata_i,       // IPIC write data
-    output  logic [`YCR1_XLEN-1:0]                  ipic2csr_rdata_o,       // IPIC read data
+    input   logic [`YCR_XLEN-1:0]                  csr2ipic_wdata_i,       // IPIC write data
+    output  logic [`YCR_XLEN-1:0]                  ipic2csr_rdata_o,       // IPIC read data
     output  logic                                   ipic2csr_irq_m_req_o    // IRQ request from IPIC
 );
 
@@ -93,12 +93,12 @@ module ycr1_ipic
 typedef struct packed { // cp.6
     logic                                   vd;
     logic                                   idx;
-} type_ycr1_search_one_2_s;
+} type_ycr_search_one_2_s;
 
 typedef struct packed { // cp.6
     logic                                   vd;
-    logic   [YCR1_IRQ_VECT_WIDTH-1:0]       idx;
-} type_ycr1_search_one_16_s;
+    logic   [YCR_IRQ_VECT_WIDTH-1:0]       idx;
+} type_ycr_search_one_16_s;
 
 typedef struct packed {
     logic                                   ip;
@@ -106,30 +106,30 @@ typedef struct packed {
     logic                                   im;
     logic                                   inv;
     logic                                   is;
-    logic   [YCR1_IRQ_LINES_WIDTH-1:0]      line;
-} type_ycr1_icsr_m_s;
+    logic   [YCR_IRQ_LINES_WIDTH-1:0]      line;
+} type_ycr_icsr_m_s;
 
 typedef struct packed {
     logic                                   ip;
     logic                                   ie;
-} type_ycr1_cicsr_s;
+} type_ycr_cicsr_s;
 
 //-------------------------------------------------------------------------------
 // Local functions declaration
 //-------------------------------------------------------------------------------
 
-function automatic type_ycr1_search_one_2_s ycr1_search_one_2(
+function automatic type_ycr_search_one_2_s ycr_search_one_2(
     input   logic   [1:0] din
 );
-    type_ycr1_search_one_2_s tmp;
+    type_ycr_search_one_2_s tmp;
 begin
     tmp.vd  = |din;
     tmp.idx = ~din[0];
-    ycr1_search_one_2 =  tmp;
+    ycr_search_one_2 =  tmp;
 end
 endfunction
 
-function automatic type_ycr1_search_one_16_s ycr1_search_one_16(
+function automatic type_ycr_search_one_16_s ycr_search_one_16(
     input   logic [15:0]    din
 );
     logic [7:0]         stage1_vd;
@@ -139,27 +139,27 @@ function automatic type_ycr1_search_one_16_s ycr1_search_one_16(
     logic               stage1_idx [7:0];
     logic [1:0]         stage2_idx [3:0];
     logic [2:0]         stage3_idx [1:0];
-    type_ycr1_search_one_16_s result;
-    type_ycr1_search_one_2_s tmp;
+    type_ycr_search_one_16_s result;
+    type_ycr_search_one_2_s tmp;
     integer i; // cp.17
 begin
     // Stage 1
     for (i=0; i<8; i=i+1) begin
-        tmp = ycr1_search_one_2(din[(i+1)*2-1-:2]);
+        tmp = ycr_search_one_2(din[(i+1)*2-1-:2]);
         stage1_vd[i]  = tmp.vd;
         stage1_idx[i] = tmp.idx;
     end
 
     // Stage 2
     for (i=0; i<4; i=i+1) begin
-        tmp = ycr1_search_one_2(stage1_vd[(i+1)*2-1-:2]);
+        tmp = ycr_search_one_2(stage1_vd[(i+1)*2-1-:2]);
         stage2_vd[i]  = tmp.vd;
         stage2_idx[i] = (~tmp.idx) ? {tmp.idx, stage1_idx[2*i]} : {tmp.idx, stage1_idx[2*i+1]};
     end
 
     // Stage 3
     for (i=0; i<2; i=i+1) begin
-        tmp = ycr1_search_one_2(stage2_vd[(i+1)*2-1-:2]);
+        tmp = ycr_search_one_2(stage2_vd[(i+1)*2-1-:2]);
         stage3_vd[i]  = tmp.vd;
         stage3_idx[i] = (~tmp.idx) ? {tmp.idx, stage2_idx[2*i]} : {tmp.idx, stage2_idx[2*i+1]};
     end
@@ -168,7 +168,7 @@ begin
     result.vd = |stage3_vd;
     result.idx = (stage3_vd[0]) ? {1'b0, stage3_idx[0]} : {1'b1, stage3_idx[1]};
 
-    ycr1_search_one_16 = result;
+    ycr_search_one_16 = result;
 end
 endfunction
 
@@ -179,25 +179,25 @@ endfunction
 // IRQ lines handling signals
 //------------------------------------------------------------------------------
 
-logic [YCR1_IRQ_VECT_NUM-1:0]           irq_lines;              // Internal IRQ lines
-`ifdef YCR1_IPIC_SYNC_EN
-logic [YCR1_IRQ_VECT_NUM-1:0]           irq_lines_sync;
-`endif // YCR1_IPIC_SYNC_EN
-logic [YCR1_IRQ_VECT_NUM-1:0]           irq_lines_dly;          // Internal IRQ lines delayed for 1 cycle
-logic [YCR1_IRQ_VECT_NUM-1:0]           irq_edge_detected;      // IRQ lines edge detected flags
-logic [YCR1_IRQ_VECT_NUM-1:0]           irq_lvl;                // IRQ lines level
+logic [YCR_IRQ_VECT_NUM-1:0]           irq_lines;              // Internal IRQ lines
+`ifdef YCR_IPIC_SYNC_EN
+logic [YCR_IRQ_VECT_NUM-1:0]           irq_lines_sync;
+`endif // YCR_IPIC_SYNC_EN
+logic [YCR_IRQ_VECT_NUM-1:0]           irq_lines_dly;          // Internal IRQ lines delayed for 1 cycle
+logic [YCR_IRQ_VECT_NUM-1:0]           irq_edge_detected;      // IRQ lines edge detected flags
+logic [YCR_IRQ_VECT_NUM-1:0]           irq_lvl;                // IRQ lines level
 
 // IPIC registers
 //------------------------------------------------------------------------------
 
 // CISV register
 logic                                   ipic_cisv_upd;          // Current Interrupt Vecotr in Service register update
-logic [YCR1_IRQ_VECT_WIDTH-1:0]         ipic_cisv_ff;           // Current Interrupt Vector in Service register
-logic [YCR1_IRQ_VECT_WIDTH-1:0]         ipic_cisv_next;         // Current Interrupt Vector in Service register next value
+logic [YCR_IRQ_VECT_WIDTH-1:0]         ipic_cisv_ff;           // Current Interrupt Vector in Service register
+logic [YCR_IRQ_VECT_WIDTH-1:0]         ipic_cisv_next;         // Current Interrupt Vector in Service register next value
 
 // CICS register (CICSR)
 logic                                   cicsr_wr_req;           // Write request to Current Interrupt Control Status register
-type_ycr1_cicsr_s                       ipic_cicsr;             // Current Interrupt Control Status register
+type_ycr_cicsr_s                       ipic_cicsr;             // Current Interrupt Control Status register
 
 // EOI register
 logic                                   eoi_wr_req;             // Write request to End of Interrupt register
@@ -209,67 +209,67 @@ logic                                   ipic_soi_req;           // Request to st
 
 // IDX register (IDXR)
 logic                                   idxr_wr_req;            // Write request to Index register
-logic [YCR1_IRQ_IDX_WIDTH-1:0]          ipic_idxr_ff;           // Index register
+logic [YCR_IRQ_IDX_WIDTH-1:0]          ipic_idxr_ff;           // Index register
 
 // IP register (IPR)
 logic                                   ipic_ipr_upd;           // Interrupt pending register update
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_ipr_ff;            // Interrupt pending register
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_ipr_next;          // Interrupt pending register next value
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_ipr_clr_cond;      // Interrupt pending clear condition
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_ipr_clr_req;       // Interrupt pending clear request
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_ipr_clr;           // Interrupt pending clear operation
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_ipr_ff;            // Interrupt pending register
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_ipr_next;          // Interrupt pending register next value
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_ipr_clr_cond;      // Interrupt pending clear condition
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_ipr_clr_req;       // Interrupt pending clear request
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_ipr_clr;           // Interrupt pending clear operation
 
 // ISV register (ISVR)
 logic                                   ipic_isvr_upd;          // Interrupt Serviced register update
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_isvr_ff;           // Interrupt Serviced register
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_isvr_next;         // Interrupt Serviced register next value
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_isvr_ff;           // Interrupt Serviced register
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_isvr_next;         // Interrupt Serviced register next value
 
 // IE register (IER)
 logic                                   ipic_ier_upd;           // Interrupt enable register update
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_ier_ff;            // Interrupt enable register
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_ier_next;          // Interrupt enable register next value
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_ier_ff;            // Interrupt enable register
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_ier_next;          // Interrupt enable register next value
 
 // IM register (IMR)
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_imr_ff;            // Interrupt mode register
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_imr_next;          // Interrupt mode register next value
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_imr_ff;            // Interrupt mode register
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_imr_next;          // Interrupt mode register next value
 
 // IINV register (IINVR)
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_iinvr_ff;          // Interrupt Inversion register
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_iinvr_next;        // Interrupt Inversion register next value
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_iinvr_ff;          // Interrupt Inversion register
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_iinvr_next;        // Interrupt Inversion register next value
 
 // ICS register (ICSR)
 logic                                   icsr_wr_req;            // Write request to Interrupt Control Status register
-type_ycr1_icsr_m_s                      ipic_icsr;              // Interrupt Control Status register
+type_ycr_icsr_m_s                      ipic_icsr;              // Interrupt Control Status register
 
 // Priority interrupt generation signals
 //------------------------------------------------------------------------------
 
 // Serviced interrupt signals
 logic                                   irq_serv_vd;            // There is an interrupt in service
-logic [YCR1_IRQ_VECT_WIDTH-1:0]         irq_serv_idx;           // Index of an interrupt that is currently in service
+logic [YCR_IRQ_VECT_WIDTH-1:0]         irq_serv_idx;           // Index of an interrupt that is currently in service
 
 // Requested interrupt signals
 logic                                   irq_req_vd;             // There is a requested interrupt
-logic [YCR1_IRQ_VECT_WIDTH-1:0]         irq_req_idx;            // Index of a requested interrupt
+logic [YCR_IRQ_VECT_WIDTH-1:0]         irq_req_idx;            // Index of a requested interrupt
 
 // Interrupt requested on "end of the previous interrupt" signals
 logic                                   irq_eoi_req_vd;         // There is a requested interrupt when the previous one has ended
-logic [YCR1_IRQ_VECT_WIDTH-1:0]         irq_eoi_req_idx;        // Index of an interrupt requested when the previous one has ended
+logic [YCR_IRQ_VECT_WIDTH-1:0]         irq_eoi_req_idx;        // Index of an interrupt requested when the previous one has ended
 
-logic [YCR1_IRQ_VECT_NUM-1:0]           irq_req_v;              // Vector of interrupts that are pending and enabled
+logic [YCR_IRQ_VECT_NUM-1:0]           irq_req_v;              // Vector of interrupts that are pending and enabled
 
 logic                                   irq_start_vd;           // Request to start an interrupt is valid
 logic                                   irq_hi_prior_pnd;       // There is a pending IRQ with a priority higher than of the interrupt that is currently in service
 
-type_ycr1_search_one_16_s               irr_priority;           // Structure for vd and idx of the requested interrupt
-type_ycr1_search_one_16_s               isvr_priority_eoi;      // Structure for vd and idx of the interrupt requested when the previous interrupt has ended
-logic [YCR1_IRQ_VECT_NUM-1:0]           ipic_isvr_eoi;          // Interrupt Serviced register when the previous interrupt has ended
+type_ycr_search_one_16_s               irr_priority;           // Structure for vd and idx of the requested interrupt
+type_ycr_search_one_16_s               isvr_priority_eoi;      // Structure for vd and idx of the interrupt requested when the previous interrupt has ended
+logic [YCR_IRQ_VECT_NUM-1:0]           ipic_isvr_eoi;          // Interrupt Serviced register when the previous interrupt has ended
 
 //------------------------------------------------------------------------------
 // IRQ lines handling
 //------------------------------------------------------------------------------
 
-`ifdef YCR1_IPIC_SYNC_EN
+`ifdef YCR_IPIC_SYNC_EN
 // IRQ lines synchronization
 //------------------------------------------------------------------------------
 
@@ -282,9 +282,9 @@ always_ff @(posedge clk, negedge rst_n) begin
         irq_lines      <= irq_lines_sync;
     end
 end
-`else // YCR1_IPIC_SYNC_EN
+`else // YCR_IPIC_SYNC_EN
 assign irq_lines = soc2ipic_irq_lines_i;
-`endif // YCR1_IPIC_SYNC_EN
+`endif // YCR_IPIC_SYNC_EN
 
 // IRQ lines level detection
 //------------------------------------------------------------------------------
@@ -317,38 +317,38 @@ always_comb begin
 
     if (csr2ipic_r_req_i) begin
         case (csr2ipic_addr_i)
-            YCR1_IPIC_CISV : begin
-                ipic2csr_rdata_o[YCR1_IRQ_VECT_WIDTH-1:0] = irq_serv_vd
+            YCR_IPIC_CISV : begin
+                ipic2csr_rdata_o[YCR_IRQ_VECT_WIDTH-1:0] = irq_serv_vd
                                                           ? ipic_cisv_ff
-                                                          : YCR1_IRQ_VOID_VECT_NUM;
+                                                          : YCR_IRQ_VOID_VECT_NUM;
             end
-            YCR1_IPIC_CICSR : begin
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_IP]  = ipic_cicsr.ip;
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_IE]  = ipic_cicsr.ie;
+            YCR_IPIC_CICSR : begin
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_IP]  = ipic_cicsr.ip;
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_IE]  = ipic_cicsr.ie;
             end
-            YCR1_IPIC_IPR : begin
-                ipic2csr_rdata_o = `YCR1_XLEN'(ipic_ipr_ff);
+            YCR_IPIC_IPR : begin
+                ipic2csr_rdata_o = `YCR_XLEN'(ipic_ipr_ff);
             end
-            YCR1_IPIC_ISVR : begin
-                ipic2csr_rdata_o = `YCR1_XLEN'(ipic_isvr_ff);
+            YCR_IPIC_ISVR : begin
+                ipic2csr_rdata_o = `YCR_XLEN'(ipic_isvr_ff);
             end
-            YCR1_IPIC_EOI,
-            YCR1_IPIC_SOI : begin
+            YCR_IPIC_EOI,
+            YCR_IPIC_SOI : begin
                 ipic2csr_rdata_o = '0;
             end
-            YCR1_IPIC_IDX : begin
-                ipic2csr_rdata_o = `YCR1_XLEN'(ipic_idxr_ff);
+            YCR_IPIC_IDX : begin
+                ipic2csr_rdata_o = `YCR_XLEN'(ipic_idxr_ff);
             end
-            YCR1_IPIC_ICSR : begin
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_IP]      = ipic_icsr.ip;
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_IE]      = ipic_icsr.ie;
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_IM]      = ipic_icsr.im;
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_INV]     = ipic_icsr.inv;
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_PRV_MSB:
-                                 YCR1_IPIC_ICSR_PRV_LSB] = YCR1_IPIC_PRV_M;
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_IS]      = ipic_icsr.is;
-                ipic2csr_rdata_o[YCR1_IPIC_ICSR_LN_MSB-1:
-                                 YCR1_IPIC_ICSR_LN_LSB]  = ipic_icsr.line;
+            YCR_IPIC_ICSR : begin
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_IP]      = ipic_icsr.ip;
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_IE]      = ipic_icsr.ie;
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_IM]      = ipic_icsr.im;
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_INV]     = ipic_icsr.inv;
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_PRV_MSB:
+                                 YCR_IPIC_ICSR_PRV_LSB] = YCR_IPIC_PRV_M;
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_IS]      = ipic_icsr.is;
+                ipic2csr_rdata_o[YCR_IPIC_ICSR_LN_MSB-1:
+                                 YCR_IPIC_ICSR_LN_LSB]  = ipic_icsr.line;
             end
             default : begin
                 ipic2csr_rdata_o = 'x;
@@ -369,14 +369,14 @@ always_comb begin
     icsr_wr_req  = 1'b0;
     if (csr2ipic_w_req_i) begin
         case (csr2ipic_addr_i)
-            YCR1_IPIC_CISV : begin end // Quiet Read-Only
-            YCR1_IPIC_CICSR: cicsr_wr_req = 1'b1;
-            YCR1_IPIC_IPR  : begin end
-            YCR1_IPIC_ISVR : begin end // Quiet Read-Only
-            YCR1_IPIC_EOI  : eoi_wr_req   = 1'b1;
-            YCR1_IPIC_SOI  : soi_wr_req   = 1'b1;
-            YCR1_IPIC_IDX  : idxr_wr_req  = 1'b1;
-            YCR1_IPIC_ICSR : icsr_wr_req  = 1'b1;
+            YCR_IPIC_CISV : begin end // Quiet Read-Only
+            YCR_IPIC_CICSR: cicsr_wr_req = 1'b1;
+            YCR_IPIC_IPR  : begin end
+            YCR_IPIC_ISVR : begin end // Quiet Read-Only
+            YCR_IPIC_EOI  : eoi_wr_req   = 1'b1;
+            YCR_IPIC_SOI  : soi_wr_req   = 1'b1;
+            YCR_IPIC_IDX  : idxr_wr_req  = 1'b1;
+            YCR_IPIC_ICSR : icsr_wr_req  = 1'b1;
             default : begin // Illegal IPIC register address
                 cicsr_wr_req = 'x;
                 eoi_wr_req   = 'x;
@@ -416,7 +416,7 @@ assign ipic_cisv_upd = irq_start_vd | ipic_eoi_req;
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        ipic_cisv_ff <= YCR1_IRQ_VOID_VECT_NUM;
+        ipic_cisv_ff <= YCR_IRQ_VOID_VECT_NUM;
     end else if (ipic_cisv_upd) begin
         ipic_cisv_ff <= ipic_cisv_next;
     end
@@ -424,11 +424,11 @@ end
 
 assign ipic_cisv_next = irq_start_vd ? irq_req_idx
                       : ipic_eoi_req ? irq_eoi_req_vd ? irq_eoi_req_idx
-                                                      : YCR1_IRQ_VOID_VECT_NUM
+                                                      : YCR_IRQ_VOID_VECT_NUM
                                      : 1'b0;
 
-assign irq_serv_idx = ipic_cisv_ff[YCR1_IRQ_VECT_WIDTH-2:0];
-assign irq_serv_vd  = ~ipic_cisv_ff[YCR1_IRQ_VECT_WIDTH-1];
+assign irq_serv_idx = ipic_cisv_ff[YCR_IRQ_VECT_WIDTH-2:0];
+assign irq_serv_vd  = ~ipic_cisv_ff[YCR_IRQ_VECT_WIDTH-1];
 
 // CICSR register
 //------------------------------------------------------------------------------
@@ -462,7 +462,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         ipic_idxr_ff <= '0;
     end else if (idxr_wr_req) begin
-        ipic_idxr_ff <= csr2ipic_wdata_i[YCR1_IRQ_IDX_WIDTH-1:0];
+        ipic_idxr_ff <= csr2ipic_wdata_i[YCR_IRQ_IDX_WIDTH-1:0];
     end
 end
 
@@ -484,11 +484,11 @@ always_comb begin
     ipic_ipr_clr_req = '0;
     if (csr2ipic_w_req_i) begin
         case (csr2ipic_addr_i)
-            YCR1_IPIC_CICSR: ipic_ipr_clr_req[irq_serv_idx] = csr2ipic_wdata_i[YCR1_IPIC_ICSR_IP]
+            YCR_IPIC_CICSR: ipic_ipr_clr_req[irq_serv_idx] = csr2ipic_wdata_i[YCR_IPIC_ICSR_IP]
                                                             & irq_serv_vd;
-            YCR1_IPIC_IPR  : ipic_ipr_clr_req               = csr2ipic_wdata_i[YCR1_IRQ_VECT_NUM-1:0];
-            YCR1_IPIC_SOI  : ipic_ipr_clr_req[irq_req_idx]  = irq_req_vd;
-            YCR1_IPIC_ICSR : ipic_ipr_clr_req[ipic_idxr_ff] = csr2ipic_wdata_i[YCR1_IPIC_ICSR_IP];
+            YCR_IPIC_IPR  : ipic_ipr_clr_req               = csr2ipic_wdata_i[YCR_IRQ_VECT_NUM-1:0];
+            YCR_IPIC_SOI  : ipic_ipr_clr_req[irq_req_idx]  = irq_req_vd;
+            YCR_IPIC_ICSR : ipic_ipr_clr_req[ipic_idxr_ff] = csr2ipic_wdata_i[YCR_IPIC_ICSR_IP];
             default        : begin end
         endcase
     end
@@ -499,7 +499,7 @@ assign ipic_ipr_clr      = ipic_ipr_clr_req & ipic_ipr_clr_cond;
 integer i;
 always_comb begin
     ipic_ipr_next = '0;
-    for (i=0; i<YCR1_IRQ_VECT_NUM; i=i+1) begin
+    for (i=0; i<YCR_IRQ_VECT_NUM; i=i+1) begin
         ipic_ipr_next[i] = ipic_ipr_clr[i] ? 1'b0
                          : ~ipic_imr_ff[i] ? irq_lvl[i]
                                            : ipic_ipr_ff[i] | irq_edge_detected[i];
@@ -554,10 +554,10 @@ always_comb begin
     ipic_ier_next = ipic_ier_ff;
     if (cicsr_wr_req) begin
         ipic_ier_next[irq_serv_idx] = irq_serv_vd
-                                    ? csr2ipic_wdata_i[YCR1_IPIC_ICSR_IE]
+                                    ? csr2ipic_wdata_i[YCR_IPIC_ICSR_IE]
                                     : ipic_ier_ff[irq_serv_idx];
     end else if (icsr_wr_req) begin
-        ipic_ier_next[ipic_idxr_ff] = csr2ipic_wdata_i[YCR1_IPIC_ICSR_IE];
+        ipic_ier_next[ipic_idxr_ff] = csr2ipic_wdata_i[YCR_IPIC_ICSR_IE];
     end
 end
 
@@ -576,7 +576,7 @@ end
 always_comb begin
     ipic_imr_next = ipic_imr_ff;
     if (icsr_wr_req) begin
-        ipic_imr_next[ipic_idxr_ff] = csr2ipic_wdata_i[YCR1_IPIC_ICSR_IM];
+        ipic_imr_next[ipic_idxr_ff] = csr2ipic_wdata_i[YCR_IPIC_ICSR_IM];
     end
 end
 
@@ -595,7 +595,7 @@ end
 always_comb begin
     ipic_iinvr_next = ipic_iinvr_ff;
     if (icsr_wr_req) begin
-        ipic_iinvr_next[ipic_idxr_ff] = csr2ipic_wdata_i[YCR1_IPIC_ICSR_INV];
+        ipic_iinvr_next[ipic_idxr_ff] = csr2ipic_wdata_i[YCR_IPIC_ICSR_INV];
     end
 end
 
@@ -608,7 +608,7 @@ assign ipic_icsr.ie    = ipic_ier_ff  [ipic_idxr_ff];
 assign ipic_icsr.im    = ipic_imr_ff  [ipic_idxr_ff];
 assign ipic_icsr.inv   = ipic_iinvr_ff[ipic_idxr_ff];
 assign ipic_icsr.is    = ipic_isvr_ff [ipic_idxr_ff];
-assign ipic_icsr.line  = YCR1_IRQ_LINES_WIDTH'(ipic_idxr_ff);
+assign ipic_icsr.line  = YCR_IRQ_LINES_WIDTH'(ipic_idxr_ff);
 
 //------------------------------------------------------------------------------
 // Priority IRQ generation logic
@@ -617,7 +617,7 @@ assign ipic_icsr.line  = YCR1_IRQ_LINES_WIDTH'(ipic_idxr_ff);
 assign irq_req_v = ipic_ipr_ff & ipic_ier_ff;
 
 /*** Modified for Yosys handing typedef in function - dinesha
-assign irr_priority        = ycr1_search_one_16(irq_req_v);
+assign irr_priority        = ycr_search_one_16(irq_req_v);
 assign irq_req_vd          = irr_priority.vd;
 assign irq_req_idx         = irr_priority.idx;
 ****/
@@ -648,7 +648,7 @@ begin
 end
 
 /*** Modified for Yosys handing typedef in function - dinesha
-assign isvr_priority_eoi   = ycr1_search_one_16(ipic_isvr_eoi);
+assign isvr_priority_eoi   = ycr_search_one_16(ipic_isvr_eoi);
 assign irq_eoi_req_vd      = isvr_priority_eoi.vd;
 assign irq_eoi_req_idx     = isvr_priority_eoi.idx;
 *************************************************/
@@ -684,6 +684,6 @@ assign ipic2csr_irq_m_req_o = irq_req_vd & (~irq_serv_vd | irq_hi_prior_pnd);
 
 assign irq_start_vd         = ipic2csr_irq_m_req_o & ipic_soi_req;
 
-endmodule : ycr1_ipic
+endmodule : ycr_ipic
 
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN

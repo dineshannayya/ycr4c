@@ -1,14 +1,14 @@
-/// @file       <ycr1_top_tb_ahb.sv>
-/// @brief      YCR1 top testbench AHB
+/// @file       <ycr_top_tb_ahb.sv>
+/// @brief      YCR top testbench AHB
 ///
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_ahb.svh"
-`ifdef YCR1_IPIC_EN
-`include "ycr1_ipic.svh"
-`endif // YCR1_IPIC_EN
+`include "ycr_arch_description.svh"
+`include "ycr_ahb.svh"
+`ifdef YCR_IPIC_EN
+`include "ycr_ipic.svh"
+`endif // YCR_IPIC_EN
 
-module ycr1_top_tb_ahb (
+module ycr_top_tb_ahb (
 `ifdef VERILATOR
     input logic clk
 `endif // VERILATOR
@@ -17,7 +17,7 @@ module ycr1_top_tb_ahb (
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam                          YCR1_MEM_SIZE       = 1024*1024;
+localparam                          YCR_MEM_SIZE       = 1024*1024;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -27,34 +27,34 @@ logic                                   rst_n;
 logic                                   clk         = 1'b0;
 `endif // VERILATOR
 logic                                   rtc_clk     = 1'b0;
-`ifdef YCR1_IPIC_EN
-logic [YCR1_IRQ_LINES_NUM-1:0]          irq_lines;
-`else // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+logic [YCR_IRQ_LINES_NUM-1:0]          irq_lines;
+`else // YCR_IPIC_EN
 logic                                   ext_irq;
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
 logic                                   soft_irq;
 logic [31:0]                            fuse_mhartid;
 integer                                 imem_req_ack_stall;
 integer                                 dmem_req_ack_stall;
 
 logic                                   test_mode   = 1'b0;
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 logic                                   trst_n;
 logic                                   tck;
 logic                                   tms;
 logic                                   tdi;
 logic                                   tdo;
 logic                                   tdo_en;
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 // Instruction Memory Interface
 logic   [3:0]                           imem_hprot;
 logic   [2:0]                           imem_hburst;
 logic   [2:0]                           imem_hsize;
 logic   [1:0]                           imem_htrans;
-logic   [YCR1_AHB_WIDTH-1:0]            imem_haddr;
+logic   [YCR_AHB_WIDTH-1:0]            imem_haddr;
 logic                                   imem_hready;
-logic   [YCR1_AHB_WIDTH-1:0]            imem_hrdata;
+logic   [YCR_AHB_WIDTH-1:0]            imem_hrdata;
 logic                                   imem_hresp;
 
 // Memory Interface
@@ -62,11 +62,11 @@ logic   [3:0]                           dmem_hprot;
 logic   [2:0]                           dmem_hburst;
 logic   [2:0]                           dmem_hsize;
 logic   [1:0]                           dmem_htrans;
-logic   [YCR1_AHB_WIDTH-1:0]            dmem_haddr;
+logic   [YCR_AHB_WIDTH-1:0]            dmem_haddr;
 logic                                   dmem_hwrite;
-logic   [YCR1_AHB_WIDTH-1:0]            dmem_hwdata;
+logic   [YCR_AHB_WIDTH-1:0]            dmem_hwdata;
 logic                                   dmem_hready;
-logic   [YCR1_AHB_WIDTH-1:0]            dmem_hrdata;
+logic   [YCR_AHB_WIDTH-1:0]            dmem_hrdata;
 logic                                   dmem_hresp;
 
 int unsigned                            f_results;
@@ -222,7 +222,7 @@ always_ff @(posedge clk) begin
 end
 
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 initial begin
     trst_n  = 1'b0;
     tck     = 1'b0;
@@ -233,7 +233,7 @@ initial begin
     #500ns trst_n   = 1'b0;
     #100ns tms      = 1'b1;
 end
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 
 
@@ -241,19 +241,19 @@ end
 // Run tests
 //-------------------------------------------------------------------------------
 
-`include "ycr1_top_tb_runtests.sv"
+`include "ycr_top_tb_runtests.sv"
 //-------------------------------------------------------------------------------
 // Core instance
 //-------------------------------------------------------------------------------
-ycr1_top_ahb i_top (
+ycr_top_ahb i_top (
     // Reset
     .pwrup_rst_n            (rst_n                  ),
     .rst_n                  (rst_n                  ),
     .cpu_rst_n              (rst_n                  ),
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     .sys_rst_n_o            (                       ),
     .sys_rdc_qlfy_o         (                       ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Clock
     .clk                    (clk                    ),
@@ -261,23 +261,23 @@ ycr1_top_ahb i_top (
 
     // Fuses
     .fuse_mhartid           (fuse_mhartid           ),
-`ifdef YCR1_DBG_EN
-    .fuse_idcode            (`YCR1_TAP_IDCODE       ),
-`endif // YCR1_DBG_EN
+`ifdef YCR_DBG_EN
+    .fuse_idcode            (`YCR_TAP_IDCODE       ),
+`endif // YCR_DBG_EN
 
     // IRQ
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     .irq_lines              (irq_lines              ),
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
     .ext_irq                (ext_irq                ),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     .soft_irq               (soft_irq               ),
 
     // DFT
     .test_mode              (1'b0                   ),
     .test_rst_n             (1'b1                   ),
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // JTAG
     .trst_n                 (trst_n                 ),
     .tck                    (tck                    ),
@@ -285,7 +285,7 @@ ycr1_top_ahb i_top (
     .tdi                    (tdi                    ),
     .tdo                    (tdo                    ),
     .tdo_en                 (tdo_en                 ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Instruction Memory Interface
     .imem_hprot         (imem_hprot     ),
@@ -315,17 +315,17 @@ ycr1_top_ahb i_top (
 //-------------------------------------------------------------------------------
 // Memory instance
 //-------------------------------------------------------------------------------
-ycr1_memory_tb_ahb #(
-    .YCR1_MEM_POWER_SIZE    ($clog2(YCR1_MEM_SIZE))
+ycr_memory_tb_ahb #(
+    .YCR_MEM_POWER_SIZE    ($clog2(YCR_MEM_SIZE))
 ) i_memory_tb (
     // Control
     .rst_n                  (rst_n),
     .clk                    (clk),
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     .irq_lines              (irq_lines),
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
     .ext_irq                (ext_irq),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     .soft_irq               (soft_irq),
     .imem_req_ack_stall_in  (imem_req_ack_stall),
     .dmem_req_ack_stall_in  (dmem_req_ack_stall),
@@ -358,9 +358,9 @@ ycr1_memory_tb_ahb #(
 initial
 begin
    $dumpfile("simx.vcd");
-   $dumpvars(0,ycr1_top_tb_ahb);
+   $dumpvars(0,ycr_top_tb_ahb);
 end
 `endif
 
-endmodule : ycr1_top_tb_ahb
+endmodule : ycr_top_tb_ahb
 

@@ -20,7 +20,7 @@
 ////  yifive TAPC shift register                                          ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     TAPC shift register                                              ////
@@ -38,12 +38,12 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_DBG_EN
-module ycr1_tapc_shift_reg #(
-    parameter   int unsigned            YCR1_WIDTH       = 8,   // Register width, bits
-    parameter   logic [YCR1_WIDTH-1:0]  YCR1_RESET_VALUE = '0   // Register's value after reset
+`ifdef YCR_DBG_EN
+module ycr_tapc_shift_reg #(
+    parameter   int unsigned            YCR_WIDTH       = 8,   // Register width, bits
+    parameter   logic [YCR_WIDTH-1:0]  YCR_RESET_VALUE = '0   // Register's value after reset
 ) (
     input  logic                    clk,            // Clock
     input  logic                    rst_n,          // Async reset
@@ -53,38 +53,38 @@ module ycr1_tapc_shift_reg #(
     input  logic                    fsm_dr_capture, //   - to capture parallel input's data into shift register;
     input  logic                    fsm_dr_shift,   //   - to enable data shifting;
                                                     // Inputs:
-    input  logic                    din_serial,     //   - serial (shift_reg[msb/YCR1_WIDTH]);
-    input  logic [YCR1_WIDTH-1:0]   din_parallel,   //   - parallel (shift register's input).
+    input  logic                    din_serial,     //   - serial (shift_reg[msb/YCR_WIDTH]);
+    input  logic [YCR_WIDTH-1:0]   din_parallel,   //   - parallel (shift register's input).
                                                     // Outputs:
     output logic                    dout_serial,    //   - serial (shift_reg[0]);
-    output logic [YCR1_WIDTH-1:0]   dout_parallel   //   - parallel (shift register's output).
+    output logic [YCR_WIDTH-1:0]   dout_parallel   //   - parallel (shift register's output).
 );
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
 //-------------------------------------------------------------------------------
-logic [YCR1_WIDTH-1:0]   shift_reg;
+logic [YCR_WIDTH-1:0]   shift_reg;
 
 //-------------------------------------------------------------------------------
 // Shift register
 //-------------------------------------------------------------------------------
 generate
-    if (YCR1_WIDTH > 1)
+    if (YCR_WIDTH > 1)
     begin : dr_shift_reg
 
         always_ff @(posedge clk, negedge rst_n)
         begin
             if (~rst_n) begin
-                shift_reg <= YCR1_RESET_VALUE;
+                shift_reg <= YCR_RESET_VALUE;
             end
             else if (~rst_n_sync) begin
-                shift_reg <= YCR1_RESET_VALUE;
+                shift_reg <= YCR_RESET_VALUE;
             end
             else if (fsm_dr_select & fsm_dr_capture) begin
                 shift_reg <= din_parallel;
             end
             else if (fsm_dr_select & fsm_dr_shift) begin
-                shift_reg <= {din_serial, shift_reg[YCR1_WIDTH-1:1]};
+                shift_reg <= {din_serial, shift_reg[YCR_WIDTH-1:1]};
             end
         end
 
@@ -94,10 +94,10 @@ generate
         always_ff @(posedge clk, negedge rst_n)
         begin
             if (~rst_n) begin
-                shift_reg <= YCR1_RESET_VALUE;
+                shift_reg <= YCR_RESET_VALUE;
             end
             else if (~rst_n_sync) begin
-                shift_reg <= YCR1_RESET_VALUE;
+                shift_reg <= YCR_RESET_VALUE;
             end
             else if (fsm_dr_select & fsm_dr_capture) begin
                 shift_reg <= din_parallel;
@@ -120,13 +120,13 @@ assign dout_parallel = shift_reg;
 //-------------------------------------------------------------------------------
 assign dout_serial = shift_reg[0];
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
 
 // X checks
-YCR1_SVA_TAPC_SHIFTREG_XCHECK : assert property (
+YCR_SVA_TAPC_SHIFTREG_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     !$isunknown({
         rst_n_sync,
@@ -140,8 +140,8 @@ YCR1_SVA_TAPC_SHIFTREG_XCHECK : assert property (
     $error("TAPC Shift Reg error: unknown values");
 end
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_tapc_shift_reg
+endmodule : ycr_tapc_shift_reg
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN

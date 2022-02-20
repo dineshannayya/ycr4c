@@ -20,7 +20,7 @@
 ////  yifive Debug Module Interface (DMI)                                 ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Debug Module Interface (DMI)                                     ////
@@ -45,19 +45,19 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_DBG_EN
-`include "ycr1_dm.svh"
+`ifdef YCR_DBG_EN
+`include "ycr_dm.svh"
 
-module ycr1_dmi (
+module ycr_dmi (
     // System
     input  logic                                    rst_n,                      // DMI unit reset
     input  logic                                    clk,                        // DMI unit clock
 
     // TAP interface
     input  logic                                    tapcsync2dmi_ch_sel_i,      // Debug Transport Module Chain Select
-    input  logic [YCR1_DBG_DMI_CH_ID_WIDTH-1:0]     tapcsync2dmi_ch_id_i,       // Debug Transport Module Chain ID
+    input  logic [YCR_DBG_DMI_CH_ID_WIDTH-1:0]     tapcsync2dmi_ch_id_i,       // Debug Transport Module Chain ID
     input  logic                                    tapcsync2dmi_ch_capture_i,  // Debug Transport Module Chain Capture
     input  logic                                    tapcsync2dmi_ch_shift_i,    // Debug Transport Module Chain Shift
     input  logic                                    tapcsync2dmi_ch_update_i,   // Debug Transport Module Chain Update
@@ -66,11 +66,11 @@ module ycr1_dmi (
 
     // DM interface
     input logic                                     dm2dmi_resp_i,              // DMI response
-    input logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]       dm2dmi_rdata_i,             // DMI read data
+    input logic [YCR_DBG_DMI_DATA_WIDTH-1:0]       dm2dmi_rdata_i,             // DMI read data
     output logic                                    dmi2dm_req_o,               // DMI request
     output logic                                    dmi2dm_wr_o,                // DMI write
-    output logic [YCR1_DBG_DMI_ADDR_WIDTH-1:0]      dmi2dm_addr_o,              // DMI address
-    output logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]      dmi2dm_wdata_o              // DMI write data
+    output logic [YCR_DBG_DMI_ADDR_WIDTH-1:0]      dmi2dm_addr_o,              // DMI address
+    output logic [YCR_DBG_DMI_DATA_WIDTH-1:0]      dmi2dm_wdata_o              // DMI write data
 );
 
 //------------------------------------------------------------------------------
@@ -98,11 +98,11 @@ localparam    DTMCS_VERSION_LO   = 5'd0;
 //------------------------------------------------------------------------------
 
 localparam    DMI_OP_LO   = 5'd0;
-localparam    DMI_OP_HI   = DMI_OP_LO   + YCR1_DBG_DMI_OP_WIDTH   - 1;
+localparam    DMI_OP_HI   = DMI_OP_LO   + YCR_DBG_DMI_OP_WIDTH   - 1;
 localparam    DMI_DATA_LO = DMI_OP_HI   + 1;
-localparam    DMI_DATA_HI = DMI_DATA_LO + YCR1_DBG_DMI_DATA_WIDTH - 1;
+localparam    DMI_DATA_HI = DMI_DATA_LO + YCR_DBG_DMI_DATA_WIDTH - 1;
 localparam    DMI_ADDR_LO = DMI_DATA_HI + 1;
-localparam    DMI_ADDR_HI = DMI_ADDR_LO + YCR1_DBG_DMI_ADDR_WIDTH - 1;
+localparam    DMI_ADDR_HI = DMI_ADDR_LO + YCR_DBG_DMI_ADDR_WIDTH - 1;
 
 //------------------------------------------------------------------------------
 // Local signals declaration
@@ -110,14 +110,14 @@ localparam    DMI_ADDR_HI = DMI_ADDR_LO + YCR1_DBG_DMI_ADDR_WIDTH - 1;
 
 // TAP data register
 logic                                               tap_dr_upd;
-logic [YCR1_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_ff;
-logic [YCR1_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_shift;
-logic [YCR1_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_rdata;
-logic [YCR1_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_next;
+logic [YCR_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_ff;
+logic [YCR_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_shift;
+logic [YCR_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_rdata;
+logic [YCR_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:0]        tap_dr_next;
 
 // DM read data register
 logic                                               dm_rdata_upd;
-logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]                 dm_rdata_ff;
+logic [YCR_DBG_DMI_DATA_WIDTH-1:0]                 dm_rdata_ff;
 
 logic                                               tapc_dmi_access_req;
 logic                                               tapc_dtmcs_sel;
@@ -142,7 +142,7 @@ always_comb begin
         tap_dr_rdata[DTMCS_RESERVEDA]                       = 'b0;
         tap_dr_rdata[DTMCS_IDLE_HI:DTMCS_IDLE_LO]           = 'b0;
         tap_dr_rdata[DTMCS_DMISTAT_HI:DTMCS_DMISTAT_LO]     = 'b0;
-        tap_dr_rdata[DTMCS_ABITS_HI  :DTMCS_ABITS_LO]       = YCR1_DBG_DMI_ADDR_WIDTH;
+        tap_dr_rdata[DTMCS_ABITS_HI  :DTMCS_ABITS_LO]       = YCR_DBG_DMI_ADDR_WIDTH;
         tap_dr_rdata[DTMCS_VERSION_LO]                      = 1'b1;
     end else begin
         tap_dr_rdata[DMI_ADDR_HI:DMI_ADDR_LO]               = 'b0;
@@ -152,8 +152,8 @@ always_comb begin
 end
 
 assign tap_dr_shift = tapc_dtmcs_sel
-                    ? {9'b0, tapcsync2dmi_ch_tdi_i, tap_dr_ff[YCR1_DBG_DMI_DR_DTMCS_WIDTH-1:1]}
-                    : {tapcsync2dmi_ch_tdi_i, tap_dr_ff[YCR1_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:1]};
+                    ? {9'b0, tapcsync2dmi_ch_tdi_i, tap_dr_ff[YCR_DBG_DMI_DR_DTMCS_WIDTH-1:1]}
+                    : {tapcsync2dmi_ch_tdi_i, tap_dr_ff[YCR_DBG_DMI_DR_DMI_ACCESS_WIDTH-1:1]};
 
 // TAP data register
 //------------------------------------------------------------------------------
@@ -208,6 +208,6 @@ always_ff @(posedge clk, negedge rst_n) begin
     end
 end
 
-endmodule : ycr1_dmi
+endmodule : ycr_dmi
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN

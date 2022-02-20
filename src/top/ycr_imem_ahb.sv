@@ -20,7 +20,7 @@
 ////  yifive AHB interface for Program memory                             ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     AHB interface for Program memory                                 ////
@@ -38,10 +38,10 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_ahb.svh"
-`include "ycr1_memif.svh"
+`include "ycr_ahb.svh"
+`include "ycr_memif.svh"
 
-module ycr1_imem_ahb (
+module ycr_imem_ahb (
     // Control Signals
     input   logic                           rst_n,
     input   logic                           clk,
@@ -49,8 +49,8 @@ module ycr1_imem_ahb (
     // Core Interface
     output  logic                           imem_req_ack,
     input   logic                           imem_req,
-    input   logic   [YCR1_AHB_WIDTH-1:0]    imem_addr,
-    output  logic   [YCR1_AHB_WIDTH-1:0]    imem_rdata,
+    input   logic   [YCR_AHB_WIDTH-1:0]    imem_addr,
+    output  logic   [YCR_AHB_WIDTH-1:0]    imem_rdata,
     output  logic [1:0]                     imem_resp,
 
     // AHB Interface
@@ -59,9 +59,9 @@ module ycr1_imem_ahb (
     output  logic   [2:0]                   hsize,
     output  logic   [1:0]                   htrans,
     output  logic                           hmastlock,
-    output  logic   [YCR1_AHB_WIDTH-1:0]    haddr,
+    output  logic   [YCR_AHB_WIDTH-1:0]    haddr,
     input   logic                           hready,
-    input   logic   [YCR1_AHB_WIDTH-1:0]    hrdata,
+    input   logic   [YCR_AHB_WIDTH-1:0]    hrdata,
     input   logic                           hresp
 
 );
@@ -69,49 +69,49 @@ module ycr1_imem_ahb (
 //-------------------------------------------------------------------------------
 // Local parameters declaration
 //-------------------------------------------------------------------------------
-`ifndef YCR1_IMEM_AHB_OUT_BP
-localparam  YCR1_FIFO_WIDTH = 2;
-localparam  YCR1_FIFO_CNT_WIDTH = $clog2(YCR1_FIFO_WIDTH+1);
-`endif // YCR1_IMEM_AHB_OUT_BP
+`ifndef YCR_IMEM_AHB_OUT_BP
+localparam  YCR_FIFO_WIDTH = 2;
+localparam  YCR_FIFO_CNT_WIDTH = $clog2(YCR_FIFO_WIDTH+1);
+`endif // YCR_IMEM_AHB_OUT_BP
 
 //-------------------------------------------------------------------------------
 // Local types declaration
 //-------------------------------------------------------------------------------
 typedef enum logic {
-    YCR1_FSM_ADDR = 1'b0,
-    YCR1_FSM_DATA = 1'b1,
-    YCR1_FSM_ERR  = 1'bx
-} type_ycr1_fsm_e;
+    YCR_FSM_ADDR = 1'b0,
+    YCR_FSM_DATA = 1'b1,
+    YCR_FSM_ERR  = 1'bx
+} type_ycr_fsm_e;
 
 typedef struct packed {
-    logic   [YCR1_AHB_WIDTH-1:0]    haddr;
-} type_ycr1_req_fifo_s;
+    logic   [YCR_AHB_WIDTH-1:0]    haddr;
+} type_ycr_req_fifo_s;
 
 typedef struct packed {
     logic                           hresp;
-    logic   [YCR1_AHB_WIDTH-1:0]    hrdata;
-} type_ycr1_resp_fifo_s;
+    logic   [YCR_AHB_WIDTH-1:0]    hrdata;
+} type_ycr_resp_fifo_s;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
-type_ycr1_fsm_e                             fsm;
+type_ycr_fsm_e                             fsm;
 logic                                       req_fifo_rd;
 logic                                       req_fifo_wr;
 logic                                       req_fifo_up;
-`ifdef YCR1_IMEM_AHB_OUT_BP
-type_ycr1_req_fifo_s                        req_fifo_r;
-type_ycr1_req_fifo_s [0:0]                  req_fifo;
-`else // YCR1_IMEM_AHB_OUT_BP
-type_ycr1_req_fifo_s [0:YCR1_FIFO_WIDTH-1]  req_fifo;
-type_ycr1_req_fifo_s [0:YCR1_FIFO_WIDTH-1]  req_fifo_new;
-logic       [YCR1_FIFO_CNT_WIDTH-1:0]       req_fifo_cnt;
-logic       [YCR1_FIFO_CNT_WIDTH-1:0]       req_fifo_cnt_new;
-`endif // YCR1_IMEM_AHB_OUT_BP
+`ifdef YCR_IMEM_AHB_OUT_BP
+type_ycr_req_fifo_s                        req_fifo_r;
+type_ycr_req_fifo_s [0:0]                  req_fifo;
+`else // YCR_IMEM_AHB_OUT_BP
+type_ycr_req_fifo_s [0:YCR_FIFO_WIDTH-1]  req_fifo;
+type_ycr_req_fifo_s [0:YCR_FIFO_WIDTH-1]  req_fifo_new;
+logic       [YCR_FIFO_CNT_WIDTH-1:0]       req_fifo_cnt;
+logic       [YCR_FIFO_CNT_WIDTH-1:0]       req_fifo_cnt_new;
+`endif // YCR_IMEM_AHB_OUT_BP
 logic                                       req_fifo_empty;
 logic                                       req_fifo_full;
 
-type_ycr1_resp_fifo_s                       resp_fifo;
+type_ycr_resp_fifo_s                       resp_fifo;
 logic                                       resp_fifo_hready;
 
 //-------------------------------------------------------------------------------
@@ -123,15 +123,15 @@ assign req_fifo_wr  = ~req_fifo_full & imem_req;
 assign imem_rdata = resp_fifo.hrdata;
 
 assign imem_resp = (resp_fifo_hready)
-                    ? (resp_fifo.hresp == YCR1_HRESP_OKAY)
-                        ? YCR1_MEM_RESP_RDY_OK
-                        : YCR1_MEM_RESP_RDY_ER
-                    : YCR1_MEM_RESP_NOTRDY;
+                    ? (resp_fifo.hresp == YCR_HRESP_OKAY)
+                        ? YCR_MEM_RESP_RDY_OK
+                        : YCR_MEM_RESP_RDY_ER
+                    : YCR_MEM_RESP_NOTRDY;
 
 //-------------------------------------------------------------------------------
 // REQ_FIFO
 //-------------------------------------------------------------------------------
-`ifdef YCR1_IMEM_AHB_OUT_BP
+`ifdef YCR_IMEM_AHB_OUT_BP
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         req_fifo_full <= 1'b0;
@@ -154,7 +154,7 @@ end
 
 assign req_fifo[0] = (req_fifo_full) ? req_fifo_r : imem_addr;
 
-`else // YCR1_IMEM_AHB_OUT_BP
+`else // YCR_IMEM_AHB_OUT_BP
 always_comb begin
     req_fifo_up      = 1'b0;
     req_fifo_cnt_new = req_fifo_cnt;
@@ -198,7 +198,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         end
     end
 end
-assign req_fifo_full  = (req_fifo_cnt == YCR1_FIFO_WIDTH);
+assign req_fifo_full  = (req_fifo_cnt == YCR_FIFO_WIDTH);
 assign req_fifo_empty = ~(|req_fifo_cnt);
 
 always_ff @(posedge clk) begin
@@ -206,32 +206,32 @@ always_ff @(posedge clk) begin
         req_fifo <= req_fifo_new;
     end
 end
-`endif // YCR1_IMEM_AHB_OUT_BP
+`endif // YCR_IMEM_AHB_OUT_BP
 
 //-------------------------------------------------------------------------------
 // FSM
 //-------------------------------------------------------------------------------
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        fsm <= YCR1_FSM_ADDR;
+        fsm <= YCR_FSM_ADDR;
     end else begin
         case (fsm)
-            YCR1_FSM_ADDR : begin
+            YCR_FSM_ADDR : begin
                 if (hready) begin
-                    fsm <= (req_fifo_empty) ? YCR1_FSM_ADDR : YCR1_FSM_DATA;
+                    fsm <= (req_fifo_empty) ? YCR_FSM_ADDR : YCR_FSM_DATA;
                 end
             end
-            YCR1_FSM_DATA : begin
+            YCR_FSM_DATA : begin
                 if (hready) begin
-                    if (hresp == YCR1_HRESP_OKAY) begin
-                        fsm <= (req_fifo_empty) ? YCR1_FSM_ADDR : YCR1_FSM_DATA;
+                    if (hresp == YCR_HRESP_OKAY) begin
+                        fsm <= (req_fifo_empty) ? YCR_FSM_ADDR : YCR_FSM_DATA;
                     end else begin
-                        fsm <= YCR1_FSM_ADDR;
+                        fsm <= YCR_FSM_ADDR;
                     end
                 end
             end
             default : begin
-                fsm <= YCR1_FSM_ERR;
+                fsm <= YCR_FSM_ERR;
             end
         endcase
     end
@@ -240,14 +240,14 @@ end
 always_comb begin
     req_fifo_rd = 1'b0;
     case (fsm)
-        YCR1_FSM_ADDR : begin
+        YCR_FSM_ADDR : begin
             if (hready) begin
                 req_fifo_rd = ~req_fifo_empty;
             end
         end
-        YCR1_FSM_DATA : begin
+        YCR_FSM_DATA : begin
             if (hready) begin
-                req_fifo_rd = ~req_fifo_empty & (hresp == YCR1_HRESP_OKAY);
+                req_fifo_rd = ~req_fifo_empty & (hresp == YCR_HRESP_OKAY);
             end
         end
         default : begin
@@ -259,96 +259,96 @@ end
 //-------------------------------------------------------------------------------
 // FIFO response
 //-------------------------------------------------------------------------------
-`ifdef YCR1_IMEM_AHB_IN_BP
-assign resp_fifo_hready = (fsm == YCR1_FSM_DATA) ? hready : 1'b0;
+`ifdef YCR_IMEM_AHB_IN_BP
+assign resp_fifo_hready = (fsm == YCR_FSM_DATA) ? hready : 1'b0;
 assign resp_fifo.hresp  = hresp;
 assign resp_fifo.hrdata = hrdata;
-`else // YCR1_IMEM_AHB_IN_BP
+`else // YCR_IMEM_AHB_IN_BP
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         resp_fifo_hready <= 1'b0;
     end else begin
-        resp_fifo_hready <= (fsm == YCR1_FSM_DATA) ? hready : 1'b0;
+        resp_fifo_hready <= (fsm == YCR_FSM_DATA) ? hready : 1'b0;
     end
 end
 
 always_ff @(posedge clk) begin
-    if (hready & (fsm == YCR1_FSM_DATA)) begin
+    if (hready & (fsm == YCR_FSM_DATA)) begin
         resp_fifo.hresp  <= hresp;
         resp_fifo.hrdata <= hrdata;
     end
 end
-`endif // YCR1_IMEM_AHB_IN_BP
+`endif // YCR_IMEM_AHB_IN_BP
 
 //-------------------------------------------------------------------------------
 // Interface to AHB
 //-------------------------------------------------------------------------------
-assign hprot[YCR1_HPROT_DATA]  = 1'b0;
-assign hprot[YCR1_HPROT_PRV]   = 1'b0;
-assign hprot[YCR1_HPROT_BUF]   = 1'b0;
-assign hprot[YCR1_HPROT_CACHE] = 1'b0;
+assign hprot[YCR_HPROT_DATA]  = 1'b0;
+assign hprot[YCR_HPROT_PRV]   = 1'b0;
+assign hprot[YCR_HPROT_BUF]   = 1'b0;
+assign hprot[YCR_HPROT_CACHE] = 1'b0;
 
-assign hburst       = YCR1_HBURST_SINGLE;
-assign hsize        = YCR1_HSIZE_32B;
+assign hburst       = YCR_HBURST_SINGLE;
+assign hsize        = YCR_HSIZE_32B;
 assign hmastlock    = 1'b0;
 
 always_comb begin
-    htrans = YCR1_HTRANS_IDLE;
+    htrans = YCR_HTRANS_IDLE;
     case (fsm)
-        YCR1_FSM_ADDR : begin
+        YCR_FSM_ADDR : begin
             if (~req_fifo_empty) begin
-                htrans = YCR1_HTRANS_NONSEQ;
+                htrans = YCR_HTRANS_NONSEQ;
             end
         end
-        YCR1_FSM_DATA : begin
+        YCR_FSM_DATA : begin
             if (hready) begin
-                if (hresp == YCR1_HRESP_OKAY) begin
+                if (hresp == YCR_HRESP_OKAY) begin
                     if (~req_fifo_empty) begin
-                        htrans = YCR1_HTRANS_NONSEQ;
+                        htrans = YCR_HTRANS_NONSEQ;
                     end
                 end
             end
         end
         default : begin
-            htrans = YCR1_HTRANS_ERR;
+            htrans = YCR_HTRANS_ERR;
         end
     endcase
 end
 
 assign haddr  = req_fifo[0].haddr;
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
 
 // Check Core interface
-YCR1_SVA_IMEM_AHB_BRIDGE_REQ_XCHECK : assert property (
+YCR_SVA_IMEM_AHB_BRIDGE_REQ_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     !$isunknown(imem_req)
     ) else $error("IMEM AHB bridge Error: imem_req has unknown values");
 
-YCR1_IMEM_AHB_BRIDGE_ADDR_XCHECK : assert property (
+YCR_IMEM_AHB_BRIDGE_ADDR_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     imem_req |-> !$isunknown(imem_addr)
     ) else $error("IMEM AHB bridge Error: imem_addr has unknown values");
 
-YCR1_IMEM_AHB_BRIDGE_ADDR_ALLIGN : assert property (
+YCR_IMEM_AHB_BRIDGE_ADDR_ALLIGN : assert property (
     @(negedge clk) disable iff (~rst_n)
     imem_req |-> (imem_addr[1:0] == '0)
     ) else $error("IMEM AHB bridge Error: imem_addr has unalign values");
 
 // Check AHB interface
-YCR1_IMEM_AHB_BRIDGE_HREADY_XCHECK : assert property (
+YCR_IMEM_AHB_BRIDGE_HREADY_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     !$isunknown(hready)
     ) else $error("IMEM AHB bridge Error: hready has unknown values");
 
-YCR1_IMEM_AHB_BRIDGE_HRESP_XCHECK : assert property (
+YCR_IMEM_AHB_BRIDGE_HRESP_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     !$isunknown(hresp)
     ) else $error("IMEM AHB bridge Error: hresp has unknown values");
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_imem_ahb
+endmodule : ycr_imem_ahb

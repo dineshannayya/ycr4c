@@ -20,7 +20,7 @@
 ////  yifive Cells for reset handling                                     ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Cells for reset handling                                         ////
@@ -38,7 +38,7 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-module ycr1_reset_buf_cell (
+module ycr_reset_buf_cell (
     input   logic           rst_n,
     input   logic           clk,
     input   logic           test_mode,
@@ -73,12 +73,12 @@ always_ff @(negedge rst_n_mux, posedge clk) begin
 end
 assign reset_n_status = reset_n_status_ff;
 
-endmodule : ycr1_reset_buf_cell
+endmodule : ycr_reset_buf_cell
 
 //--------------------------------------------------------------------
 // Reset CDC Synchronization Cell
 //--------------------------------------------------------------------
-module ycr1_reset_sync_cell #(
+module ycr_reset_sync_cell #(
     parameter int unsigned STAGES_AMOUNT = 2
 ) (
     input   logic           rst_n,
@@ -125,12 +125,12 @@ endgenerate
 
 assign rst_n_out = (test_mode == 1'b1) ? test_rst_n : rst_n_dff[STAGES_AMOUNT-1];
 
-endmodule : ycr1_reset_sync_cell
+endmodule : ycr_reset_sync_cell
 
 //--------------------------------------------------------------------
 // Data CDC/RDC Synchronization Cell
 //--------------------------------------------------------------------
-module ycr1_data_sync_cell #(
+module ycr_data_sync_cell #(
     parameter int unsigned  STAGES_AMOUNT = 1
 ) (
     input   logic           rst_n,
@@ -173,7 +173,7 @@ endgenerate
 
 assign data_out = data_dff[STAGES_AMOUNT-1];
 
-endmodule : ycr1_data_sync_cell
+endmodule : ycr_data_sync_cell
 
 //--------------------------------------------------------------------
 // Reset / RDC Qualifyer Adapter Cell
@@ -183,7 +183,7 @@ endmodule : ycr1_data_sync_cell
 //    1 Front Sync stage \
 //  + 1 (delay introduced by the reset output buffer register)
 //--------------------------------------------------------------------
-module ycr1_reset_qlfy_adapter_cell_sync (
+module ycr_reset_qlfy_adapter_cell_sync (
     input   logic           rst_n,
     input   logic           clk,
     input   logic           test_rst_n,
@@ -213,7 +213,7 @@ end
 assign reset_n_out_qlfy = reset_n_front_ff;
 
 // Reset output buffer
-ycr1_reset_buf_cell
+ycr_reset_buf_cell
 i_reset_output_buf (
     .rst_n              (rst_n),
     .clk                (clk),
@@ -224,9 +224,9 @@ i_reset_output_buf (
     .reset_n_status     (reset_n_status)
 );
 
-endmodule : ycr1_reset_qlfy_adapter_cell_sync
+endmodule : ycr_reset_qlfy_adapter_cell_sync
 
-module ycr1_reset_and2_cell (
+module ycr_reset_and2_cell (
     input   logic [1:0]     rst_n_in,
     input   logic           test_rst_n,
     input   logic           test_mode,
@@ -235,10 +235,10 @@ module ycr1_reset_and2_cell (
 
 assign rst_n_out = (test_mode == 1'b1) ? test_rst_n : (&rst_n_in);
 
-endmodule : ycr1_reset_and2_cell
+endmodule : ycr_reset_and2_cell
 
 
-module ycr1_reset_and3_cell (
+module ycr_reset_and3_cell (
     input   logic [2:0]     rst_n_in,
     input   logic           test_rst_n,
     input   logic           test_mode,
@@ -247,10 +247,10 @@ module ycr1_reset_and3_cell (
 
 assign rst_n_out = (test_mode == 1'b1) ? test_rst_n : (&rst_n_in);
 
-endmodule : ycr1_reset_and3_cell
+endmodule : ycr_reset_and3_cell
 
 
-module ycr1_reset_mux2_cell (
+module ycr_reset_mux2_cell (
     input   logic [1:0]     rst_n_in,
     input   logic           select,
     input   logic           test_rst_n,
@@ -260,4 +260,4 @@ module ycr1_reset_mux2_cell (
 
 assign rst_n_out = (test_mode == 1'b1) ? test_rst_n : rst_n_in[select];
 
-endmodule : ycr1_reset_mux2_cell
+endmodule : ycr_reset_mux2_cell

@@ -20,7 +20,7 @@
 ////  yifive Debug Module (DM)                                            ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Debug Module (DM)                                                ////
@@ -69,13 +69,13 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_DBG_EN
-`include "ycr1_csr.svh"
-`include "ycr1_dm.svh"
+`ifdef YCR_DBG_EN
+`include "ycr_csr.svh"
+`include "ycr_dm.svh"
 
-module ycr1_dm (
+module ycr_dm (
     // System
     input  logic                                    rst_n,                      // DM reset
     input  logic                                    clk,                        // DM clock
@@ -83,36 +83,36 @@ module ycr1_dm (
     // DM internal interface
     input  logic                                    dmi2dm_req_i,               // DMI request
     input  logic                                    dmi2dm_wr_i,                // DMI write
-    input  logic [YCR1_DBG_DMI_ADDR_WIDTH-1:0]      dmi2dm_addr_i,              // DMI address
-    input  logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]      dmi2dm_wdata_i,             // DMI write data
+    input  logic [YCR_DBG_DMI_ADDR_WIDTH-1:0]      dmi2dm_addr_i,              // DMI address
+    input  logic [YCR_DBG_DMI_DATA_WIDTH-1:0]      dmi2dm_wdata_i,             // DMI write data
     output logic                                    dm2dmi_resp_o,              // DMI response
-    output logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]      dm2dmi_rdata_o,             // DMI read data
+    output logic [YCR_DBG_DMI_DATA_WIDTH-1:0]      dm2dmi_rdata_o,             // DMI read data
 
     // DM <-> Pipeline: HART Run Control i/f
     output logic                                    ndm_rst_n_o,                // Non-DM Reset output
     output logic                                    hart_rst_n_o,               // HART reset output
     output logic                                    dm2pipe_active_o,           // Debug Module active flag
     output logic                                    dm2pipe_cmd_req_o,          // Request to pipe
-    output type_ycr1_hdu_dbgstates_e                dm2pipe_cmd_o,              // Command to pipe
+    output type_ycr_hdu_dbgstates_e                dm2pipe_cmd_o,              // Command to pipe
     input  logic                                    pipe2dm_cmd_resp_i,         // Response to Debug Module
     input  logic                                    pipe2dm_cmd_rcode_i,        // HART Command return code: 0 - Ok; 1 - Error
     input  logic                                    pipe2dm_hart_event_i,       // HART event flag
-    input  type_ycr1_hdu_hartstatus_s               pipe2dm_hart_status_i,      // HART Status
+    input  type_ycr_hdu_hartstatus_s               pipe2dm_hart_status_i,      // HART Status
 
-    input  logic [`YCR1_XLEN-1:0]                   soc2dm_fuse_mhartid_i,      // RO MHARTID value
-    input  logic [`YCR1_XLEN-1:0]                   pipe2dm_pc_sample_i,        // RO PC value for sampling
+    input  logic [`YCR_XLEN-1:0]                   soc2dm_fuse_mhartid_i,      // RO MHARTID value
+    input  logic [`YCR_XLEN-1:0]                   pipe2dm_pc_sample_i,        // RO PC value for sampling
 
     // HART Abstract Command / Program Buffer i/f
-    input  logic [YCR1_HDU_PBUF_ADDR_WIDTH-1:0]     pipe2dm_pbuf_addr_i,        // Program Buffer address
-    output logic [YCR1_HDU_CORE_INSTR_WIDTH-1:0]    dm2pipe_pbuf_instr_o,       // Program Buffer instruction
+    input  logic [YCR_HDU_PBUF_ADDR_WIDTH-1:0]     pipe2dm_pbuf_addr_i,        // Program Buffer address
+    output logic [YCR_HDU_CORE_INSTR_WIDTH-1:0]    dm2pipe_pbuf_instr_o,       // Program Buffer instruction
 
     // HART Abstract Data regs i/f
     input  logic                                    pipe2dm_dreg_req_i,         // Abstract Data Register request
     input  logic                                    pipe2dm_dreg_wr_i,          // Abstract Data Register write
-    input  logic [`YCR1_XLEN-1:0]                   pipe2dm_dreg_wdata_i,       // Abstract Data Register write data
+    input  logic [`YCR_XLEN-1:0]                   pipe2dm_dreg_wdata_i,       // Abstract Data Register write data
     output logic                                    dm2pipe_dreg_resp_o,        // Abstract Data Register response
     output logic                                    dm2pipe_dreg_fail_o,        // Abstract Data Register fail - possibly not needed ?
-    output logic [`YCR1_XLEN-1:0]                   dm2pipe_dreg_rdata_o        // Abstract Data Register read data
+    output logic [`YCR_XLEN-1:0]                   dm2pipe_dreg_rdata_o        // Abstract Data Register read data
 );
 
 //------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ typedef enum logic [3:0] {
     ABS_STATE_CSR_SAVE_XREG,
     ABS_STATE_CSR_RW,
     ABS_STATE_CSR_RETURN_XREG
-} type_ycr1_abs_fsm_e;
+} type_ycr_abs_fsm_e;
 
 typedef enum logic [2:0] {
     DHI_STATE_IDLE,
@@ -143,15 +143,15 @@ typedef enum logic [2:0] {
     DHI_STATE_HALT_REQ,
     DHI_STATE_RESUME_REQ,
     DHI_STATE_RESUME_RUN
-} type_ycr1_dhi_fsm_e;
+} type_ycr_dhi_fsm_e;
 
-//typedef enum logic [YCR1_DBG_ABSTRACTCS_CMDERR_WDTH:0] {
-parameter    ABS_ERR_NONE      = (YCR1_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d0);
-parameter    ABS_ERR_BUSY      = (YCR1_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d1);
-parameter    ABS_ERR_CMD       = (YCR1_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d2);
-parameter    ABS_ERR_EXCEPTION = (YCR1_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d3);
-parameter    ABS_ERR_NOHALT    = (YCR1_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d4);
-//} type_ycr1_abs_err_e;
+//typedef enum logic [YCR_DBG_ABSTRACTCS_CMDERR_WDTH:0] {
+parameter    ABS_ERR_NONE      = (YCR_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d0);
+parameter    ABS_ERR_BUSY      = (YCR_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d1);
+parameter    ABS_ERR_CMD       = (YCR_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d2);
+parameter    ABS_ERR_EXCEPTION = (YCR_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d3);
+parameter    ABS_ERR_NOHALT    = (YCR_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d4);
+//} type_ycr_abs_err_e;
 
 
 //------------------------------------------------------------------------------
@@ -159,19 +159,19 @@ parameter    ABS_ERR_NOHALT    = (YCR1_DBG_ABSTRACTCS_CMDERR_WDTH+1)'('d4);
 //------------------------------------------------------------------------------
 
 // Abstract instruction opcode parameters
-localparam      YCR1_OP_SYSTEM      = 7'b111_0011;
-localparam      YCR1_OP_LOAD        = 7'b000_0011;
-localparam      YCR1_OP_STORE       = 7'b010_0011;
+localparam      YCR_OP_SYSTEM      = 7'b111_0011;
+localparam      YCR_OP_LOAD        = 7'b000_0011;
+localparam      YCR_OP_STORE       = 7'b010_0011;
 
 // Abstract instruction funct3 parameters
-localparam      YCR1_FUNCT3_CSRRW       = 3'b001;
-localparam      YCR1_FUNCT3_CSRRS       = 3'b010;
-localparam      YCR1_FUNCT3_SB          = 3'b000;
-localparam      YCR1_FUNCT3_SH          = 3'b001;
-localparam      YCR1_FUNCT3_SW          = 3'b010;
-localparam      YCR1_FUNCT3_LW          = 3'b010;
-localparam      YCR1_FUNCT3_LBU         = 3'b100;
-localparam      YCR1_FUNCT3_LHU         = 3'b101;
+localparam      YCR_FUNCT3_CSRRW       = 3'b001;
+localparam      YCR_FUNCT3_CSRRS       = 3'b010;
+localparam      YCR_FUNCT3_SB          = 3'b000;
+localparam      YCR_FUNCT3_SH          = 3'b001;
+localparam      YCR_FUNCT3_SW          = 3'b010;
+localparam      YCR_FUNCT3_LW          = 3'b010;
+localparam      YCR_FUNCT3_LBU         = 3'b100;
+localparam      YCR_FUNCT3_LHU         = 3'b101;
 
 // DMCONTROL parameters
 //------------------------------------------------------------------------------
@@ -296,15 +296,15 @@ logic                                             dmstatus_allany_halted_next;
 // Abstract command control logic signals
 //------------------------------------------------------------------------------
 
-logic [YCR1_DBG_DMI_DATA_WIDTH-1:0]               abs_cmd;
+logic [YCR_DBG_DMI_DATA_WIDTH-1:0]               abs_cmd;
 
 logic                                             abs_cmd_csr_ro;
-logic [YCR1_DBG_COMMAND_TYPE_WDTH:0]              abs_cmd_type;
+logic [YCR_DBG_COMMAND_TYPE_WDTH:0]              abs_cmd_type;
 logic                                             abs_cmd_regacs;
-logic [YCR1_DBG_COMMAND_ACCESSREG_REGNO_HI-12:0]  abs_cmd_regtype;
+logic [YCR_DBG_COMMAND_ACCESSREG_REGNO_HI-12:0]  abs_cmd_regtype;
 logic [6:0]                                       abs_cmd_regfile;
 logic                                             abs_cmd_regwr;
-logic [YCR1_DBG_COMMAND_ACCESSREG_SIZE_WDTH:0]    abs_cmd_regsize;
+logic [YCR_DBG_COMMAND_ACCESSREG_SIZE_WDTH:0]    abs_cmd_regsize;
 logic                                             abs_cmd_execprogbuf;
 logic                                             abs_cmd_regvalid;
 logic [2:0]                                       abs_cmd_memsize;
@@ -342,8 +342,8 @@ logic                                             abs_cmd_mem_access_vd;
 // Abstract FSM signals
 //------------------------------------------------------------------------------
 
-type_ycr1_abs_fsm_e                               abs_fsm_ff;
-type_ycr1_abs_fsm_e                               abs_fsm_next;
+type_ycr_abs_fsm_e                               abs_fsm_ff;
+type_ycr_abs_fsm_e                               abs_fsm_next;
 logic                                             abs_fsm_idle;
 logic                                             abs_fsm_exec;
 logic                                             abs_fsm_csr_ro;
@@ -360,27 +360,27 @@ logic                                             abstractcs_busy;
 logic                                             abstractcs_ro_en;
 
 // COMMAND register signals
-logic [`YCR1_XLEN-1:0]                            abs_command_ff;
-logic [`YCR1_XLEN-1:0]                            abs_command_next;
+logic [`YCR_XLEN-1:0]                            abs_command_ff;
+logic [`YCR_XLEN-1:0]                            abs_command_next;
 
 // ABSTRACTAUTO register signals
 logic                                             abs_autoexec_ff;
 logic                                             abs_autoexec_next;
 
 // Program buffer registers
-logic [`YCR1_XLEN-1:0]                            abs_progbuf0_ff;
-logic [`YCR1_XLEN-1:0]                            abs_progbuf1_ff;
-logic [`YCR1_XLEN-1:0]                            abs_progbuf2_ff;
-logic [`YCR1_XLEN-1:0]                            abs_progbuf3_ff;
-logic [`YCR1_XLEN-1:0]                            abs_progbuf4_ff;
-logic [`YCR1_XLEN-1:0]                            abs_progbuf5_ff;
+logic [`YCR_XLEN-1:0]                            abs_progbuf0_ff;
+logic [`YCR_XLEN-1:0]                            abs_progbuf1_ff;
+logic [`YCR_XLEN-1:0]                            abs_progbuf2_ff;
+logic [`YCR_XLEN-1:0]                            abs_progbuf3_ff;
+logic [`YCR_XLEN-1:0]                            abs_progbuf4_ff;
+logic [`YCR_XLEN-1:0]                            abs_progbuf5_ff;
 
 // Data 0/1 registers
 logic                                             data0_xreg_save;
-logic [`YCR1_XLEN-1:0]                            abs_data0_ff;
-logic [`YCR1_XLEN-1:0]                            abs_data0_next;
-logic [`YCR1_XLEN-1:0]                            abs_data1_ff;
-logic [`YCR1_XLEN-1:0]                            abs_data1_next;
+logic [`YCR_XLEN-1:0]                            abs_data0_ff;
+logic [`YCR_XLEN-1:0]                            abs_data0_next;
+logic [`YCR_XLEN-1:0]                            abs_data1_ff;
+logic [`YCR_XLEN-1:0]                            abs_data1_next;
 
 // Abstract command status logic signals
 //------------------------------------------------------------------------------
@@ -394,8 +394,8 @@ logic                                             abs_err_acc_busy_upd;
 logic                                             abs_err_acc_busy_ff;
 logic                                             abs_err_acc_busy_next;
 
-logic [YCR1_DBG_ABSTRACTCS_CMDERR_WDTH:0]         abstractcs_cmderr_ff;
-logic [YCR1_DBG_ABSTRACTCS_CMDERR_WDTH:0]         abstractcs_cmderr_next;
+logic [YCR_DBG_ABSTRACTCS_CMDERR_WDTH:0]         abstractcs_cmderr_ff;
+logic [YCR_DBG_ABSTRACTCS_CMDERR_WDTH:0]         abstractcs_cmderr_next;
 
 // Abstract instruction signals
 //------------------------------------------------------------------------------
@@ -409,15 +409,15 @@ logic [4:0]                                       abs_instr_rd;
 logic [4:0]                                       abs_instr_rs1;
 logic [4:0]                                       abs_instr_rs2;
 logic [2:0]                                       abs_instr_mem_funct3;
-logic [`YCR1_XLEN-1:0]                            abs_exec_instr_next;
-logic [`YCR1_XLEN-1:0]                            abs_exec_instr_ff;
+logic [`YCR_XLEN-1:0]                            abs_exec_instr_next;
+logic [`YCR_XLEN-1:0]                            abs_exec_instr_ff;
 
 // DHI FSM signals
 //------------------------------------------------------------------------------
 
-type_ycr1_dhi_fsm_e                               dhi_fsm_next;
-type_ycr1_dhi_fsm_e                               dhi_fsm_ff;
-type_ycr1_dhi_fsm_e                               dhi_req;
+type_ycr_dhi_fsm_e                               dhi_fsm_next;
+type_ycr_dhi_fsm_e                               dhi_fsm_ff;
+type_ycr_dhi_fsm_e                               dhi_req;
 
 logic                                             dhi_fsm_idle;
 logic                                             dhi_fsm_exec;
@@ -445,8 +445,8 @@ logic                                             hart_pbuf_ebreak_next;
 logic                                             hart_cmd_req_ff;
 logic                                             hart_cmd_req_next;
 
-type_ycr1_hdu_dbgstates_e                         hart_cmd_ff;
-type_ycr1_hdu_dbgstates_e                         hart_cmd_next;
+type_ycr_hdu_dbgstates_e                         hart_cmd_ff;
+type_ycr_hdu_dbgstates_e                         hart_cmd_next;
 
 // HART state signals
 //------------------------------------------------------------------------------
@@ -464,19 +464,19 @@ logic                                             hart_state_dhalt;
 //------------------------------------------------------------------------------
 
 always_comb begin
-    dmi_req_dmcontrol    = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_DMCONTROL);
-    dmi_req_abstractcs   = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_ABSTRACTCS);
-    dmi_req_abstractauto = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_ABSTRACTAUTO);
-    dmi_req_data0        = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_DATA0);
-    dmi_req_data1        = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_DATA1);
-    dmi_req_command      = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_COMMAND);
+    dmi_req_dmcontrol    = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_DMCONTROL);
+    dmi_req_abstractcs   = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_ABSTRACTCS);
+    dmi_req_abstractauto = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_ABSTRACTAUTO);
+    dmi_req_data0        = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_DATA0);
+    dmi_req_data1        = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_DATA1);
+    dmi_req_command      = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_COMMAND);
     dmi_rpt_command      = (abs_autoexec_ff & dmi_req_data0);
-    dmi_req_progbuf0     = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_PROGBUF0);
-    dmi_req_progbuf1     = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_PROGBUF1);
-    dmi_req_progbuf2     = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_PROGBUF2);
-    dmi_req_progbuf3     = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_PROGBUF3);
-    dmi_req_progbuf4     = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_PROGBUF4);
-    dmi_req_progbuf5     = dmi2dm_req_i & (dmi2dm_addr_i == YCR1_DBG_PROGBUF5);
+    dmi_req_progbuf0     = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_PROGBUF0);
+    dmi_req_progbuf1     = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_PROGBUF1);
+    dmi_req_progbuf2     = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_PROGBUF2);
+    dmi_req_progbuf3     = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_PROGBUF3);
+    dmi_req_progbuf4     = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_PROGBUF4);
+    dmi_req_progbuf5     = dmi2dm_req_i & (dmi2dm_addr_i == YCR_DBG_PROGBUF5);
 end
 
 assign dmi_req_any = dmi_req_command  | dmi_rpt_command  | dmi_req_abstractauto
@@ -492,90 +492,90 @@ always_comb begin
     dm2dmi_rdata_o = '0;
 
     case (dmi2dm_addr_i)
-        YCR1_DBG_DMSTATUS: begin
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_RESERVEDC_HI:
-                           YCR1_DBG_DMSTATUS_RESERVEDC_LO]     = DMSTATUS_RESERVEDC;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_IMPEBREAK]        = DMSTATUS_IMPEBREAK;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_RESERVEDB_HI:
-                           YCR1_DBG_DMSTATUS_RESERVEDB_LO]     = DMSTATUS_RESERVEDB;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ALLHAVERESET]     = dmstatus_allany_havereset_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ANYHAVERESET]     = dmstatus_allany_havereset_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ALLRESUMEACK]     = dmstatus_allany_resumeack_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ANYRESUMEACK]     = dmstatus_allany_resumeack_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ALLNONEXISTENT]   = DMSTATUS_ALLANYNONEXIST;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ANYNONEXISTENT]   = DMSTATUS_ALLANYNONEXIST;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ALLUNAVAIL]       = DMSTATUS_ALLANYUNAVAIL;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ANYUNAVAIL]       = DMSTATUS_ALLANYUNAVAIL;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ALLRUNNING]       = ~dmstatus_allany_halted_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ANYRUNNING]       = ~dmstatus_allany_halted_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ALLHALTED]        = dmstatus_allany_halted_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_ANYHALTED]        = dmstatus_allany_halted_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_AUTHENTICATED]    = DMSTATUS_AUTHENTICATED;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_AUTHBUSY]         = DMSTATUS_AUTHBUSY;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_RESERVEDA]        = DMSTATUS_RESERVEDA;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_DEVTREEVALID]     = DMSTATUS_DEVTREEVALID;
-            dm2dmi_rdata_o[YCR1_DBG_DMSTATUS_VERSION_HI:
-                           YCR1_DBG_DMSTATUS_VERSION_LO]       = DMSTATUS_VERSION;;
+        YCR_DBG_DMSTATUS: begin
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_RESERVEDC_HI:
+                           YCR_DBG_DMSTATUS_RESERVEDC_LO]     = DMSTATUS_RESERVEDC;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_IMPEBREAK]        = DMSTATUS_IMPEBREAK;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_RESERVEDB_HI:
+                           YCR_DBG_DMSTATUS_RESERVEDB_LO]     = DMSTATUS_RESERVEDB;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ALLHAVERESET]     = dmstatus_allany_havereset_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ANYHAVERESET]     = dmstatus_allany_havereset_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ALLRESUMEACK]     = dmstatus_allany_resumeack_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ANYRESUMEACK]     = dmstatus_allany_resumeack_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ALLNONEXISTENT]   = DMSTATUS_ALLANYNONEXIST;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ANYNONEXISTENT]   = DMSTATUS_ALLANYNONEXIST;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ALLUNAVAIL]       = DMSTATUS_ALLANYUNAVAIL;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ANYUNAVAIL]       = DMSTATUS_ALLANYUNAVAIL;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ALLRUNNING]       = ~dmstatus_allany_halted_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ANYRUNNING]       = ~dmstatus_allany_halted_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ALLHALTED]        = dmstatus_allany_halted_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_ANYHALTED]        = dmstatus_allany_halted_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_AUTHENTICATED]    = DMSTATUS_AUTHENTICATED;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_AUTHBUSY]         = DMSTATUS_AUTHBUSY;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_RESERVEDA]        = DMSTATUS_RESERVEDA;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_DEVTREEVALID]     = DMSTATUS_DEVTREEVALID;
+            dm2dmi_rdata_o[YCR_DBG_DMSTATUS_VERSION_HI:
+                           YCR_DBG_DMSTATUS_VERSION_LO]       = DMSTATUS_VERSION;;
         end
 
-        YCR1_DBG_DMCONTROL: begin
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_HALTREQ]         = dmcontrol_haltreq_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_RESUMEREQ]       = dmcontrol_resumereq_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_HARTRESET]       = DMCONTROL_HARTRESET;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_ACKHAVERESET]    = dmcontrol_ackhavereset_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_RESERVEDB]       = DMCONTROL_RESERVEDB;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_HASEL]           = DMCONTROL_HASEL;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_HARTSELLO_HI:
-                           YCR1_DBG_DMCONTROL_HARTSELLO_LO]    = DMCONTROL_HARTSELLO;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_HARTSELHI_HI:
-                           YCR1_DBG_DMCONTROL_HARTSELHI_LO]    = DMCONTROL_HARTSELHI;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_RESERVEDA_HI:
-                           YCR1_DBG_DMCONTROL_RESERVEDA_LO]    = DMCONTROL_RESERVEDA;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_NDMRESET]        = dmcontrol_ndmreset_ff;
-            dm2dmi_rdata_o[YCR1_DBG_DMCONTROL_DMACTIVE]        = dmcontrol_dmactive_ff;
+        YCR_DBG_DMCONTROL: begin
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_HALTREQ]         = dmcontrol_haltreq_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_RESUMEREQ]       = dmcontrol_resumereq_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_HARTRESET]       = DMCONTROL_HARTRESET;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_ACKHAVERESET]    = dmcontrol_ackhavereset_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_RESERVEDB]       = DMCONTROL_RESERVEDB;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_HASEL]           = DMCONTROL_HASEL;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_HARTSELLO_HI:
+                           YCR_DBG_DMCONTROL_HARTSELLO_LO]    = DMCONTROL_HARTSELLO;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_HARTSELHI_HI:
+                           YCR_DBG_DMCONTROL_HARTSELHI_LO]    = DMCONTROL_HARTSELHI;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_RESERVEDA_HI:
+                           YCR_DBG_DMCONTROL_RESERVEDA_LO]    = DMCONTROL_RESERVEDA;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_NDMRESET]        = dmcontrol_ndmreset_ff;
+            dm2dmi_rdata_o[YCR_DBG_DMCONTROL_DMACTIVE]        = dmcontrol_dmactive_ff;
         end
 
-        YCR1_DBG_ABSTRACTCS: begin
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_RESERVEDD_HI:
-                           YCR1_DBG_ABSTRACTCS_RESERVEDD_LO]   = ABSTRACTCS_RESERVEDD;
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_PROGBUFSIZE_HI:
-                           YCR1_DBG_ABSTRACTCS_PROGBUFSIZE_LO] = ABSTRACTCS_PROGBUFSIZE;
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_RESERVEDC_HI:
-                           YCR1_DBG_ABSTRACTCS_RESERVEDC_LO]   = ABSTRACTCS_RESERVEDC;
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_BUSY]           = abstractcs_busy;
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_RESERVEDB]      = ABSTRACTCS_RESERVEDB;
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_CMDERR_HI:
-                           YCR1_DBG_ABSTRACTCS_CMDERR_LO]      = abstractcs_cmderr_ff;
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_RESERVEDA_HI:
-                           YCR1_DBG_ABSTRACTCS_RESERVEDA_LO]   = ABSTRACTCS_RESERVEDA;
-            dm2dmi_rdata_o[YCR1_DBG_ABSTRACTCS_DATACOUNT_HI:
-                           YCR1_DBG_ABSTRACTCS_DATACOUNT_LO]   = ABSTRACTCS_DATACOUNT;
+        YCR_DBG_ABSTRACTCS: begin
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_RESERVEDD_HI:
+                           YCR_DBG_ABSTRACTCS_RESERVEDD_LO]   = ABSTRACTCS_RESERVEDD;
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_PROGBUFSIZE_HI:
+                           YCR_DBG_ABSTRACTCS_PROGBUFSIZE_LO] = ABSTRACTCS_PROGBUFSIZE;
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_RESERVEDC_HI:
+                           YCR_DBG_ABSTRACTCS_RESERVEDC_LO]   = ABSTRACTCS_RESERVEDC;
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_BUSY]           = abstractcs_busy;
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_RESERVEDB]      = ABSTRACTCS_RESERVEDB;
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_CMDERR_HI:
+                           YCR_DBG_ABSTRACTCS_CMDERR_LO]      = abstractcs_cmderr_ff;
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_RESERVEDA_HI:
+                           YCR_DBG_ABSTRACTCS_RESERVEDA_LO]   = ABSTRACTCS_RESERVEDA;
+            dm2dmi_rdata_o[YCR_DBG_ABSTRACTCS_DATACOUNT_HI:
+                           YCR_DBG_ABSTRACTCS_DATACOUNT_LO]   = ABSTRACTCS_DATACOUNT;
         end
 
-        YCR1_DBG_HARTINFO: begin
-            dm2dmi_rdata_o[YCR1_DBG_HARTINFO_RESERVEDB_HI:
-                           YCR1_DBG_HARTINFO_RESERVEDB_LO]     = HARTINFO_RESERVEDB;
-            dm2dmi_rdata_o[YCR1_DBG_HARTINFO_NSCRATCH_HI:
-                           YCR1_DBG_HARTINFO_NSCRATCH_LO]      = HARTINFO_NSCRATCH;
-            dm2dmi_rdata_o[YCR1_DBG_HARTINFO_RESERVEDA_HI:
-                           YCR1_DBG_HARTINFO_RESERVEDA_LO]     = HARTINFO_RESERVEDA;
-            dm2dmi_rdata_o[YCR1_DBG_HARTINFO_DATAACCESS]       = HARTINFO_DATAACCESS;
-            dm2dmi_rdata_o[YCR1_DBG_HARTINFO_DATASIZE_HI:
-                           YCR1_DBG_HARTINFO_DATASIZE_LO]      = HARTINFO_DATASIZE;
-            dm2dmi_rdata_o[YCR1_DBG_HARTINFO_DATAADDR_HI:
-                           YCR1_DBG_HARTINFO_DATAADDR_LO]      = HARTINFO_DATAADDR;
+        YCR_DBG_HARTINFO: begin
+            dm2dmi_rdata_o[YCR_DBG_HARTINFO_RESERVEDB_HI:
+                           YCR_DBG_HARTINFO_RESERVEDB_LO]     = HARTINFO_RESERVEDB;
+            dm2dmi_rdata_o[YCR_DBG_HARTINFO_NSCRATCH_HI:
+                           YCR_DBG_HARTINFO_NSCRATCH_LO]      = HARTINFO_NSCRATCH;
+            dm2dmi_rdata_o[YCR_DBG_HARTINFO_RESERVEDA_HI:
+                           YCR_DBG_HARTINFO_RESERVEDA_LO]     = HARTINFO_RESERVEDA;
+            dm2dmi_rdata_o[YCR_DBG_HARTINFO_DATAACCESS]       = HARTINFO_DATAACCESS;
+            dm2dmi_rdata_o[YCR_DBG_HARTINFO_DATASIZE_HI:
+                           YCR_DBG_HARTINFO_DATASIZE_LO]      = HARTINFO_DATASIZE;
+            dm2dmi_rdata_o[YCR_DBG_HARTINFO_DATAADDR_HI:
+                           YCR_DBG_HARTINFO_DATAADDR_LO]      = HARTINFO_DATAADDR;
         end
 
-        YCR1_DBG_ABSTRACTAUTO: dm2dmi_rdata_o[0] = abs_autoexec_ff;
-        YCR1_DBG_DATA0       : dm2dmi_rdata_o    = abs_data0_ff;
-        YCR1_DBG_DATA1       : dm2dmi_rdata_o    = abs_data1_ff;
-        YCR1_DBG_PROGBUF0    : dm2dmi_rdata_o    = abs_progbuf0_ff;
-        YCR1_DBG_PROGBUF1    : dm2dmi_rdata_o    = abs_progbuf1_ff;
-        YCR1_DBG_PROGBUF2    : dm2dmi_rdata_o    = abs_progbuf2_ff;
-        YCR1_DBG_PROGBUF3    : dm2dmi_rdata_o    = abs_progbuf3_ff;
-        YCR1_DBG_PROGBUF4    : dm2dmi_rdata_o    = abs_progbuf4_ff;
-        YCR1_DBG_PROGBUF5    : dm2dmi_rdata_o    = abs_progbuf5_ff;
-        YCR1_DBG_HALTSUM0    : dm2dmi_rdata_o[0] = dmstatus_allany_halted_ff;
+        YCR_DBG_ABSTRACTAUTO: dm2dmi_rdata_o[0] = abs_autoexec_ff;
+        YCR_DBG_DATA0       : dm2dmi_rdata_o    = abs_data0_ff;
+        YCR_DBG_DATA1       : dm2dmi_rdata_o    = abs_data1_ff;
+        YCR_DBG_PROGBUF0    : dm2dmi_rdata_o    = abs_progbuf0_ff;
+        YCR_DBG_PROGBUF1    : dm2dmi_rdata_o    = abs_progbuf1_ff;
+        YCR_DBG_PROGBUF2    : dm2dmi_rdata_o    = abs_progbuf2_ff;
+        YCR_DBG_PROGBUF3    : dm2dmi_rdata_o    = abs_progbuf3_ff;
+        YCR_DBG_PROGBUF4    : dm2dmi_rdata_o    = abs_progbuf4_ff;
+        YCR_DBG_PROGBUF5    : dm2dmi_rdata_o    = abs_progbuf5_ff;
+        YCR_DBG_HALTSUM0    : dm2dmi_rdata_o[0] = dmstatus_allany_halted_ff;
 
         default: begin
             dm2dmi_rdata_o = '0;
@@ -606,10 +606,10 @@ assign abstractcs_wr_req = dmi_req_abstractcs   & dmi2dm_wr_i;
 // HART state signals
 //------------------------------------------------------------------------------
 
-assign hart_state_reset = (pipe2dm_hart_status_i.dbg_state == YCR1_HDU_DBGSTATE_RESET);
-assign hart_state_run   = (pipe2dm_hart_status_i.dbg_state == YCR1_HDU_DBGSTATE_RUN);
-assign hart_state_dhalt = (pipe2dm_hart_status_i.dbg_state == YCR1_HDU_DBGSTATE_DHALTED);
-assign hart_state_drun  = (pipe2dm_hart_status_i.dbg_state == YCR1_HDU_DBGSTATE_DRUN);
+assign hart_state_reset = (pipe2dm_hart_status_i.dbg_state == YCR_HDU_DBGSTATE_RESET);
+assign hart_state_run   = (pipe2dm_hart_status_i.dbg_state == YCR_HDU_DBGSTATE_RUN);
+assign hart_state_dhalt = (pipe2dm_hart_status_i.dbg_state == YCR_HDU_DBGSTATE_DHALTED);
+assign hart_state_drun  = (pipe2dm_hart_status_i.dbg_state == YCR_HDU_DBGSTATE_DRUN);
 
 //------------------------------------------------------------------------------
 // DM registers
@@ -656,7 +656,7 @@ always_ff @(posedge clk, negedge rst_n) begin
 end
 
 assign dmcontrol_dmactive_next = dmcontrol_wr_req
-                               ? dmi2dm_wdata_i[YCR1_DBG_DMCONTROL_DMACTIVE]
+                               ? dmi2dm_wdata_i[YCR_DBG_DMCONTROL_DMACTIVE]
                                : dmcontrol_dmactive_ff;
 
 always_comb begin
@@ -670,10 +670,10 @@ always_comb begin
         dmcontrol_haltreq_next      = 1'b0;
         dmcontrol_resumereq_next    = 1'b0;
     end else if (dmcontrol_wr_req) begin
-        dmcontrol_ndmreset_next     = dmi2dm_wdata_i[YCR1_DBG_DMCONTROL_NDMRESET];
-        dmcontrol_ackhavereset_next = dmi2dm_wdata_i[YCR1_DBG_DMCONTROL_ACKHAVERESET];
-        dmcontrol_haltreq_next      = dmi2dm_wdata_i[YCR1_DBG_DMCONTROL_HALTREQ];
-        dmcontrol_resumereq_next    = dmi2dm_wdata_i[YCR1_DBG_DMCONTROL_RESUMEREQ];
+        dmcontrol_ndmreset_next     = dmi2dm_wdata_i[YCR_DBG_DMCONTROL_NDMRESET];
+        dmcontrol_ackhavereset_next = dmi2dm_wdata_i[YCR_DBG_DMCONTROL_ACKHAVERESET];
+        dmcontrol_haltreq_next      = dmi2dm_wdata_i[YCR_DBG_DMCONTROL_HALTREQ];
+        dmcontrol_resumereq_next    = dmi2dm_wdata_i[YCR_DBG_DMCONTROL_RESUMEREQ];
     end
 end
 
@@ -742,38 +742,38 @@ assign clk_en_abs = clk_en_dm & dmcontrol_dmactive_ff;
 assign abs_cmd = dmi_req_command ? dmi2dm_wdata_i : abs_command_ff;
 
 always_comb begin
-    abs_cmd_regno       = abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_REGNO_LO +: 12];
+    abs_cmd_regno       = abs_cmd[YCR_DBG_COMMAND_ACCESSREG_REGNO_LO +: 12];
 
-    abs_cmd_csr_ro      = (abs_cmd_regno == YCR1_CSR_ADDR_MISA)
-                        | (abs_cmd_regno == YCR1_CSR_ADDR_MVENDORID)
-                        | (abs_cmd_regno == YCR1_CSR_ADDR_MARCHID)
-                        | (abs_cmd_regno == YCR1_CSR_ADDR_MIMPID)
-                        | (abs_cmd_regno == YCR1_CSR_ADDR_MHARTID)
-                        | (abs_cmd_regno == YCR1_CSR_ADDR_NUMCORES)
-                        | (abs_cmd_regno == YCR1_HDU_DBGCSR_ADDR_DPC);
+    abs_cmd_csr_ro      = (abs_cmd_regno == YCR_CSR_ADDR_MISA)
+                        | (abs_cmd_regno == YCR_CSR_ADDR_MVENDORID)
+                        | (abs_cmd_regno == YCR_CSR_ADDR_MARCHID)
+                        | (abs_cmd_regno == YCR_CSR_ADDR_MIMPID)
+                        | (abs_cmd_regno == YCR_CSR_ADDR_MHARTID)
+                        | (abs_cmd_regno == YCR_CSR_ADDR_NUMCORES)
+                        | (abs_cmd_regno == YCR_HDU_DBGCSR_ADDR_DPC);
 
-    abs_cmd_type        = abs_cmd[YCR1_DBG_COMMAND_TYPE_HI:YCR1_DBG_COMMAND_TYPE_LO];
-    abs_cmd_regacs      = abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_TRANSFER];
-    abs_cmd_regtype     = abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_REGNO_HI:12];
+    abs_cmd_type        = abs_cmd[YCR_DBG_COMMAND_TYPE_HI:YCR_DBG_COMMAND_TYPE_LO];
+    abs_cmd_regacs      = abs_cmd[YCR_DBG_COMMAND_ACCESSREG_TRANSFER];
+    abs_cmd_regtype     = abs_cmd[YCR_DBG_COMMAND_ACCESSREG_REGNO_HI:12];
     abs_cmd_regfile     = abs_cmd[11:5];
-    abs_cmd_regsize     = abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_SIZE_HI:
-                                  YCR1_DBG_COMMAND_ACCESSREG_SIZE_LO];
-    abs_cmd_regwr       = abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_WRITE];
-    abs_cmd_execprogbuf = abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_POSTEXEC];
+    abs_cmd_regsize     = abs_cmd[YCR_DBG_COMMAND_ACCESSREG_SIZE_HI:
+                                  YCR_DBG_COMMAND_ACCESSREG_SIZE_LO];
+    abs_cmd_regwr       = abs_cmd[YCR_DBG_COMMAND_ACCESSREG_WRITE];
+    abs_cmd_execprogbuf = abs_cmd[YCR_DBG_COMMAND_ACCESSREG_POSTEXEC];
 
-    abs_cmd_regvalid    = ~(|{abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_RESERVEDB],
-                              abs_cmd[YCR1_DBG_COMMAND_ACCESSREG_RESERVEDA]});
+    abs_cmd_regvalid    = ~(|{abs_cmd[YCR_DBG_COMMAND_ACCESSREG_RESERVEDB],
+                              abs_cmd[YCR_DBG_COMMAND_ACCESSREG_RESERVEDA]});
 
-    abs_cmd_memsize     = abs_cmd[YCR1_DBG_COMMAND_ACCESSMEM_AAMSIZE_HI:
-                                  YCR1_DBG_COMMAND_ACCESSMEM_AAMSIZE_LO];
-    abs_cmd_memwr       = abs_cmd[YCR1_DBG_COMMAND_ACCESSMEM_WRITE];
+    abs_cmd_memsize     = abs_cmd[YCR_DBG_COMMAND_ACCESSMEM_AAMSIZE_HI:
+                                  YCR_DBG_COMMAND_ACCESSMEM_AAMSIZE_LO];
+    abs_cmd_memwr       = abs_cmd[YCR_DBG_COMMAND_ACCESSMEM_WRITE];
 
-    abs_cmd_memvalid    = ~(|{abs_cmd[YCR1_DBG_COMMAND_ACCESSMEM_AAMVIRTUAL],
-                              abs_cmd[YCR1_DBG_COMMAND_ACCESSMEM_AAMPOSTINC],
-                              abs_cmd[YCR1_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI:
-                                      YCR1_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI],
-                              abs_cmd[YCR1_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI:
-                                      YCR1_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI]});
+    abs_cmd_memvalid    = ~(|{abs_cmd[YCR_DBG_COMMAND_ACCESSMEM_AAMVIRTUAL],
+                              abs_cmd[YCR_DBG_COMMAND_ACCESSMEM_AAMPOSTINC],
+                              abs_cmd[YCR_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI:
+                                      YCR_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI],
+                              abs_cmd[YCR_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI:
+                                      YCR_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI]});
 end
 
 assign abs_reg_access_csr  = (abs_cmd_regtype == ABS_CMD_HARTREG_CSR);
@@ -992,10 +992,10 @@ end
 
 always_comb begin
     case (abs_cmd_size_ff)
-        2'b00  : abs_instr_mem_funct3 = abs_cmd_wr_ff ? YCR1_FUNCT3_SB : YCR1_FUNCT3_LBU;
-        2'b01  : abs_instr_mem_funct3 = abs_cmd_wr_ff ? YCR1_FUNCT3_SH : YCR1_FUNCT3_LHU;
-        2'b10  : abs_instr_mem_funct3 = abs_cmd_wr_ff ? YCR1_FUNCT3_SW : YCR1_FUNCT3_LW;
-        default: abs_instr_mem_funct3 = YCR1_FUNCT3_SB;
+        2'b00  : abs_instr_mem_funct3 = abs_cmd_wr_ff ? YCR_FUNCT3_SB : YCR_FUNCT3_LBU;
+        2'b01  : abs_instr_mem_funct3 = abs_cmd_wr_ff ? YCR_FUNCT3_SH : YCR_FUNCT3_LHU;
+        2'b10  : abs_instr_mem_funct3 = abs_cmd_wr_ff ? YCR_FUNCT3_SW : YCR_FUNCT3_LW;
+        default: abs_instr_mem_funct3 = YCR_FUNCT3_SB;
     endcase
 end
 
@@ -1058,19 +1058,19 @@ always_comb begin
         ABS_STATE_MEM_SAVE_XREG_FORADDR,
         ABS_STATE_MEM_RETURN_XREG,
         ABS_STATE_MEM_RETURN_XREG_FORADDR: begin
-            abs_exec_instr_next = {YCR1_HDU_DBGCSR_ADDR_DSCRATCH0, abs_instr_rs1, YCR1_FUNCT3_CSRRW, abs_instr_rd, YCR1_OP_SYSTEM};
+            abs_exec_instr_next = {YCR_HDU_DBGCSR_ADDR_DSCRATCH0, abs_instr_rs1, YCR_FUNCT3_CSRRW, abs_instr_rd, YCR_OP_SYSTEM};
         end
 
         ABS_STATE_CSR_RW: begin
             abs_exec_instr_next = abs_cmd_wr_ff
-                                ? {abs_cmd_regno_ff[11:0], abs_instr_rs1, YCR1_FUNCT3_CSRRW, abs_instr_rd, YCR1_OP_SYSTEM}
-                                : {abs_cmd_regno_ff[11:0], abs_instr_rs1, YCR1_FUNCT3_CSRRS, abs_instr_rd, YCR1_OP_SYSTEM};
+                                ? {abs_cmd_regno_ff[11:0], abs_instr_rs1, YCR_FUNCT3_CSRRW, abs_instr_rd, YCR_OP_SYSTEM}
+                                : {abs_cmd_regno_ff[11:0], abs_instr_rs1, YCR_FUNCT3_CSRRS, abs_instr_rd, YCR_OP_SYSTEM};
         end
 
         ABS_STATE_MEM_RW: begin
             abs_exec_instr_next = abs_cmd_wr_ff
-                                ? {7'h0,  abs_instr_rs2, abs_instr_rs1, abs_instr_mem_funct3, 5'h0,         YCR1_OP_STORE}
-                                : {12'h0,                abs_instr_rs1, abs_instr_mem_funct3, abs_instr_rd, YCR1_OP_LOAD};
+                                ? {7'h0,  abs_instr_rs2, abs_instr_rs1, abs_instr_mem_funct3, 5'h0,         YCR_OP_STORE}
+                                : {12'h0,                abs_instr_rs1, abs_instr_mem_funct3, abs_instr_rd, YCR_OP_LOAD};
         end
 
         default: begin end
@@ -1165,8 +1165,8 @@ always_comb begin
         ABS_STATE_ERR: begin
             if (dmi_req_abstractcs & dmi2dm_wr_i) begin
                 abstractcs_cmderr_next = abstractcs_cmderr_ff  // cp.7
-                                       & (~dmi2dm_wdata_i[YCR1_DBG_ABSTRACTCS_CMDERR_HI:
-                                                          YCR1_DBG_ABSTRACTCS_CMDERR_LO]);
+                                       & (~dmi2dm_wdata_i[YCR_DBG_ABSTRACTCS_CMDERR_HI:
+                                                          YCR_DBG_ABSTRACTCS_CMDERR_LO]);
             end
         end
 
@@ -1242,12 +1242,12 @@ always_comb begin
 
         ABS_STATE_CSR_RO: begin
             case (abs_cmd_regno_ff[11:0])
-                YCR1_CSR_ADDR_MISA     : abs_data0_next = YCR1_CSR_MISA;
-                YCR1_CSR_ADDR_MVENDORID: abs_data0_next = YCR1_CSR_MVENDORID;
-                YCR1_CSR_ADDR_MARCHID  : abs_data0_next = YCR1_CSR_MARCHID;
-                YCR1_CSR_ADDR_MIMPID   : abs_data0_next = YCR1_CSR_MIMPID;
-                YCR1_CSR_ADDR_MHARTID  : abs_data0_next = soc2dm_fuse_mhartid_i;
-                YCR1_CSR_ADDR_NUMCORES : abs_data0_next = YCR1_CSR_NUMCORES;
+                YCR_CSR_ADDR_MISA     : abs_data0_next = YCR_CSR_MISA;
+                YCR_CSR_ADDR_MVENDORID: abs_data0_next = YCR_CSR_MVENDORID;
+                YCR_CSR_ADDR_MARCHID  : abs_data0_next = YCR_CSR_MARCHID;
+                YCR_CSR_ADDR_MIMPID   : abs_data0_next = YCR_CSR_MIMPID;
+                YCR_CSR_ADDR_MHARTID  : abs_data0_next = soc2dm_fuse_mhartid_i;
+                YCR_CSR_ADDR_NUMCORES : abs_data0_next = YCR_CSR_NUMCORES;
                 default                : abs_data0_next = pipe2dm_pc_sample_i;
             endcase
         end
@@ -1354,19 +1354,19 @@ assign hart_cmd_req_next = (dhi_fsm_exec | dhi_fsm_halt_req | dhi_fsm_resume_req
 // HART command register
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
-        hart_cmd_ff <= YCR1_HDU_DBGSTATE_RUN;
+        hart_cmd_ff <= YCR_HDU_DBGSTATE_RUN;
     end else if (clk_en_dm) begin
         hart_cmd_ff <= hart_cmd_next;
     end
 end
 
 always_comb begin
-    hart_cmd_next = YCR1_HDU_DBGSTATE_RUN;
+    hart_cmd_next = YCR_HDU_DBGSTATE_RUN;
     if (dmcontrol_dmactive_ff) begin
         case (dhi_fsm_ff)
-            DHI_STATE_EXEC      : hart_cmd_next = YCR1_HDU_DBGSTATE_DRUN;
-            DHI_STATE_HALT_REQ  : hart_cmd_next = YCR1_HDU_DBGSTATE_DHALTED;
-            DHI_STATE_RESUME_REQ: hart_cmd_next = YCR1_HDU_DBGSTATE_RUN;
+            DHI_STATE_EXEC      : hart_cmd_next = YCR_HDU_DBGSTATE_DRUN;
+            DHI_STATE_HALT_REQ  : hart_cmd_next = YCR_HDU_DBGSTATE_DHALTED;
+            DHI_STATE_RESUME_REQ: hart_cmd_next = YCR_HDU_DBGSTATE_RUN;
             default             : hart_cmd_next = dm2pipe_cmd_o;
         endcase
     end
@@ -1417,7 +1417,7 @@ assign dm2pipe_dreg_resp_o  = 1'b1;
 assign dm2pipe_dreg_fail_o  = 1'b0;
 assign dm2pipe_dreg_rdata_o = abs_fsm_use_addr ? abs_data1_ff : abs_data0_ff;
 
-`ifdef YCR1_TRGT_SIMULATION
+`ifdef YCR_TRGT_SIMULATION
 //------------------------------------------------------------------------------
 // Assertions
 //------------------------------------------------------------------------------
@@ -1454,8 +1454,8 @@ SVA_DM_X_HART_EVENT : assert property (
     pipe2dm_hart_event_i |-> !$isunknown(pipe2dm_hart_status_i)
 ) else $error("DM error: data signals is X on pipe2dm_hart_event_i");
 
-`endif // YCR1_TRGT_SIMULATION
+`endif // YCR_TRGT_SIMULATION
 
-endmodule : ycr1_dm
+endmodule : ycr_dm
 
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN

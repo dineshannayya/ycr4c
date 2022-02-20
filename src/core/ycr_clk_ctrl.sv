@@ -20,7 +20,7 @@
 ////  yifive clock control                                                ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr2c.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     clock control                                                    ////
@@ -38,10 +38,10 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
+`include "ycr_arch_description.svh"
 
-`ifdef YCR1_CLKCTRL_EN
-module ycr1_clk_ctrl (
+`ifdef YCR_CLKCTRL_EN
+module ycr_clk_ctrl (
     input   logic   clk,                            // Clock control module clock
     input   logic   rst_n,                          // Clock control module reset
     input   logic   test_mode,                      // DFT Test Mode
@@ -78,13 +78,13 @@ always_ff @(posedge clk, negedge ctrl_rst_n) begin
     end
 end
 
-ycr1_cg i_ycr1_cg_pipe (
+ycr_cg i_ycr_cg_pipe (
     .clk        (clk                 ),
     .clk_en     (clkctl2pipe_clk_en_o),
     .test_mode  (test_mode           ),
     .clk_out    (clkctl2pipe_clk_o   )
 );
 
-endmodule : ycr1_clk_ctrl
+endmodule : ycr_clk_ctrl
 
-`endif // YCR1_CLKCTRL_EN
+`endif // YCR_CLKCTRL_EN

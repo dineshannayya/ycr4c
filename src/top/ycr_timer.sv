@@ -20,7 +20,7 @@
 ////  yifive Memory-mapped Timer                                          ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     Memory-mapped Timer                                              ////
@@ -44,10 +44,10 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_memif.svh"
+`include "ycr_arch_description.svh"
+`include "ycr_memif.svh"
 
-module ycr1_timer (
+module ycr_timer (
     // Common
     input   logic                                   rst_n,
     input   logic                                   clk,
@@ -57,10 +57,10 @@ module ycr1_timer (
     input   logic                                   dmem_req,
     input   logic                                   dmem_cmd,
     input   logic [1:0]                             dmem_width,
-    input   logic [`YCR1_DMEM_AWIDTH-1:0]           dmem_addr,
-    input   logic [`YCR1_DMEM_DWIDTH-1:0]           dmem_wdata,
+    input   logic [`YCR_DMEM_AWIDTH-1:0]           dmem_addr,
+    input   logic [`YCR_DMEM_DWIDTH-1:0]           dmem_wdata,
     output  logic                                   dmem_req_ack,
-    output  logic [`YCR1_DMEM_DWIDTH-1:0]           dmem_rdata,
+    output  logic [`YCR_DMEM_DWIDTH-1:0]           dmem_rdata,
     output  logic [1:0]                             dmem_resp,
 
     // Timer interface
@@ -73,18 +73,18 @@ module ycr1_timer (
 //-------------------------------------------------------------------------------
 // Local parameters declaration
 //-------------------------------------------------------------------------------
-localparam int unsigned YCR1_TIMER_ADDR_WIDTH                               = 5;
-localparam logic [YCR1_TIMER_ADDR_WIDTH-1:0] YCR1_TIMER_CONTROL             = 5'h0;
-localparam logic [YCR1_TIMER_ADDR_WIDTH-1:0] YCR1_TIMER_DIVIDER             = 5'h4;
-localparam logic [YCR1_TIMER_ADDR_WIDTH-1:0] YCR1_TIMER_MTIMELO             = 5'h8;
-localparam logic [YCR1_TIMER_ADDR_WIDTH-1:0] YCR1_TIMER_MTIMEHI             = 5'hC;
-localparam logic [YCR1_TIMER_ADDR_WIDTH-1:0] YCR1_TIMER_MTIMECMPLO          = 5'h10;
-localparam logic [YCR1_TIMER_ADDR_WIDTH-1:0] YCR1_TIMER_MTIMECMPHI          = 5'h14;
-localparam logic [YCR1_TIMER_ADDR_WIDTH-1:0] YCR1_GLBL_CONTROL              = 5'h18;
+localparam int unsigned YCR_TIMER_ADDR_WIDTH                               = 5;
+localparam logic [YCR_TIMER_ADDR_WIDTH-1:0] YCR_TIMER_CONTROL             = 5'h0;
+localparam logic [YCR_TIMER_ADDR_WIDTH-1:0] YCR_TIMER_DIVIDER             = 5'h4;
+localparam logic [YCR_TIMER_ADDR_WIDTH-1:0] YCR_TIMER_MTIMELO             = 5'h8;
+localparam logic [YCR_TIMER_ADDR_WIDTH-1:0] YCR_TIMER_MTIMEHI             = 5'hC;
+localparam logic [YCR_TIMER_ADDR_WIDTH-1:0] YCR_TIMER_MTIMECMPLO          = 5'h10;
+localparam logic [YCR_TIMER_ADDR_WIDTH-1:0] YCR_TIMER_MTIMECMPHI          = 5'h14;
+localparam logic [YCR_TIMER_ADDR_WIDTH-1:0] YCR_GLBL_CONTROL              = 5'h18;
 
-localparam int unsigned YCR1_TIMER_CONTROL_EN_OFFSET                        = 0;
-localparam int unsigned YCR1_TIMER_CONTROL_CLKSRC_OFFSET                    = 1;
-localparam int unsigned YCR1_TIMER_DIVIDER_WIDTH                            = 10;
+localparam int unsigned YCR_TIMER_CONTROL_EN_OFFSET                        = 0;
+localparam int unsigned YCR_TIMER_CONTROL_CLKSRC_OFFSET                    = 1;
+localparam int unsigned YCR_TIMER_DIVIDER_WIDTH                            = 10;
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
@@ -96,7 +96,7 @@ logic [63:0]                                        mtimecmp_reg;
 logic [63:0]                                        mtimecmp_new;
 logic                                               timer_en;
 logic                                               timer_clksrc_rtc;
-logic [YCR1_TIMER_DIVIDER_WIDTH-1:0]                timer_div;
+logic [YCR_TIMER_DIVIDER_WIDTH-1:0]                timer_div;
 
 logic                                               control_up;
 logic                                               divider_up;
@@ -110,7 +110,7 @@ logic                                               dmem_req_valid;
 
 logic [3:0]                                         rtc_sync;
 logic                                               rtc_ext_pulse;
-logic [YCR1_TIMER_DIVIDER_WIDTH-1:0]                timeclk_cnt;
+logic [YCR_TIMER_DIVIDER_WIDTH-1:0]                timeclk_cnt;
 logic                                               timeclk_cnt_en;
 logic                                               time_posedge;
 logic                                               time_cmp_flag;
@@ -126,8 +126,8 @@ always_ff @(posedge clk, negedge rst_n) begin
         timer_clksrc_rtc    <= 1'b0;
     end else begin
         if (control_up) begin
-            timer_en            <= dmem_wdata[YCR1_TIMER_CONTROL_EN_OFFSET];
-            timer_clksrc_rtc    <= dmem_wdata[YCR1_TIMER_CONTROL_CLKSRC_OFFSET];
+            timer_en            <= dmem_wdata[YCR_TIMER_CONTROL_EN_OFFSET];
+            timer_clksrc_rtc    <= dmem_wdata[YCR_TIMER_CONTROL_CLKSRC_OFFSET];
         end
     end
 end
@@ -138,7 +138,7 @@ always_ff @(posedge clk, negedge rst_n) begin
         timer_div   <= '0;
     end else begin
         if (divider_up) begin
-            timer_div   <= dmem_wdata[YCR1_TIMER_DIVIDER_WIDTH-1:0];
+            timer_div   <= dmem_wdata[YCR_TIMER_DIVIDER_WIDTH-1:0];
         end
     end
 end
@@ -230,7 +230,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         timeclk_cnt <= '0;
     end else begin
         case (1'b1)
-            divider_up      : timeclk_cnt   <= dmem_wdata[YCR1_TIMER_DIVIDER_WIDTH-1:0];
+            divider_up      : timeclk_cnt   <= dmem_wdata[YCR_TIMER_DIVIDER_WIDTH-1:0];
             time_posedge    : timeclk_cnt   <= timer_div;
             timeclk_cnt_en  : timeclk_cnt   <= timeclk_cnt - 1'b1;
             default         : begin end
@@ -267,7 +267,7 @@ end
 // Memory interface
 //-------------------------------------------------------------------------------
 logic                           dmem_cmd_ff;
-logic [YCR1_TIMER_ADDR_WIDTH-1:0]   dmem_addr_ff;
+logic [YCR_TIMER_ADDR_WIDTH-1:0]   dmem_addr_ff;
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
        dmem_req_valid <= '0;
@@ -275,35 +275,35 @@ always_ff @(negedge rst_n, posedge clk) begin
        dmem_cmd_ff  <= '0;
        dmem_addr_ff <= '0;
     end else begin
-       dmem_req_valid <=  (dmem_req) && (dmem_req_ack == 0) &&  (dmem_width == YCR1_MEM_WIDTH_WORD) & (~|dmem_addr[1:0]) &
-                          (dmem_addr[YCR1_TIMER_ADDR_WIDTH-1:2] <= YCR1_TIMER_MTIMECMPHI[YCR1_TIMER_ADDR_WIDTH-1:2]);
+       dmem_req_valid <=  (dmem_req) && (dmem_req_ack == 0) &&  (dmem_width == YCR_MEM_WIDTH_WORD) & (~|dmem_addr[1:0]) &
+                          (dmem_addr[YCR_TIMER_ADDR_WIDTH-1:2] <= YCR_TIMER_MTIMECMPHI[YCR_TIMER_ADDR_WIDTH-1:2]);
        dmem_req_ack   <= dmem_req & (dmem_req_ack ==0);
        dmem_cmd_ff    <= dmem_cmd;
-       dmem_addr_ff   <= dmem_addr[YCR1_TIMER_ADDR_WIDTH-1:0];
+       dmem_addr_ff   <= dmem_addr[YCR_TIMER_ADDR_WIDTH-1:0];
     end
 end
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        dmem_resp   <= YCR1_MEM_RESP_NOTRDY;
+        dmem_resp   <= YCR_MEM_RESP_NOTRDY;
         dmem_rdata  <= '0;
     end else begin
         if (dmem_req_valid) begin
-                dmem_resp   <= YCR1_MEM_RESP_RDY_OK;
-                if (dmem_cmd_ff == YCR1_MEM_CMD_RD) begin
+                dmem_resp   <= YCR_MEM_RESP_RDY_OK;
+                if (dmem_cmd_ff == YCR_MEM_CMD_RD) begin
                     case (dmem_addr_ff)
-                        YCR1_TIMER_CONTROL      : dmem_rdata    <= `YCR1_DMEM_DWIDTH'({timer_clksrc_rtc, timer_en});
-                        YCR1_TIMER_DIVIDER      : dmem_rdata    <= `YCR1_DMEM_DWIDTH'(timer_div);
-                        YCR1_TIMER_MTIMELO      : dmem_rdata    <= mtime_reg[31:0];
-                        YCR1_TIMER_MTIMEHI      : dmem_rdata    <= mtime_reg[63:32];
-                        YCR1_TIMER_MTIMECMPLO   : dmem_rdata    <= mtimecmp_reg[31:0];
-                        YCR1_TIMER_MTIMECMPHI   : dmem_rdata    <= mtimecmp_reg[63:32];
-                        YCR1_GLBL_CONTROL       : dmem_rdata    <= riscv_glbl_cfg;
+                        YCR_TIMER_CONTROL      : dmem_rdata    <= `YCR_DMEM_DWIDTH'({timer_clksrc_rtc, timer_en});
+                        YCR_TIMER_DIVIDER      : dmem_rdata    <= `YCR_DMEM_DWIDTH'(timer_div);
+                        YCR_TIMER_MTIMELO      : dmem_rdata    <= mtime_reg[31:0];
+                        YCR_TIMER_MTIMEHI      : dmem_rdata    <= mtime_reg[63:32];
+                        YCR_TIMER_MTIMECMPLO   : dmem_rdata    <= mtimecmp_reg[31:0];
+                        YCR_TIMER_MTIMECMPHI   : dmem_rdata    <= mtimecmp_reg[63:32];
+                        YCR_GLBL_CONTROL       : dmem_rdata    <= riscv_glbl_cfg;
                         default                 : begin end
                     endcase
                 end
         end else begin
-            dmem_resp   <= YCR1_MEM_RESP_NOTRDY;
+            dmem_resp   <= YCR_MEM_RESP_NOTRDY;
             dmem_rdata  <= '0;
         end
     end
@@ -317,15 +317,15 @@ always_comb begin
     mtimecmplo_up   = 1'b0;
     mtimecmphi_up   = 1'b0;
     glbl_cfg_up     = 1'b0;
-    if (dmem_req_valid & (dmem_cmd_ff == YCR1_MEM_CMD_WR)) begin
+    if (dmem_req_valid & (dmem_cmd_ff == YCR_MEM_CMD_WR)) begin
         case (dmem_addr_ff)
-            YCR1_TIMER_CONTROL      : control_up    = 1'b1;
-            YCR1_TIMER_DIVIDER      : divider_up    = 1'b1;
-            YCR1_TIMER_MTIMELO      : mtimelo_up    = 1'b1;
-            YCR1_TIMER_MTIMEHI      : mtimehi_up    = 1'b1;
-            YCR1_TIMER_MTIMECMPLO   : mtimecmplo_up = 1'b1;
-            YCR1_TIMER_MTIMECMPHI   : mtimecmphi_up = 1'b1;
-	    YCR1_GLBL_CONTROL       : glbl_cfg_up   = 1'b1;
+            YCR_TIMER_CONTROL      : control_up    = 1'b1;
+            YCR_TIMER_DIVIDER      : divider_up    = 1'b1;
+            YCR_TIMER_MTIMELO      : mtimelo_up    = 1'b1;
+            YCR_TIMER_MTIMEHI      : mtimehi_up    = 1'b1;
+            YCR_TIMER_MTIMECMPLO   : mtimecmplo_up = 1'b1;
+            YCR_TIMER_MTIMECMPHI   : mtimecmphi_up = 1'b1;
+	    YCR_GLBL_CONTROL       : glbl_cfg_up   = 1'b1;
             default                 : begin end
         endcase
     end
@@ -336,4 +336,4 @@ end
 //-------------------------------------------------------------------------------
 assign timer_val    = mtime_reg;
 
-endmodule : ycr1_timer
+endmodule : ycr_timer

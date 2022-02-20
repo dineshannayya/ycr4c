@@ -20,7 +20,7 @@
 ////  yifive AXI TOP                                                      ////
 ////                                                                      ////
 ////  This file is part of the yifive cores project                       ////
-////  https://github.com/dineshannayya/ycr1.git                           ////
+////  https://github.com/dineshannayya/ycr.git                           ////
 ////                                                                      ////
 ////  Description:                                                        ////
 ////     AXI TOP                                                          ////
@@ -38,17 +38,17 @@
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
-`include "ycr1_arch_description.svh"
-`include "ycr1_memif.svh"
-`ifdef YCR1_IPIC_EN
-`include "ycr1_ipic.svh"
-`endif // YCR1_IPIC_EN
+`include "ycr_arch_description.svh"
+`include "ycr_memif.svh"
+`ifdef YCR_IPIC_EN
+`include "ycr_ipic.svh"
+`endif // YCR_IPIC_EN
 
-`ifdef YCR1_TCM_EN
- `define YCR1_IMEM_ROUTER_EN
-`endif // YCR1_TCM_EN
+`ifdef YCR_TCM_EN
+ `define YCR_IMEM_ROUTER_EN
+`endif // YCR_TCM_EN
 
-module ycr1_top_axi (
+module ycr_top_axi (
     // Control
     input   logic                                   pwrup_rst_n,            // Power-Up Reset
     input   logic                                   rst_n,                  // Regular Reset signal
@@ -57,29 +57,29 @@ module ycr1_top_axi (
     input   logic                                   test_rst_n,             // Test mode's reset
     input   logic                                   clk,                    // System clock
     input   logic                                   rtc_clk,                // Real-time clock
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     output  logic                                   sys_rst_n_o,            // External System Reset output
                                                                             //   (for the processor cluster's components or
                                                                             //    external SOC (could be useful in small
                                                                             //    YCR-core-centric SOCs))
     output  logic                                   sys_rdc_qlfy_o,         // System-to-External SOC Reset Domain Crossing Qualifier
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Fuses
-    input   logic [`YCR1_XLEN-1:0]                  fuse_mhartid,           // Hart ID
-`ifdef YCR1_DBG_EN
+    input   logic [`YCR_XLEN-1:0]                  fuse_mhartid,           // Hart ID
+`ifdef YCR_DBG_EN
     input   logic [31:0]                            fuse_idcode,            // TAPC IDCODE
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // IRQ
-`ifdef YCR1_IPIC_EN
-    input   logic [YCR1_IRQ_LINES_NUM-1:0]          irq_lines,              // IRQ lines to IPIC
-`else // YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
+    input   logic [YCR_IRQ_LINES_NUM-1:0]          irq_lines,              // IRQ lines to IPIC
+`else // YCR_IPIC_EN
     input   logic                                   ext_irq,                // External IRQ input
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     input   logic                                   soft_irq,               // Software IRQ input
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // -- JTAG I/F
     input   logic                                   trst_n,
     input   logic                                   tck,
@@ -87,7 +87,7 @@ module ycr1_top_axi (
     input   logic                                   tdi,
     output  logic                                   tdo,
     output  logic                                   tdo_en,
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Instruction Memory Interface
     output  logic [3:0]                             io_axi_imem_awid,
@@ -185,7 +185,7 @@ module ycr1_top_axi (
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam int unsigned YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM            = 2;
+localparam int unsigned YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM            = 2;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -196,16 +196,16 @@ logic                                               rst_n_sync;
 logic                                               cpu_rst_n_sync;
 logic                                               core_rst_n_local;
 logic                                               axi_rst_n;
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 logic                                               tapc_trst_n;
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 // Instruction memory interface from core to router
 logic                                               core_imem_req_ack;
 logic                                               core_imem_req;
 logic                                               core_imem_cmd;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       core_imem_addr;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       core_imem_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       core_imem_addr;
+logic [`YCR_IMEM_DWIDTH-1:0]                       core_imem_rdata;
 logic [1:0]                                         core_imem_resp;
 
 // Data memory interface from core to router
@@ -213,17 +213,17 @@ logic                                               core_dmem_req_ack;
 logic                                               core_dmem_req;
 logic                                               core_dmem_cmd;
 logic [1:0]                                         core_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       core_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       core_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       core_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       core_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       core_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       core_dmem_rdata;
 logic [1:0]                                         core_dmem_resp;
 
 // Instruction memory interface from router to AXI bridge
 logic                                               axi_imem_req_ack;
 logic                                               axi_imem_req;
 logic                                               axi_imem_cmd;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       axi_imem_addr;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       axi_imem_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       axi_imem_addr;
+logic [`YCR_IMEM_DWIDTH-1:0]                       axi_imem_rdata;
 logic [1:0]                                         axi_imem_resp;
 
 // Data memory interface from router to AXI bridge
@@ -231,18 +231,18 @@ logic                                               axi_dmem_req_ack;
 logic                                               axi_dmem_req;
 logic                                               axi_dmem_cmd;
 logic [1:0]                                         axi_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       axi_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       axi_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       axi_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       axi_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       axi_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       axi_dmem_rdata;
 logic [1:0]                                         axi_dmem_resp;
 
-`ifdef YCR1_TCM_EN
+`ifdef YCR_TCM_EN
 // Instruction memory interface from router to TCM
 logic                                               tcm_imem_req_ack;
 logic                                               tcm_imem_req;
 logic                                               tcm_imem_cmd;
-logic [`YCR1_IMEM_AWIDTH-1:0]                       tcm_imem_addr;
-logic [`YCR1_IMEM_DWIDTH-1:0]                       tcm_imem_rdata;
+logic [`YCR_IMEM_AWIDTH-1:0]                       tcm_imem_addr;
+logic [`YCR_IMEM_DWIDTH-1:0]                       tcm_imem_rdata;
 logic [1:0]                                         tcm_imem_resp;
 
 // Data memory interface from router to TCM
@@ -250,20 +250,20 @@ logic                                               tcm_dmem_req_ack;
 logic                                               tcm_dmem_req;
 logic                                               tcm_dmem_cmd;
 logic [1:0]                                         tcm_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       tcm_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       tcm_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       tcm_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       tcm_dmem_rdata;
 logic [1:0]                                         tcm_dmem_resp;
-`endif // YCR1_TCM_EN
+`endif // YCR_TCM_EN
 
 // Data memory interface from router to memory-mapped timer
 logic                                               timer_dmem_req_ack;
 logic                                               timer_dmem_req;
 logic                                               timer_dmem_cmd;
 logic [1:0]                                         timer_dmem_width;
-logic [`YCR1_DMEM_AWIDTH-1:0]                       timer_dmem_addr;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       timer_dmem_wdata;
-logic [`YCR1_DMEM_DWIDTH-1:0]                       timer_dmem_rdata;
+logic [`YCR_DMEM_AWIDTH-1:0]                       timer_dmem_addr;
+logic [`YCR_DMEM_DWIDTH-1:0]                       timer_dmem_wdata;
+logic [`YCR_DMEM_DWIDTH-1:0]                       timer_dmem_rdata;
 logic [1:0]                                         timer_dmem_resp;
 
 // Misc
@@ -277,8 +277,8 @@ logic                                               axi_dmem_idle;
 // Reset logic
 //-------------------------------------------------------------------------------
 // Power-Up Reset synchronizer
-ycr1_reset_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+ycr_reset_sync_cell #(
+    .STAGES_AMOUNT       (YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
 ) i_pwrup_rstn_reset_sync (
     .rst_n          (pwrup_rst_n     ),
     .clk            (clk             ),
@@ -289,8 +289,8 @@ ycr1_reset_sync_cell #(
 );
 
 // Regular Reset synchronizer
-ycr1_reset_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+ycr_reset_sync_cell #(
+    .STAGES_AMOUNT       (YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
 ) i_rstn_reset_sync (
     .rst_n          (pwrup_rst_n     ),
     .clk            (clk             ),
@@ -301,8 +301,8 @@ ycr1_reset_sync_cell #(
 );
 
 // CPU Reset synchronizer
-ycr1_reset_sync_cell #(
-    .STAGES_AMOUNT       (YCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+ycr_reset_sync_cell #(
+    .STAGES_AMOUNT       (YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
 ) i_cpu_rstn_reset_sync (
     .rst_n          (pwrup_rst_n     ),
     .clk            (clk             ),
@@ -312,26 +312,26 @@ ycr1_reset_sync_cell #(
     .rst_n_out      (cpu_rst_n_sync  )
 );
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 // TAPC Reset
-ycr1_reset_and2_cell i_tapc_rstn_and2_cell (
+ycr_reset_and2_cell i_tapc_rstn_and2_cell (
     .rst_n_in       ({trst_n, pwrup_rst_n}),
     .test_rst_n     (test_rst_n      ),
     .test_mode      (test_mode       ),
     .rst_n_out      (tapc_trst_n     )
 );
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
 assign axi_rst_n = sys_rst_n_o;
-`else // YCR1_DBG_EN
+`else // YCR_DBG_EN
 assign axi_rst_n = rst_n_sync;
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
 //-------------------------------------------------------------------------------
-// YCR1 core instance
+// YCR core instance
 //-------------------------------------------------------------------------------
-ycr1_core_top i_core_top (
+ycr_core_top i_core_top (
     // Common
     .pwrup_rst_n                (pwrup_rst_n_sync ),
     .rst_n                      (rst_n_sync       ),
@@ -341,30 +341,30 @@ ycr1_core_top i_core_top (
     .clk                        (clk              ),
     .core_rst_n_o               (core_rst_n_local ),
     .core_rdc_qlfy_o            (                 ),
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     .sys_rst_n_o                (sys_rst_n_o      ),
     .sys_rdc_qlfy_o             (sys_rdc_qlfy_o   ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Fuses
     .core_fuse_mhartid_i        (fuse_mhartid     ),
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     .tapc_fuse_idcode_i         (fuse_idcode      ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // IRQ
-`ifdef YCR1_IPIC_EN
+`ifdef YCR_IPIC_EN
     .core_irq_lines_i           (irq_lines        ),
-`else // YCR1_IPIC_EN
+`else // YCR_IPIC_EN
     .core_irq_ext_i             (ext_irq          ),
-`endif // YCR1_IPIC_EN
+`endif // YCR_IPIC_EN
     .core_irq_soft_i            (soft_irq         ),
     .core_irq_mtimer_i          (timer_irq        ),
 
     // Memory-mapped external timer
     .core_mtimer_val_i          (timer_val        ),
 
-`ifdef YCR1_DBG_EN
+`ifdef YCR_DBG_EN
     // Debug interface
     .tapc_trst_n                (tapc_trst_n      ),
     .tapc_tck                   (tck              ),
@@ -372,7 +372,7 @@ ycr1_core_top i_core_top (
     .tapc_tdi                   (tdi              ),
     .tapc_tdo                   (tdo              ),
     .tapc_tdo_en                (tdo_en           ),
-`endif // YCR1_DBG_EN
+`endif // YCR_DBG_EN
 
     // Instruction memory interface
     .imem2core_req_ack_i        (core_imem_req_ack),
@@ -394,12 +394,12 @@ ycr1_core_top i_core_top (
 );
 
 
-`ifdef YCR1_TCM_EN
+`ifdef YCR_TCM_EN
 //-------------------------------------------------------------------------------
 // TCM instance
 //-------------------------------------------------------------------------------
-ycr1_tcm #(
-    .YCR1_TCM_SIZE  (`YCR1_DMEM_AWIDTH'(~YCR1_TCM_ADDR_MASK + 1'b1))
+ycr_tcm #(
+    .YCR_TCM_SIZE  (`YCR_DMEM_AWIDTH'(~YCR_TCM_ADDR_MASK + 1'b1))
 ) i_tcm (
     .clk            (clk             ),
     .rst_n          (core_rst_n_local),
@@ -421,13 +421,13 @@ ycr1_tcm #(
     .dmem_rdata     (tcm_dmem_rdata  ),
     .dmem_resp      (tcm_dmem_resp   )
 );
-`endif // YCR1_TCM_EN
+`endif // YCR_TCM_EN
 
 
 //-------------------------------------------------------------------------------
 // Memory-mapped timer instance
 //-------------------------------------------------------------------------------
-ycr1_timer i_timer (
+ycr_timer i_timer (
     // Common
     .rst_n          (core_rst_n_local  ),
     .clk            (clk               ),
@@ -449,13 +449,13 @@ ycr1_timer i_timer (
 );
 
 
-`ifdef YCR1_IMEM_ROUTER_EN
+`ifdef YCR_IMEM_ROUTER_EN
 //-------------------------------------------------------------------------------
 // Instruction memory router
 //-------------------------------------------------------------------------------
-ycr1_imem_router #(
-    .YCR1_ADDR_MASK     (YCR1_TCM_ADDR_MASK),
-    .YCR1_ADDR_PATTERN  (YCR1_TCM_ADDR_PATTERN)
+ycr_imem_router #(
+    .YCR_ADDR_MASK     (YCR_TCM_ADDR_MASK),
+    .YCR_ADDR_PATTERN  (YCR_TCM_ADDR_PATTERN)
 ) i_imem_router (
     .rst_n          (core_rst_n_local ),
     .clk            (clk              ),
@@ -485,7 +485,7 @@ ycr1_imem_router #(
     .port1_resp     (tcm_imem_resp    )
 );
 
-`else // YCR1_IMEM_ROUTER_EN
+`else // YCR_IMEM_ROUTER_EN
 
 assign axi_imem_req         = core_imem_req;
 assign axi_imem_cmd         = core_imem_cmd;
@@ -494,24 +494,24 @@ assign core_imem_req_ack    = axi_imem_req_ack;
 assign core_imem_resp       = axi_imem_resp;
 assign core_imem_rdata      = axi_imem_rdata;
 
-`endif // YCR1_IMEM_ROUTER_EN
+`endif // YCR_IMEM_ROUTER_EN
 
 
 //-------------------------------------------------------------------------------
 // Data memory router
 //-------------------------------------------------------------------------------
-ycr1_dmem_router #(
+ycr_dmem_router #(
 
-`ifdef YCR1_TCM_EN
-    .YCR1_PORT1_ADDR_MASK       (YCR1_TCM_ADDR_MASK),
-    .YCR1_PORT1_ADDR_PATTERN    (YCR1_TCM_ADDR_PATTERN),
-`else // YCR1_TCM_EN
-    .YCR1_PORT1_ADDR_MASK       (32'h00000000),
-    .YCR1_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
-`endif // YCR1_TCM_EN
+`ifdef YCR_TCM_EN
+    .YCR_PORT1_ADDR_MASK       (YCR_TCM_ADDR_MASK),
+    .YCR_PORT1_ADDR_PATTERN    (YCR_TCM_ADDR_PATTERN),
+`else // YCR_TCM_EN
+    .YCR_PORT1_ADDR_MASK       (32'h00000000),
+    .YCR_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_TCM_EN
 
-    .YCR1_PORT2_ADDR_MASK       (YCR1_TIMER_ADDR_MASK),
-    .YCR1_PORT2_ADDR_PATTERN    (YCR1_TIMER_ADDR_PATTERN)
+    .YCR_PORT2_ADDR_MASK       (YCR_TIMER_ADDR_MASK),
+    .YCR_PORT2_ADDR_PATTERN    (YCR_TIMER_ADDR_PATTERN)
 
 ) i_dmem_router (
     .rst_n          (core_rst_n_local    ),
@@ -527,7 +527,7 @@ ycr1_dmem_router #(
     .dmem_rdata     (core_dmem_rdata     ),
     .dmem_resp      (core_dmem_resp      ),
 
-`ifdef YCR1_TCM_EN
+`ifdef YCR_TCM_EN
     // Interface to TCM
     .port1_req_ack  (tcm_dmem_req_ack    ),
     .port1_req      (tcm_dmem_req        ),
@@ -537,7 +537,7 @@ ycr1_dmem_router #(
     .port1_wdata    (tcm_dmem_wdata      ),
     .port1_rdata    (tcm_dmem_rdata      ),
     .port1_resp     (tcm_dmem_resp       ),
-`else // YCR1_TCM_EN
+`else // YCR_TCM_EN
     .port1_req_ack  (1'b0                ),
     .port1_req      (                    ),
     .port1_cmd      (                    ),
@@ -545,8 +545,8 @@ ycr1_dmem_router #(
     .port1_addr     (                    ),
     .port1_wdata    (                    ),
     .port1_rdata    ('0                  ),
-    .port1_resp     (YCR1_MEM_RESP_RDY_ER),
-`endif // YCR1_TCM_EN
+    .port1_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_TCM_EN
 
     // Interface to memory-mapped timer
     .port2_req_ack  (timer_dmem_req_ack  ),
@@ -573,17 +573,17 @@ ycr1_dmem_router #(
 //-------------------------------------------------------------------------------
 // Instruction memory AXI bridge
 //-------------------------------------------------------------------------------
-ycr1_mem_axi #(
-`ifdef YCR1_IMEM_AXI_REQ_BP
-    .YCR1_AXI_REQ_BP    (1),
-`else // YCR1_IMEM_AXI_REQ_BP
-    .YCR1_AXI_REQ_BP    (0),
-`endif // YCR1_IMEM_AXI_REQ_BP
-`ifdef YCR1_IMEM_AXI_RESP_BP
-    .YCR1_AXI_RESP_BP   (1)
-`else // YCR1_IMEM_AXI_RESP_BP
-    .YCR1_AXI_RESP_BP   (0)
-`endif // YCR1_IMEM_AXI_RESP_BP
+ycr_mem_axi #(
+`ifdef YCR_IMEM_AXI_REQ_BP
+    .YCR_AXI_REQ_BP    (1),
+`else // YCR_IMEM_AXI_REQ_BP
+    .YCR_AXI_REQ_BP    (0),
+`endif // YCR_IMEM_AXI_REQ_BP
+`ifdef YCR_IMEM_AXI_RESP_BP
+    .YCR_AXI_RESP_BP   (1)
+`else // YCR_IMEM_AXI_RESP_BP
+    .YCR_AXI_RESP_BP   (0)
+`endif // YCR_IMEM_AXI_RESP_BP
 ) i_imem_axi (
     .clk            (clk                    ),
     .rst_n          (axi_rst_n              ),
@@ -594,7 +594,7 @@ ycr1_mem_axi #(
     .core_req_ack   (axi_imem_req_ack       ),
     .core_req       (axi_imem_req           ),
     .core_cmd       (axi_imem_cmd           ),
-    .core_width     (YCR1_MEM_WIDTH_WORD    ),
+    .core_width     (YCR_MEM_WIDTH_WORD    ),
     .core_addr      (axi_imem_addr          ),
     .core_wdata     ('0                     ),
     .core_rdata     (axi_imem_rdata         ),
@@ -651,17 +651,17 @@ ycr1_mem_axi #(
 //-------------------------------------------------------------------------------
 // Data memory AXI bridge
 //-------------------------------------------------------------------------------
-ycr1_mem_axi #(
-`ifdef YCR1_DMEM_AXI_REQ_BP
-    .YCR1_AXI_REQ_BP    (1),
-`else // YCR1_DMEM_AXI_REQ_BP
-    .YCR1_AXI_REQ_BP    (0),
-`endif // YCR1_DMEM_AXI_REQ_BP
-`ifdef YCR1_DMEM_AXI_RESP_BP
-    .YCR1_AXI_RESP_BP   (1)
-`else // YCR1_DMEM_AXI_RESP_BP
-    .YCR1_AXI_RESP_BP   (0)
-`endif // YCR1_DMEM_AXI_RESP_BP
+ycr_mem_axi #(
+`ifdef YCR_DMEM_AXI_REQ_BP
+    .YCR_AXI_REQ_BP    (1),
+`else // YCR_DMEM_AXI_REQ_BP
+    .YCR_AXI_REQ_BP    (0),
+`endif // YCR_DMEM_AXI_REQ_BP
+`ifdef YCR_DMEM_AXI_RESP_BP
+    .YCR_AXI_RESP_BP   (1)
+`else // YCR_DMEM_AXI_RESP_BP
+    .YCR_AXI_RESP_BP   (0)
+`endif // YCR_DMEM_AXI_RESP_BP
 ) i_dmem_axi (
     .clk            (clk                    ),
     .rst_n          (axi_rst_n              ),
@@ -733,4 +733,4 @@ always_ff @(negedge core_rst_n_local, posedge clk) begin
     else if (axi_imem_idle & axi_dmem_idle)     axi_reinit <= 1'b0;
 end
 
-endmodule : ycr1_top_axi
+endmodule : ycr_top_axi

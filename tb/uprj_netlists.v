@@ -39,6 +39,8 @@
      `include "top/ycr_dmem_wb.sv"
      `include "top/ycr_imem_wb.sv"
      `include "top/ycr2_top_wb.sv"
+     `include "top/ycr2_mintf.sv"
+     `include "top/ycr2_mcore_router.sv"
      `include "top/ycr2_intf.sv"
      `include "top/ycr_imem_router.sv"
      `include "top/ycr_icache_router.sv"

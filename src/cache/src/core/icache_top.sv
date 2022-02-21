@@ -178,6 +178,11 @@ module icache_top #(
 
 // Parameters
 
+parameter CACHE_LINE_WD = $clog2(CACHESIZE);
+// TAG compare Address Low & High, 
+//parameter CACHE_TAG_CMP_ADDR_L = CACHE_LINE_WD+2;
+//parameter CACHE_TAG_CMP_ADDR_H = TAG_MEM_WD+CACHE_TAG_CMP_ADDR_L;
+
 // Total cache memory = 16 * 32 * 4 = 2048 (2KB)
 
 // State Machine Parameters
@@ -226,7 +231,7 @@ logic [$clog2(TAG_MEM_DP)-1:0]    tag_hindex               ; // Tag Hit Index
 logic                             tag_cdirty               ; // Current location Dirty indication
 logic  [`TAG_XLEN-1:0]            tag_ctag                 ; // Tag Compare Data
 
-logic [$clog2(CACHESIZE)-1:0]     cache_mem_ptr            ; // Cache Memory Pointer
+logic [CACHE_LINE_WD-1:0]         cache_mem_ptr            ; // Cache Memory Pointer
 
 
 // Internal Signals derived from respective data or address buses
@@ -240,7 +245,7 @@ logic [MEM_BL-1:0]               cpu_bl_l               ;
 logic [WB_AW-1:0]                cache_refill_addr         ;
 
 logic   [WB_DW-1:0]               prefetch_data            ; // Additional Prefetch on next location of current location
-logic [$clog2(CACHESIZE)-1:0]     prefetch_ptr             ; // Prefetch Ptr
+logic [CACHE_LINE_WD-1:0]         prefetch_ptr             ; // Prefetch Ptr
 logic [$clog2(TAG_MEM_DP)-1:0]    prefetch_index           ; // Prefetch Index
 logic                             prefetch_val             ;
 
@@ -309,7 +314,7 @@ assign tag_cmp_data = cpu_addr_l[26:7];
 assign cache_hit = |tag_hit;
 assign cache_next_hit = |tag_next_hit;
 
-wire [$clog2(CACHESIZE)-1:0]  next_prefetch_ptr = prefetch_ptr[4:0] + 1;
+wire [CACHE_LINE_WD-1:0]  next_prefetch_ptr = prefetch_ptr[CACHE_LINE_WD-1:0] + 1;
 
 // Cache Controller State Machine and Logic
 
@@ -317,7 +322,7 @@ wire [$clog2(CACHESIZE)-1:0]  next_prefetch_ptr = prefetch_ptr[4:0] + 1;
 // Generate Response saying request is accepted
 assign cpu_mem_req_ack = (state == IDLE) && (
 	           (!cfg_pfet_dis && cpu_mem_req && prefetch_val && 
-		     (cpu_mem_addr[31:2] == {cpu_addr_l[31:7], prefetch_ptr[4:0]})) ||
+		     (cpu_mem_addr[31:2] == {cpu_addr_l[31:7], prefetch_ptr[CACHE_LINE_WD-1:0]})) ||
                    ( cpu_mem_req && (cpu_mem_resp == 2'b00)));
 
 always@(posedge mclk or negedge rst_n)
@@ -358,7 +363,7 @@ begin
 	// Check if the current address is next location of same cache offset
 	// if yes, pick the data from prefetch content
 	 if(!cfg_pfet_dis && cpu_mem_req && prefetch_val && 
-	     (cpu_mem_addr[31:2] == {cpu_addr_l[31:7], prefetch_ptr[4:0]})) begin
+	     (cpu_mem_addr[31:2] == {cpu_addr_l[31:7], prefetch_ptr[CACHE_LINE_WD-1:0]})) begin
 	     // Ack with Prefect data
               cpu_mem_rdata    <= ycr1_conv_wb2mem_rdata(cpu_mem_width,cpu_mem_addr[1:0], prefetch_data);
 	      if(cpu_mem_bl == 'h1)
@@ -367,7 +372,7 @@ begin
 	          cpu_mem_resp     <= 2'b01;
 
 	      // Goahead for next data prefetech in same cache index
-	      cache_mem_addr1  <= {prefetch_index,next_prefetch_ptr[4:0]}; // Address for additional prefetch;
+	      cache_mem_addr1  <= {prefetch_index,next_prefetch_ptr[CACHE_LINE_WD-1:0]}; // Address for additional prefetch;
 	      prefetch_ptr     <= next_prefetch_ptr+1;
 	      cpu_width_l      <= cpu_mem_width;
               cpu_bl_l         <= cpu_mem_bl-1;

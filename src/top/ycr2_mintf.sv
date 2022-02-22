@@ -494,7 +494,7 @@ ycr2_mcore_router u_imem_router(
      .core1_req               (core1_imem_req          ),
      .core1_cmd               (core1_imem_cmd          ),
      .core1_width             (YCR_MEM_WIDTH_WORD      ),
-     .core1_addr              (core1_dmem_addr         ),
+     .core1_addr              (core1_imem_addr         ),
      .core1_bl                (core1_imem_bl           ),
      .core1_wdata             ('h0                     ),
      .core1_rdata             (core1_imem_rdata        ),

@@ -342,8 +342,8 @@ logic [1:0]                                        timer_dmem_resp;
 
 logic                                              timer_irq;
 logic [63:0]                                       timer_val;
-logic [48:0]                                       core_debug0;
-logic [48:0]                                       core_debug1;
+logic [48:0]                                       core0_debug;
+logic [48:0]                                       core1_debug;
 logic                                              core0_uid;
 logic                                              core1_uid;
 

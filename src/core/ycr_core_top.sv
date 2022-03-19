@@ -68,8 +68,7 @@ module ycr_core_top (
     output  logic                                   sys_rdc_qlfy_o,             // System RDC qualifier
 `endif // YCR_DBG_EN
 
-    // Fuses
-    input   logic [`YCR_XLEN-1:0]                  core_fuse_mhartid_i,        // Fuse MHARTID value
+    input   logic [1:0]                             core_uid,        // Unique Core Id 
 `ifdef YCR_DBG_EN
     input   logic [31:0]                            tapc_fuse_idcode_i,         // Fuse IDCODE value
 `endif // YCR_DBG_EN
@@ -220,6 +219,7 @@ logic                                           clk_dbgc;
 logic                                           clk_alw_on;
 `endif // YCR_CLKCTRL_EN
 
+wire logic [`YCR_XLEN-1:0]        core_fuse_mhartid_i = {30'h0,core_uid}; // Fuse MHARTID value
 
 //-------------------------------------------------------------------------------
 // Reset Logic

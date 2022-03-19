@@ -241,8 +241,10 @@ module ycr2_mintf (
     output   logic [`YCR_DMEM_DWIDTH-1:0]   core1_dmem_rdata,          // DMEM read data
     output   logic [1:0]                    core1_dmem_resp,           // DMEM response
 
-    output   logic                          core0_uid  ,
-    output   logic                          core1_uid  
+    output   logic     [1:0]                core0_uid  ,
+    output   logic     [1:0]                core1_uid  ,
+    output   logic     [1:0]                core2_uid  ,
+    output   logic     [1:0]                core3_uid  
 
 
 );
@@ -439,8 +441,10 @@ logic   [48:0]                                     core_debug;
 
 
 // Unique core it lower bits
-assign core0_uid = 1'b0;
-assign core1_uid = 1'b1;
+assign core0_uid = 2'b00;
+assign core1_uid = 2'b01;
+assign core2_uid = 2'b10;
+assign core3_uid = 2'b11;
 
 assign core_debug = (core_debug_sel == 2'b0) ? core0_debug : core1_debug;
                                                

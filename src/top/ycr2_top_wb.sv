@@ -64,7 +64,8 @@
 ////            Total RISC CORE variable added in address at 0xFC1        //// 
 ////     1.5:   Feb 21, 2022, Dinesh A                                    ////
 ////            Two Risc core is integrated with common interface block   ////
-////                                                                      ////
+////     1.6:   Mar 14, 2022, Dinesh A                                    ////
+////            fuse_mhartid is internally tied                           ////////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
 `include "ycr_arch_description.svh"
@@ -107,8 +108,6 @@ module ycr2_top_wb            (
     output  logic                        sys_rdc_qlfy_o,         // System-to-External SOC Reset Domain Crossing Qualifier
 `endif // YCR_DBG_EN
 
-    // Fuses
-    input   logic [`YCR_XLEN-1:0]        fuse_mhartid,           // Hart ID
 `ifdef YCR_DBG_EN
     input   logic [31:0]                 fuse_idcode,            // TAPC IDCODE
 `endif // YCR_DBG_EN
@@ -344,8 +343,10 @@ logic                                              timer_irq;
 logic [63:0]                                       timer_val;
 logic [48:0]                                       core0_debug;
 logic [48:0]                                       core1_debug;
-logic                                              core0_uid;
-logic                                              core1_uid;
+logic [1:0]                                        core0_uid;
+logic [1:0]                                        core1_uid;
+logic [1:0]                                        core2_uid;
+logic [1:0]                                        core3_uid;
 
 //-------------------------------------------------------------------------------
 // YCR Intf instance
@@ -532,7 +533,9 @@ ycr2_mintf u_mintf (
      .core1_dmem_resp         (core1_dmem_resp         ), // DMEM response
 
      .core0_uid               (core0_uid               ),
-     .core1_uid               (core1_uid               )
+     .core1_uid               (core1_uid               ),
+     .core2_uid               (core2_uid               ),
+     .core3_uid               (core3_uid               )
 
 );
 
@@ -557,7 +560,7 @@ ycr_core_top i_core_top_0 (
 `endif // YCR_DBG_EN
 
     // Fuses
-     .core_fuse_mhartid_i     ({fuse_mhartid[31:1],core0_uid}  ),
+     .core_uid                (core0_uid               ),
 `ifdef YCR_DBG_EN
      .tapc_fuse_idcode_i      (fuse_idcode             ),
 `endif // YCR_DBG_EN
@@ -625,7 +628,7 @@ ycr_core_top i_core_top_1 (
 `endif // YCR_DBG_EN
 
     // Fuses
-     .core_fuse_mhartid_i     ({fuse_mhartid[31:1],core1_uid}  ),
+     .core_uid                (core1_uid               ),
 `ifdef YCR_DBG_EN
      .tapc_fuse_idcode_i      (fuse_idcode             ),
 `endif // YCR_DBG_EN

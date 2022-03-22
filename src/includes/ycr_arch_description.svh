@@ -50,7 +50,7 @@
 // YCR1 core identifiers
 `define YCR_MIMPID             32'h21051400
 `define YCR_MVENDORID          32'h00000000
-`define YCR_NUMCORES           32'h00000002
+`define YCR_NUMCORES           32'h00000004
 
 // Width of main registers and buses
 `define YCR_XLEN               32

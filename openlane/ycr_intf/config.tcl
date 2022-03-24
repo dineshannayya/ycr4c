@@ -17,13 +17,13 @@ set script_dir [file dirname [file normalize [info script]]]
 
 set ::env(ROUTING_CORES) "6"
 
-set ::env(DESIGN_NAME) ycr1_intf
+set ::env(DESIGN_NAME) ycr_intf
 set ::env(DESIGN_IS_CORE) "0"
 set ::env(FP_PDN_CORE_RING) "0"
 
 # Timing configuration
 set ::env(CLOCK_PERIOD) "10"
-set ::env(CLOCK_PORT) "wb_clk core_clk rtc_clk"
+set ::env(CLOCK_PORT) "wb_clk core_clk"
 
 set ::env(SYNTH_MAX_FANOUT) 4
 
@@ -35,29 +35,21 @@ set ::env(LEC_ENABLE) 0
 
 set ::env(VERILOG_FILES) "\
         $script_dir/../../src/lib/clk_skew_adjust.gv                   \
-	$script_dir/../../src/top/ycr1_dmem_router.sv                  \
-	$script_dir/../../src/top/ycr1_imem_router.sv                  \
-	$script_dir/../../src/top/ycr1_icache_router.sv                \
-	$script_dir/../../src/top/ycr1_dcache_router.sv                \
-	$script_dir/../../src/top/ycr1_tcm.sv                          \
-	$script_dir/../../src/top/ycr1_timer.sv                        \
-	$script_dir/../../src/top/ycr1_top_wb.sv                       \
-	$script_dir/../../src/top/ycr1_dmem_wb.sv                      \
-	$script_dir/../../src/top/ycr1_imem_wb.sv                      \
-	$script_dir/../../src/top/ycr1_intf.sv                         \
+        $script_dir/../../src/lib/ctech_cells.sv                       \
+        $script_dir/../../src/cache/src/core/dcache_top.sv             \
+        $script_dir/../../src/cache/src/core/dcache_tag_fifo.sv        \
+        $script_dir/../../src/cache/src/core/icache_tag_fifo.sv        \
         $script_dir/../../src/cache/src/core/icache_top.sv             \
         $script_dir/../../src/cache/src/core/icache_app_fsm.sv         \
-        $script_dir/../../src/cache/src/core/icache_tag_fifo.sv        \
-        $script_dir/../../src/cache/src/core/dcache_tag_fifo.sv        \
-        $script_dir/../../src/cache/src/core/dcache_top.sv             \
-        $script_dir/../../src/lib/ycr1_async_wbb.sv                    \
-        $script_dir/../../src/lib/ycr1_arb.sv                          \
-        $script_dir/../../src/lib/sync_fifo.sv                         \
-        $script_dir/../../src/lib/async_fifo.sv                        \
-        $script_dir/../../src/lib/ctech_cells.sv                       \
-	$script_dir/../../src/core/primitives/ycr1_reset_cells.sv      \
+        $script_dir/../../src/lib/ycr_async_wbb.sv                    \
+	$script_dir/../../src/top/ycr_dmem_wb.sv                      \
+	$script_dir/../../src/top/ycr_intf.sv                         \
+        $script_dir/../../src/lib/async_fifo.sv                       \
+	$script_dir/../../src/core/primitives/ycr_reset_cells.sv      \
 	"
 set ::env(VERILOG_INCLUDE_DIRS) [glob $script_dir/../../src/includes ]
+set ::env(SYNTH_READ_BLACKBOX_LIB) 1
+set ::env(SYNTH_DEFINES) [list SYNTHESIS ]
 
 
 set ::env(SDC_FILE) "$script_dir/base.sdc"
@@ -71,10 +63,10 @@ set ::env(GND_PIN) [list {vssd1}]
 ## Floorplan
 set ::env(FP_PIN_ORDER_CFG) $script_dir/pin_order.cfg
 set ::env(FP_SIZING) absolute
-set ::env(DIE_AREA) "0 0 825 700 "
+set ::env(DIE_AREA) "0 0 800 600 "
 
 set ::env(MACRO_PLACEMENT_CFG) $script_dir/macro_placement.cfg
-set ::env(PL_TARGET_DENSITY) 0.36
+set ::env(PL_TARGET_DENSITY) 0.38
 
 
 set ::env(GLB_RT_MAXLAYER) 5

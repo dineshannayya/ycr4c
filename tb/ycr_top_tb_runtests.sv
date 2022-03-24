@@ -55,8 +55,6 @@ end
  end
 **/
 
-  logic [31:0] pc_count;
-  logic [31:0] instr_count;
  `define RISC_CORE  i_top.i_core_top_0
  `define RISC_EXU  i_top.i_core_top_0.i_pipe_top.i_pipe_exu
  `define RISC_IFU  i_top.i_core_top_0.i_pipe_top.i_pipe_ifu

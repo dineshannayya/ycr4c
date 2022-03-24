@@ -185,6 +185,9 @@ wire  [31:0]                            sram0_dout1   ; // Read Data
    logic  [31:0]                     dcache_mem_dout1 ; // Read Data
 `endif
 
+  logic [31:0] pc_count;
+  logic [31:0] instr_count;
+
 `ifdef VERILATOR
 function bit is_compliance (logic [255:0] testname);
     bit res;
@@ -318,6 +321,12 @@ always_ff @(posedge clk) begin
     else if (~&rst_cnt) rst_cnt <= rst_cnt + 1'b1;
 end
 
+//initial begin
+//    #1000;
+//    $dumpoff;
+//    wait(instr_count == 32'h40000);
+//    $dumpon;
+//end
 
 `ifdef YCR_DBG_EN
 initial begin
@@ -689,7 +698,13 @@ end
 initial
 begin
    $dumpfile("simx.vcd");
-   $dumpvars(0,ycr4_top_tb_wb);
+   $dumpvars(1,ycr4_top_tb_wb);
+   $dumpvars(0,ycr4_top_tb_wb.i_top.u_connect);
+   $dumpvars(0,ycr4_top_tb_wb.i_top.u_intf);
+   $dumpvars(0,ycr4_top_tb_wb.i_top.i_core_top_0);
+   $dumpvars(1,ycr4_top_tb_wb.i_top.i_core_top_1);
+   $dumpvars(1,ycr4_top_tb_wb.i_top.i_core_top_2);
+   $dumpvars(1,ycr4_top_tb_wb.i_top.i_core_top_3);
    //$dumpvars(0,ycr2_top_tb_wb.i_top);
    //$dumpvars(0,ycr2_top_tb_wb.i_top.i_core_top_0.i_pipe_top.i_pipe_mprf);
 end

@@ -40,17 +40,7 @@
 `include "ycr_memif.svh"
 `include "ycr_arch_description.svh"
 
-module ycr4_cross_bar
-#(
-    parameter YCR_PORT1_ADDR_MASK      = `YCR_DMEM_AWIDTH'hFFFF0000,
-    parameter YCR_PORT1_ADDR_PATTERN   = `YCR_DMEM_AWIDTH'h00010000,
-    parameter YCR_PORT2_ADDR_MASK      = `YCR_DMEM_AWIDTH'hFFFF0000,
-    parameter YCR_PORT2_ADDR_PATTERN   = `YCR_DMEM_AWIDTH'h00020000,
-    parameter YCR_PORT3_ADDR_MASK      = `YCR_DMEM_AWIDTH'hFFFF0000,
-    parameter YCR_PORT3_ADDR_PATTERN   = `YCR_DMEM_AWIDTH'h00020000,
-    parameter YCR_PORT4_ADDR_MASK      = `YCR_DMEM_AWIDTH'hFFFF0000,
-    parameter YCR_PORT4_ADDR_PATTERN   = `YCR_DMEM_AWIDTH'h00020000
-) (
+module ycr4_cross_bar (
     // Control signals
     input   logic                           rst_n,
     input   logic                           clk,
@@ -143,7 +133,7 @@ module ycr4_cross_bar
     output  logic [`YCR_IMEM_DWIDTH-1:0]   core3_dmem_rdata,
     output  logic [1:0]                    core3_dmem_resp,
 
-    // PORT0 interface
+    // PORT0 interface - dmem
     input   logic                          port0_req_ack,
     output  logic                          port0_req,
     output  logic                          port0_cmd,
@@ -154,7 +144,7 @@ module ycr4_cross_bar
     input   logic [`YCR_IMEM_DWIDTH-1:0]   port0_rdata,
     input   logic [1:0]                    port0_resp,
 
-    // PORT1 interface
+    // PORT1 interface - icache
     input   logic                          port1_req_ack,
     output  logic                          port1_req,
     output  logic                          port1_cmd,
@@ -165,7 +155,7 @@ module ycr4_cross_bar
     input   logic [`YCR_IMEM_DWIDTH-1:0]   port1_rdata,
     input   logic [1:0]                    port1_resp,
 
-    // PORT2 interface
+    // PORT2 interface - dcache
     input   logic                          port2_req_ack,
     output  logic                          port2_req,
     output  logic                          port2_cmd,
@@ -176,7 +166,7 @@ module ycr4_cross_bar
     input   logic [`YCR_IMEM_DWIDTH-1:0]   port2_rdata,
     input   logic [1:0]                    port2_resp,
     
-    // PORT3 interface
+    // PORT3 interface - tcm
     input   logic                          port3_req_ack,
     output  logic                          port3_req,
     output  logic                          port3_cmd,
@@ -187,7 +177,7 @@ module ycr4_cross_bar
     input   logic [`YCR_IMEM_DWIDTH-1:0]   port3_rdata,
     input   logic [1:0]                    port3_resp,
 
-    // PORT4 interface
+    // PORT4 interface - timer
     input   logic                          port4_req_ack,
     output  logic                          port4_req,
     output  logic                          port4_cmd,
@@ -418,6 +408,17 @@ wire                        core3_dmem_lack_p4;
 wire [`YCR_IMEM_DWIDTH-1:0] core3_dmem_rdata_p4;
 wire [1:0]                  core3_dmem_resp_p4;
 
+// dmem if
+logic                          core_dmem_req_ack;
+logic                          core_dmem_req;
+logic                          core_dmem_cmd;
+logic [1:0]                    core_dmem_width;
+logic [`YCR_IMEM_AWIDTH-1:0]   core_dmem_addr;
+logic [`YCR_IMEM_BSIZE-1:0]    core_dmem_bl;             
+logic [`YCR_IMEM_DWIDTH-1:0]   core_dmem_wdata;
+logic [`YCR_IMEM_DWIDTH-1:0]   core_dmem_rdata;
+logic [1:0]                    core_dmem_resp;
+
 // As RISC request are pipe lined and address is not hold during complete
 // trasaction, we need to hold the target id untill the last ack is received
 // for current trasaction and avoid out of order flows, we need block request
@@ -566,257 +567,169 @@ end
 assign core0_imem_req_ack = 
 	                      (core0_imem_tid == 3'b000) ? core0_imem_req_ack_p0 :
 	                      (core0_imem_tid == 3'b001) ? core0_imem_req_ack_p1 :
-	                      (core0_imem_tid == 3'b010) ? core0_imem_req_ack_p2 :
-	                      (core0_imem_tid == 3'b011) ? core0_imem_req_ack_p3 :
-	                      (core0_imem_tid == 3'b100) ? core0_imem_req_ack_p4 :
 			      'h0;
 assign core0_imem_lack = 
 	                      (core0_imem_tid == 3'b000) ? core0_imem_lack_p0 :
 	                      (core0_imem_tid == 3'b001) ? core0_imem_lack_p1 :
-	                      (core0_imem_tid == 3'b010) ? core0_imem_lack_p2 :
-	                      (core0_imem_tid == 3'b011) ? core0_imem_lack_p3 :
-	                      (core0_imem_tid == 3'b100) ? core0_imem_lack_p4 :
 			      'h0;
 
 assign core0_imem_rdata  = 
 	                      (core0_imem_tid == 3'b000) ? core0_imem_rdata_p0 :
 	                      (core0_imem_tid == 3'b001) ? core0_imem_rdata_p1 :
-	                      (core0_imem_tid == 3'b010) ? core0_imem_rdata_p2 :
-	                      (core0_imem_tid == 3'b011) ? core0_imem_rdata_p3 :
-	                      (core0_imem_tid == 3'b100) ? core0_imem_rdata_p4 :
 			      'h0;
 
 assign core0_imem_resp  = 
 	                      (core0_imem_tid == 3'b000) ? core0_imem_resp_p0 :
 	                      (core0_imem_tid == 3'b001) ? core0_imem_resp_p1 :
-	                      (core0_imem_tid == 3'b010) ? core0_imem_resp_p2 :
-	                      (core0_imem_tid == 3'b011) ? core0_imem_resp_p3 :
-	                      (core0_imem_tid == 3'b100) ? core0_imem_resp_p4 :
 			      'h0;
 
 // CORE0 DMEM
 assign core0_dmem_req_ack = 
 	                      (core0_dmem_tid == 3'b000) ? core0_dmem_req_ack_p0 :
 	                      (core0_dmem_tid == 3'b001) ? core0_dmem_req_ack_p1 :
-	                      (core0_dmem_tid == 3'b010) ? core0_dmem_req_ack_p2 :
-	                      (core0_dmem_tid == 3'b011) ? core0_dmem_req_ack_p3 :
-	                      (core0_dmem_tid == 3'b100) ? core0_dmem_req_ack_p4 :
 			      'h0;
 assign core0_dmem_lack = 
 	                      (core0_dmem_tid == 3'b000) ? core0_dmem_lack_p0 :
 	                      (core0_dmem_tid == 3'b001) ? core0_dmem_lack_p1 :
-	                      (core0_dmem_tid == 3'b010) ? core0_dmem_lack_p2 :
-	                      (core0_dmem_tid == 3'b011) ? core0_dmem_lack_p3 :
-	                      (core0_dmem_tid == 3'b100) ? core0_dmem_lack_p4 :
 			      'h0;
 
 assign core0_dmem_rdata  = 
 	                      (core0_dmem_tid == 3'b000) ? core0_dmem_rdata_p0 :
 	                      (core0_dmem_tid == 3'b001) ? core0_dmem_rdata_p1 :
-	                      (core0_dmem_tid == 3'b010) ? core0_dmem_rdata_p2 :
-	                      (core0_dmem_tid == 3'b011) ? core0_dmem_rdata_p3 :
-	                      (core0_dmem_tid == 3'b100) ? core0_dmem_rdata_p4 :
 			      'h0;
 
 assign core0_dmem_resp  = 
 	                      (core0_dmem_tid == 3'b000) ? core0_dmem_resp_p0 :
 	                      (core0_dmem_tid == 3'b001) ? core0_dmem_resp_p1 :
-	                      (core0_dmem_tid == 3'b010) ? core0_dmem_resp_p2 :
-	                      (core0_dmem_tid == 3'b011) ? core0_dmem_resp_p3 :
-	                      (core0_dmem_tid == 3'b100) ? core0_dmem_resp_p4 :
 			      'h0;
 
 // CORE1 IMEM
 assign core1_imem_req_ack = 
 	                      (core1_imem_tid == 3'b000) ? core1_imem_req_ack_p0 :
 	                      (core1_imem_tid == 3'b001) ? core1_imem_req_ack_p1 :
-	                      (core1_imem_tid == 3'b010) ? core1_imem_req_ack_p2 :
-	                      (core1_imem_tid == 3'b011) ? core1_imem_req_ack_p3 :
-	                      (core1_imem_tid == 3'b100) ? core1_imem_req_ack_p4 :
 			      'h0;
 assign core1_imem_lack = 
 	                      (core1_imem_tid == 3'b000) ? core1_imem_lack_p0 :
 	                      (core1_imem_tid == 3'b001) ? core1_imem_lack_p1 :
-	                      (core1_imem_tid == 3'b010) ? core1_imem_lack_p2 :
-	                      (core1_imem_tid == 3'b011) ? core1_imem_lack_p3 :
-	                      (core1_imem_tid == 3'b100) ? core1_imem_lack_p4 :
 			      'h0;
 
 assign core1_imem_rdata  = 
 	                      (core1_imem_tid == 3'b000) ? core1_imem_rdata_p0 :
 	                      (core1_imem_tid == 3'b001) ? core1_imem_rdata_p1 :
-	                      (core1_imem_tid == 3'b010) ? core1_imem_rdata_p2 :
-	                      (core1_imem_tid == 3'b011) ? core1_imem_rdata_p3 :
-	                      (core1_imem_tid == 3'b100) ? core1_imem_rdata_p4 :
 			      'h0;
 
 assign core1_imem_resp  = 
 	                      (core1_imem_tid == 3'b000) ? core1_imem_resp_p0 :
 	                      (core1_imem_tid == 3'b001) ? core1_imem_resp_p1 :
-	                      (core1_imem_tid == 3'b010) ? core1_imem_resp_p2 :
-	                      (core1_imem_tid == 3'b011) ? core1_imem_resp_p3 :
-	                      (core1_imem_tid == 3'b100) ? core1_imem_resp_p4 :
 			      'h0;
 
 // CORE0 DMEM
 assign core1_dmem_req_ack = 
 	                      (core1_dmem_tid == 3'b000) ? core1_dmem_req_ack_p0 :
 	                      (core1_dmem_tid == 3'b001) ? core1_dmem_req_ack_p1 :
-	                      (core1_dmem_tid == 3'b010) ? core1_dmem_req_ack_p2 :
-	                      (core1_dmem_tid == 3'b011) ? core1_dmem_req_ack_p3 :
-	                      (core1_dmem_tid == 3'b100) ? core1_dmem_req_ack_p4 :
 			      'h0;
 assign core1_dmem_lack = 
 	                      (core1_dmem_tid == 3'b000) ? core1_dmem_lack_p0 :
 	                      (core1_dmem_tid == 3'b001) ? core1_dmem_lack_p1 :
-	                      (core1_dmem_tid == 3'b010) ? core1_dmem_lack_p2 :
-	                      (core1_dmem_tid == 3'b011) ? core1_dmem_lack_p3 :
-	                      (core1_dmem_tid == 3'b100) ? core1_dmem_lack_p4 :
 			      'h0;
 
 assign core1_dmem_rdata  = 
 	                      (core1_dmem_tid == 3'b000) ? core1_dmem_rdata_p0 :
 	                      (core1_dmem_tid == 3'b001) ? core1_dmem_rdata_p1 :
-	                      (core1_dmem_tid == 3'b010) ? core1_dmem_rdata_p2 :
-	                      (core1_dmem_tid == 3'b011) ? core1_dmem_rdata_p3 :
-	                      (core1_dmem_tid == 3'b100) ? core1_dmem_rdata_p4 :
 			      'h0;
 
 assign core1_dmem_resp  = 
 	                      (core1_dmem_tid == 3'b000) ? core1_dmem_resp_p0 :
 	                      (core1_dmem_tid == 3'b001) ? core1_dmem_resp_p1 :
-	                      (core1_dmem_tid == 3'b010) ? core1_dmem_resp_p2 :
-	                      (core1_dmem_tid == 3'b011) ? core1_dmem_resp_p3 :
-	                      (core1_dmem_tid == 3'b100) ? core1_dmem_resp_p4 :
 			      'h0;
 
 // CORE2 IMEM
 assign core2_imem_req_ack = 
 	                      (core2_imem_tid == 3'b000) ? core2_imem_req_ack_p0 :
 	                      (core2_imem_tid == 3'b001) ? core2_imem_req_ack_p1 :
-	                      (core2_imem_tid == 3'b010) ? core2_imem_req_ack_p2 :
-	                      (core2_imem_tid == 3'b011) ? core2_imem_req_ack_p3 :
-	                      (core2_imem_tid == 3'b100) ? core2_imem_req_ack_p4 :
 			      'h0;
 assign core2_imem_lack = 
 	                      (core2_imem_tid == 3'b000) ? core2_imem_lack_p0 :
 	                      (core2_imem_tid == 3'b001) ? core2_imem_lack_p1 :
-	                      (core2_imem_tid == 3'b010) ? core2_imem_lack_p2 :
-	                      (core2_imem_tid == 3'b011) ? core2_imem_lack_p3 :
-	                      (core2_imem_tid == 3'b100) ? core2_imem_lack_p4 :
 			      'h0;
 
 assign core2_imem_rdata  = 
 	                      (core2_imem_tid == 3'b000) ? core2_imem_rdata_p0 :
 	                      (core2_imem_tid == 3'b001) ? core2_imem_rdata_p1 :
-	                      (core2_imem_tid == 3'b010) ? core2_imem_rdata_p2 :
-	                      (core2_imem_tid == 3'b011) ? core2_imem_rdata_p3 :
-	                      (core2_imem_tid == 3'b100) ? core2_imem_rdata_p4 :
 			      'h0;
 
 assign core2_imem_resp  = 
 	                      (core2_imem_tid == 3'b000) ? core2_imem_resp_p0 :
 	                      (core2_imem_tid == 3'b001) ? core2_imem_resp_p1 :
-	                      (core2_imem_tid == 3'b010) ? core2_imem_resp_p2 :
-	                      (core2_imem_tid == 3'b011) ? core2_imem_resp_p3 :
-	                      (core2_imem_tid == 3'b100) ? core2_imem_resp_p4 :
 			      'h0;
 
 // CORE2 DMEM
 assign core2_dmem_req_ack = 
 	                      (core2_dmem_tid == 3'b000) ? core2_dmem_req_ack_p0 :
 	                      (core2_dmem_tid == 3'b001) ? core2_dmem_req_ack_p1 :
-	                      (core2_dmem_tid == 3'b010) ? core2_dmem_req_ack_p2 :
-	                      (core2_dmem_tid == 3'b011) ? core2_dmem_req_ack_p3 :
-	                      (core2_dmem_tid == 3'b100) ? core2_dmem_req_ack_p4 :
 			      'h0;
 assign core2_dmem_lack = 
 	                      (core2_dmem_tid == 3'b000) ? core2_dmem_lack_p0 :
 	                      (core2_dmem_tid == 3'b001) ? core2_dmem_lack_p1 :
-	                      (core2_dmem_tid == 3'b010) ? core2_dmem_lack_p2 :
-	                      (core2_dmem_tid == 3'b011) ? core2_dmem_lack_p3 :
-	                      (core2_dmem_tid == 3'b100) ? core2_dmem_lack_p4 :
 			      'h0;
 
 assign core2_dmem_rdata  = 
 	                      (core2_dmem_tid == 3'b000) ? core2_dmem_rdata_p0 :
 	                      (core2_dmem_tid == 3'b001) ? core2_dmem_rdata_p1 :
-	                      (core2_dmem_tid == 3'b010) ? core2_dmem_rdata_p2 :
-	                      (core2_dmem_tid == 3'b011) ? core2_dmem_rdata_p3 :
-	                      (core2_dmem_tid == 3'b100) ? core2_dmem_rdata_p4 :
 			      'h0;
 
 assign core2_dmem_resp  = 
 	                      (core2_dmem_tid == 3'b000) ? core2_dmem_resp_p0 :
 	                      (core2_dmem_tid == 3'b001) ? core2_dmem_resp_p1 :
-	                      (core2_dmem_tid == 3'b010) ? core2_dmem_resp_p2 :
-	                      (core2_dmem_tid == 3'b011) ? core2_dmem_resp_p3 :
-	                      (core2_dmem_tid == 3'b100) ? core2_dmem_resp_p4 :
 			      'h0;
 
 // CORE3 IMEM
 assign core3_imem_req_ack = 
 	                      (core3_imem_tid == 3'b000) ? core3_imem_req_ack_p0 :
 	                      (core3_imem_tid == 3'b001) ? core3_imem_req_ack_p1 :
-	                      (core3_imem_tid == 3'b010) ? core3_imem_req_ack_p2 :
-	                      (core3_imem_tid == 3'b011) ? core3_imem_req_ack_p3 :
-	                      (core3_imem_tid == 3'b100) ? core3_imem_req_ack_p4 :
 			      'h0;
 assign core3_imem_lack = 
 	                      (core3_imem_tid == 3'b000) ? core3_imem_lack_p0 :
 	                      (core3_imem_tid == 3'b001) ? core3_imem_lack_p1 :
-	                      (core3_imem_tid == 3'b010) ? core3_imem_lack_p2 :
-	                      (core3_imem_tid == 3'b011) ? core3_imem_lack_p3 :
-	                      (core3_imem_tid == 3'b100) ? core3_imem_lack_p4 :
 			      'h0;
 
 assign core3_imem_rdata  = 
 	                      (core3_imem_tid == 3'b000) ? core3_imem_rdata_p0 :
 	                      (core3_imem_tid == 3'b001) ? core3_imem_rdata_p1 :
-	                      (core3_imem_tid == 3'b010) ? core3_imem_rdata_p2 :
-	                      (core3_imem_tid == 3'b011) ? core3_imem_rdata_p3 :
-	                      (core3_imem_tid == 3'b100) ? core3_imem_rdata_p4 :
 			      'h0;
 
 assign core3_imem_resp  = 
 	                      (core3_imem_tid == 3'b000) ? core3_imem_resp_p0 :
 	                      (core3_imem_tid == 3'b001) ? core3_imem_resp_p1 :
-	                      (core3_imem_tid == 3'b010) ? core3_imem_resp_p2 :
-	                      (core3_imem_tid == 3'b011) ? core3_imem_resp_p3 :
-	                      (core3_imem_tid == 3'b100) ? core3_imem_resp_p4 :
 			      'h0;
 
 // CORE3 DMEM
 assign core3_dmem_req_ack = 
 	                      (core3_dmem_tid == 3'b000) ? core3_dmem_req_ack_p0 :
 	                      (core3_dmem_tid == 3'b001) ? core3_dmem_req_ack_p1 :
-	                      (core3_dmem_tid == 3'b010) ? core3_dmem_req_ack_p2 :
-	                      (core3_dmem_tid == 3'b011) ? core3_dmem_req_ack_p3 :
-	                      (core3_dmem_tid == 3'b100) ? core3_dmem_req_ack_p4 :
 			      'h0;
 assign core3_dmem_lack = 
 	                      (core3_dmem_tid == 3'b000) ? core3_dmem_lack_p0 :
 	                      (core3_dmem_tid == 3'b001) ? core3_dmem_lack_p1 :
-	                      (core3_dmem_tid == 3'b010) ? core3_dmem_lack_p2 :
-	                      (core3_dmem_tid == 3'b011) ? core3_dmem_lack_p3 :
-	                      (core3_dmem_tid == 3'b100) ? core3_dmem_lack_p4 :
 			      'h0;
 
 assign core3_dmem_rdata  = 
 	                      (core3_dmem_tid == 3'b000) ? core3_dmem_rdata_p0 :
 	                      (core3_dmem_tid == 3'b001) ? core3_dmem_rdata_p1 :
-	                      (core3_dmem_tid == 3'b010) ? core3_dmem_rdata_p2 :
-	                      (core3_dmem_tid == 3'b011) ? core3_dmem_rdata_p3 :
-	                      (core3_dmem_tid == 3'b100) ? core3_dmem_rdata_p4 :
 			      'h0;
 
 assign core3_dmem_resp  = 
 	                      (core3_dmem_tid == 3'b000) ? core3_dmem_resp_p0 :
 	                      (core3_dmem_tid == 3'b001) ? core3_dmem_resp_p1 :
-	                      (core3_dmem_tid == 3'b010) ? core3_dmem_resp_p2 :
-	                      (core3_dmem_tid == 3'b011) ? core3_dmem_resp_p3 :
-	                      (core3_dmem_tid == 3'b100) ? core3_dmem_resp_p4 :
 			      'h0;
+//-------------------------------------------------------------------------
+// Burst is only support in icache and rest of the interface support only
+// single burst, as cross-bar expect last burst access to exit the grant,
+// we are generting LOK for dcache, tcm,timer,dmem interface
+// ------------------------------------------------------------------------
+               
+wire [1:0] core_dmem_resp_t   = {2{core_dmem_resp[0]}};
+
 
 ycr4_router  u_router_p0 (
     // Control signals
@@ -930,15 +843,15 @@ ycr4_router  u_router_p0 (
           .core3_dmem_resp            (core3_dmem_resp_p0      ),
 
     // core interface
-          .core_req_ack               (port0_req_ack            ),
-          .core_req                   (port0_req                ),
-          .core_cmd                   (port0_cmd                ),
-          .core_width                 (port0_width              ),
-          .core_addr                  (port0_addr               ),
-          .core_bl                    (port0_bl                 ),
-          .core_wdata                 (port0_wdata              ),
-          .core_rdata                 (port0_rdata              ),
-          .core_resp                  (port0_resp               )   
+          .core_req_ack               (core_dmem_req_ack       ),
+          .core_req                   (core_dmem_req           ),
+          .core_cmd                   (core_dmem_cmd           ),
+          .core_width                 (core_dmem_width         ),
+          .core_addr                  (core_dmem_addr          ),
+          .core_bl                    (core_dmem_bl            ),
+          .core_wdata                 (core_dmem_wdata         ),
+          .core_rdata                 (core_dmem_rdata         ),
+          .core_resp                  (core_dmem_resp_t        )   
 
 );
 
@@ -1066,377 +979,105 @@ ycr4_router  u_router_p1 (
 
 );
 
-ycr4_router  u_router_p2 (
-    // Control signals
-          .rst_n                      (rst_n                   ),
-          .clk                        (clk                     ),
-                                                                  
-          .taget_id                   (3'b010                  ),
 
-    // core0-imem interface
-          .core0_imem_tid             (core0_imem_tid          ),
-          .core0_imem_req_ack         (core0_imem_req_ack_p2   ),
-          .core0_imem_lack            (core0_imem_lack_p2      ),
-          .core0_imem_req             (core0_imem_req          ),
-          .core0_imem_cmd             (core0_imem_cmd          ),
-          .core0_imem_width           (core0_imem_width        ),
-          .core0_imem_addr            (core0_imem_addr         ),
-          .core0_imem_bl              (core0_imem_bl           ),
-          .core0_imem_wdata           (core0_imem_wdata        ),
-          .core0_imem_rdata           (core0_imem_rdata_p2     ),
-          .core0_imem_resp            (core0_imem_resp_p2      ),
+//-------------------------------------------------------------------------------
+// Data memory router
+//-------------------------------------------------------------------------------
+ycr_dmem_router #(
+`ifdef YCR_DCACHE_EN
+    .YCR_PORT1_ADDR_MASK       (YCR_DCACHE_ADDR_MASK),
+    .YCR_PORT1_ADDR_PATTERN    (YCR_DCACHE_ADDR_PATTERN),
+`else // YCR_DCACHE_EN
+    .YCR_PORT1_ADDR_MASK       (32'h00000000),
+    .YCR_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_DCACHE_EN
 
-    // core0-dmem interface
-          .core0_dmem_tid             (core0_dmem_tid          ),
-          .core0_dmem_req_ack         (core0_dmem_req_ack_p2   ),
-          .core0_dmem_lack            (core0_dmem_lack_p2      ),
-          .core0_dmem_req             (core0_dmem_req          ),
-          .core0_dmem_cmd             (core0_dmem_cmd          ),
-          .core0_dmem_width           (core0_dmem_width        ),
-          .core0_dmem_addr            (core0_dmem_addr         ),
-          .core0_dmem_bl              (core0_dmem_bl           ),
-          .core0_dmem_wdata           (core0_dmem_wdata        ),
-          .core0_dmem_rdata           (core0_dmem_rdata_p2     ),
-          .core0_dmem_resp            (core0_dmem_resp_p2      ),
+`ifdef YCR_TCM_EN
+    .YCR_PORT2_ADDR_MASK       (YCR_TCM_ADDR_MASK),
+    .YCR_PORT2_ADDR_PATTERN    (YCR_TCM_ADDR_PATTERN),
+`else // YCR_TCM_EN
+    .YCR_PORT2_ADDR_MASK       (32'h00000000),
+    .YCR_PORT2_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // YCR_TCM_EN
 
-    // core1-imem interface
-          .core1_imem_tid             (core1_imem_tid          ),
-          .core1_imem_req_ack         (core1_imem_req_ack_p2   ),
-          .core1_imem_lack            (core1_imem_lack_p2      ),
-          .core1_imem_req             (core1_imem_req          ),
-          .core1_imem_cmd             (core1_imem_cmd          ),
-          .core1_imem_width           (core1_imem_width        ),
-          .core1_imem_addr            (core1_imem_addr         ),
-          .core1_imem_bl              (core1_imem_bl           ),
-          .core1_imem_wdata           (core1_imem_wdata        ),
-          .core1_imem_rdata           (core1_imem_rdata_p2     ),
-          .core1_imem_resp            (core1_imem_resp_p2      ),
+    .YCR_PORT3_ADDR_MASK       (YCR_TIMER_ADDR_MASK),
+    .YCR_PORT3_ADDR_PATTERN    (YCR_TIMER_ADDR_PATTERN)
 
-    // core1-dmem interface
-          .core1_dmem_tid             (core1_dmem_tid          ),
-          .core1_dmem_req_ack         (core1_dmem_req_ack_p2   ),
-          .core1_dmem_lack            (core1_dmem_lack_p2      ),
-          .core1_dmem_req             (core1_dmem_req          ),
-          .core1_dmem_cmd             (core1_dmem_cmd          ),
-          .core1_dmem_width           (core1_dmem_width        ),
-          .core1_dmem_addr            (core1_dmem_addr         ),
-          .core1_dmem_bl              (core1_dmem_bl           ),
-          .core1_dmem_wdata           (core1_dmem_wdata        ),
-          .core1_dmem_rdata           (core1_dmem_rdata_p2     ),
-          .core1_dmem_resp            (core1_dmem_resp_p2      ),
+) i_dmem_router (
+    .rst_n          (rst_n               ),
+    .clk            (clk                 ),
+    // Interface to core
+    .dmem_req_ack   (core_dmem_req_ack   ),
+    .dmem_req       (core_dmem_req       ),
+    .dmem_cmd       (core_dmem_cmd       ),
+    .dmem_width     (core_dmem_width     ),
+    .dmem_addr      (core_dmem_addr      ),
+    .dmem_wdata     (core_dmem_wdata     ),
+    .dmem_rdata     (core_dmem_rdata     ),
+    .dmem_resp      (core_dmem_resp      ),
 
-    // core2-imem interface
-          .core2_imem_tid             (core2_imem_tid          ),
-          .core2_imem_req_ack         (core2_imem_req_ack_p2   ),
-          .core2_imem_lack            (core2_imem_lack_p2      ),
-          .core2_imem_req             (core2_imem_req          ),
-          .core2_imem_cmd             (core2_imem_cmd          ),
-          .core2_imem_width           (core2_imem_width        ),
-          .core2_imem_addr            (core2_imem_addr         ),
-          .core2_imem_bl              (core2_imem_bl           ),
-          .core2_imem_wdata           (core2_imem_wdata        ),
-          .core2_imem_rdata           (core2_imem_rdata_p2     ),
-          .core2_imem_resp            (core2_imem_resp_p2      ),
+`ifdef YCR_DCACHE_EN
+    // Interface to TCM
+    .port1_req_ack  (port2_req_ack    ),
+    .port1_req      (port2_req        ),
+    .port1_cmd      (port2_cmd        ),
+    .port1_width    (port2_width      ),
+    .port1_addr     (port2_addr       ),
+    .port1_wdata    (port2_wdata      ),
+    .port1_rdata    (port2_rdata      ),
+    .port1_resp     (port2_resp       ),
+`else // YCR_ICACHE_EN
+    .port1_req_ack  (1'b0),
+    .port1_req      (                    ),
+    .port1_cmd      (                    ),
+    .port1_width    (                    ),
+    .port1_addr     (                    ),
+    .port1_wdata    (                    ),
+    .port1_rdata    (32'h0               ),
+    .port1_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_ICACHE_EN
+`ifdef YCR_TCM_EN
+    // Interface to TCM
+    .port2_req_ack  (port3_req_ack    ),
+    .port2_req      (port3_req        ),
+    .port2_cmd      (port3_cmd        ),
+    .port2_width    (port3_width      ),
+    .port2_addr     (port3_addr       ),
+    .port2_wdata    (port3_wdata      ),
+    .port2_rdata    (port3_rdata      ),
+    .port2_resp     (port3_resp       ),
+`else // YCR_TCM_EN
+    .port2_req_ack  (1'b0),
+    .port2_req      (                    ),
+    .port2_cmd      (                    ),
+    .port2_width    (                    ),
+    .port2_addr     (                    ),
+    .port2_wdata    (                    ),
+    .port2_rdata    (32'h0               ),
+    .port2_resp     (YCR_MEM_RESP_RDY_ER),
+`endif // YCR_TCM_EN
 
-    // core2-dmem interface
-          .core2_dmem_tid             (core2_dmem_tid          ),
-          .core2_dmem_req_ack         (core2_dmem_req_ack_p2   ),
-          .core2_dmem_lack            (core2_dmem_lack_p2      ),
-          .core2_dmem_req             (core2_dmem_req          ),
-          .core2_dmem_cmd             (core2_dmem_cmd          ),
-          .core2_dmem_width           (core2_dmem_width        ),
-          .core2_dmem_addr            (core2_dmem_addr         ),
-          .core2_dmem_bl              (core2_dmem_bl           ),
-          .core2_dmem_wdata           (core2_dmem_wdata        ),
-          .core2_dmem_rdata           (core2_dmem_rdata_p2     ),
-          .core2_dmem_resp            (core2_dmem_resp_p2      ),
+    // Interface to memory-mapped timer
+    .port3_req_ack  (port4_req_ack  ),
+    .port3_req      (port4_req      ),
+    .port3_cmd      (port4_cmd      ),
+    .port3_width    (port4_width    ),
+    .port3_addr     (port4_addr     ),
+    .port3_wdata    (port4_wdata    ),
+    .port3_rdata    (port4_rdata    ),
+    .port3_resp     (port4_resp     ),
 
-    // core3-imem interface
-          .core3_imem_tid             (core3_imem_tid          ),
-          .core3_imem_req_ack         (core3_imem_req_ack_p2   ),
-          .core3_imem_lack            (core3_imem_lack_p2      ),
-          .core3_imem_req             (core3_imem_req          ),
-          .core3_imem_cmd             (core3_imem_cmd          ),
-          .core3_imem_width           (core3_imem_width        ),
-          .core3_imem_addr            (core3_imem_addr         ),
-          .core3_imem_bl              (core3_imem_bl           ),
-          .core3_imem_wdata           (core3_imem_wdata        ),
-          .core3_imem_rdata           (core3_imem_rdata_p2     ),
-          .core3_imem_resp            (core3_imem_resp_p2      ),
-
-    // core3-dmem interface
-          .core3_dmem_tid             (core3_dmem_tid          ),
-          .core3_dmem_req_ack         (core3_dmem_req_ack_p2   ),
-          .core3_dmem_lack            (core3_dmem_lack_p2      ),
-          .core3_dmem_req             (core3_dmem_req          ),
-          .core3_dmem_cmd             (core3_dmem_cmd          ),
-          .core3_dmem_width           (core3_dmem_width        ),
-          .core3_dmem_addr            (core3_dmem_addr         ),
-          .core3_dmem_bl              (core3_dmem_bl           ),
-          .core3_dmem_wdata           (core3_dmem_wdata        ),
-          .core3_dmem_rdata           (core3_dmem_rdata_p2     ),
-          .core3_dmem_resp            (core3_dmem_resp_p2      ),
-
-    // core interface
-          .core_req_ack               (port2_req_ack            ),
-          .core_req                   (port2_req                ),
-          .core_cmd                   (port2_cmd                ),
-          .core_width                 (port2_width              ),
-          .core_addr                  (port2_addr               ),
-          .core_bl                    (port2_bl                 ),
-          .core_wdata                 (port2_wdata              ),
-          .core_rdata                 (port2_rdata              ),
-          .core_resp                  (port2_resp               )   
-
+    // Interface to WB bridge
+    .port0_req_ack  (port0_req_ack    ),
+    .port0_req      (port0_req        ),
+    .port0_cmd      (port0_cmd        ),
+    .port0_width    (port0_width      ),
+    .port0_addr     (port0_addr       ),
+    .port0_wdata    (port0_wdata      ),
+    .port0_rdata    (port0_rdata      ),
+    .port0_resp     (port0_resp       )
 );
 
-ycr4_router  u_router_p3 (
-    // Control signals
-          .rst_n                      (rst_n                   ),
-          .clk                        (clk                     ),
-                                                                  
-          .taget_id                   (3'b011                  ),
-
-    // core0-imem interface
-          .core0_imem_tid             (core0_imem_tid          ),
-          .core0_imem_req_ack         (core0_imem_req_ack_p3   ),
-          .core0_imem_lack            (core0_imem_lack_p3      ),
-          .core0_imem_req             (core0_imem_req          ),
-          .core0_imem_cmd             (core0_imem_cmd          ),
-          .core0_imem_width           (core0_imem_width        ),
-          .core0_imem_addr            (core0_imem_addr         ),
-          .core0_imem_bl              (core0_imem_bl           ),
-          .core0_imem_wdata           (core0_imem_wdata        ),
-          .core0_imem_rdata           (core0_imem_rdata_p3     ),
-          .core0_imem_resp            (core0_imem_resp_p3      ),
-
-    // core0-dmem interface
-          .core0_dmem_tid             (core0_dmem_tid          ),
-          .core0_dmem_req_ack         (core0_dmem_req_ack_p3   ),
-          .core0_dmem_lack            (core0_dmem_lack_p3      ),
-          .core0_dmem_req             (core0_dmem_req          ),
-          .core0_dmem_cmd             (core0_dmem_cmd          ),
-          .core0_dmem_width           (core0_dmem_width        ),
-          .core0_dmem_addr            (core0_dmem_addr         ),
-          .core0_dmem_bl              (core0_dmem_bl           ),
-          .core0_dmem_wdata           (core0_dmem_wdata        ),
-          .core0_dmem_rdata           (core0_dmem_rdata_p3     ),
-          .core0_dmem_resp            (core0_dmem_resp_p3      ),
-
-    // core1-imem interface
-          .core1_imem_tid             (core1_imem_tid          ),
-          .core1_imem_req_ack         (core1_imem_req_ack_p3   ),
-          .core1_imem_lack            (core1_imem_lack_p3      ),
-          .core1_imem_req             (core1_imem_req          ),
-          .core1_imem_cmd             (core1_imem_cmd          ),
-          .core1_imem_width           (core1_imem_width        ),
-          .core1_imem_addr            (core1_imem_addr         ),
-          .core1_imem_bl              (core1_imem_bl           ),
-          .core1_imem_wdata           (core1_imem_wdata        ),
-          .core1_imem_rdata           (core1_imem_rdata_p3     ),
-          .core1_imem_resp            (core1_imem_resp_p3      ),
-
-    // core1-dmem interface
-          .core1_dmem_tid             (core1_dmem_tid          ),
-          .core1_dmem_req_ack         (core1_dmem_req_ack_p3   ),
-          .core1_dmem_lack            (core1_dmem_lack_p3      ),
-          .core1_dmem_req             (core1_dmem_req          ),
-          .core1_dmem_cmd             (core1_dmem_cmd          ),
-          .core1_dmem_width           (core1_dmem_width        ),
-          .core1_dmem_addr            (core1_dmem_addr         ),
-          .core1_dmem_bl              (core1_dmem_bl           ),
-          .core1_dmem_wdata           (core1_dmem_wdata        ),
-          .core1_dmem_rdata           (core1_dmem_rdata_p3     ),
-          .core1_dmem_resp            (core1_dmem_resp_p3      ),
-
-    // core2-imem interface
-          .core2_imem_tid             (core2_imem_tid          ),
-          .core2_imem_req_ack         (core2_imem_req_ack_p3   ),
-          .core2_imem_lack            (core2_imem_lack_p3      ),
-          .core2_imem_req             (core2_imem_req          ),
-          .core2_imem_cmd             (core2_imem_cmd          ),
-          .core2_imem_width           (core2_imem_width        ),
-          .core2_imem_addr            (core2_imem_addr         ),
-          .core2_imem_bl              (core2_imem_bl           ),
-          .core2_imem_wdata           (core2_imem_wdata        ),
-          .core2_imem_rdata           (core2_imem_rdata_p3     ),
-          .core2_imem_resp            (core2_imem_resp_p3      ),
-
-    // core2-dmem interface
-          .core2_dmem_tid             (core2_dmem_tid          ),
-          .core2_dmem_req_ack         (core2_dmem_req_ack_p3   ),
-          .core2_dmem_lack            (core2_dmem_lack_p3      ),
-          .core2_dmem_req             (core2_dmem_req          ),
-          .core2_dmem_cmd             (core2_dmem_cmd          ),
-          .core2_dmem_width           (core2_dmem_width        ),
-          .core2_dmem_addr            (core2_dmem_addr         ),
-          .core2_dmem_bl              (core2_dmem_bl           ),
-          .core2_dmem_wdata           (core2_dmem_wdata        ),
-          .core2_dmem_rdata           (core2_dmem_rdata_p3     ),
-          .core2_dmem_resp            (core2_dmem_resp_p3      ),
-
-    // core3-imem interface
-          .core3_imem_tid             (core3_imem_tid          ),
-          .core3_imem_req_ack         (core3_imem_req_ack_p3   ),
-          .core3_imem_lack            (core3_imem_lack_p3      ),
-          .core3_imem_req             (core3_imem_req          ),
-          .core3_imem_cmd             (core3_imem_cmd          ),
-          .core3_imem_width           (core3_imem_width        ),
-          .core3_imem_addr            (core3_imem_addr         ),
-          .core3_imem_bl              (core3_imem_bl           ),
-          .core3_imem_wdata           (core3_imem_wdata        ),
-          .core3_imem_rdata           (core3_imem_rdata_p3     ),
-          .core3_imem_resp            (core3_imem_resp_p3      ),
-
-    // core3-dmem interface
-          .core3_dmem_tid             (core3_dmem_tid          ),
-          .core3_dmem_req_ack         (core3_dmem_req_ack_p3   ),
-          .core3_dmem_lack            (core3_dmem_lack_p3      ),
-          .core3_dmem_req             (core3_dmem_req          ),
-          .core3_dmem_cmd             (core3_dmem_cmd          ),
-          .core3_dmem_width           (core3_dmem_width        ),
-          .core3_dmem_addr            (core3_dmem_addr         ),
-          .core3_dmem_bl              (core3_dmem_bl           ),
-          .core3_dmem_wdata           (core3_dmem_wdata        ),
-          .core3_dmem_rdata           (core3_dmem_rdata_p3     ),
-          .core3_dmem_resp            (core3_dmem_resp_p3      ),
-
-    // core interface
-          .core_req_ack               (port3_req_ack            ),
-          .core_req                   (port3_req                ),
-          .core_cmd                   (port3_cmd                ),
-          .core_width                 (port3_width              ),
-          .core_addr                  (port3_addr               ),
-          .core_bl                    (port3_bl                 ),
-          .core_wdata                 (port3_wdata              ),
-          .core_rdata                 (port3_rdata              ),
-          .core_resp                  (port3_resp               )   
-
-);
-
-ycr4_router  u_router_p4 (
-    // Control signals
-          .rst_n                      (rst_n                   ),
-          .clk                        (clk                     ),
-                                                                  
-          .taget_id                   (3'b100                  ),
-
-    // core0-imem interface
-          .core0_imem_tid             (core0_imem_tid          ),
-          .core0_imem_req_ack         (core0_imem_req_ack_p4   ),
-          .core0_imem_lack            (core0_imem_lack_p4      ),
-          .core0_imem_req             (core0_imem_req          ),
-          .core0_imem_cmd             (core0_imem_cmd          ),
-          .core0_imem_width           (core0_imem_width        ),
-          .core0_imem_addr            (core0_imem_addr         ),
-          .core0_imem_bl              (core0_imem_bl           ),
-          .core0_imem_wdata           (core0_imem_wdata        ),
-          .core0_imem_rdata           (core0_imem_rdata_p4     ),
-          .core0_imem_resp            (core0_imem_resp_p4      ),
-
-    // core0-dmem interface
-          .core0_dmem_tid             (core0_dmem_tid          ),
-          .core0_dmem_req_ack         (core0_dmem_req_ack_p4   ),
-          .core0_dmem_lack            (core0_dmem_lack_p4      ),
-          .core0_dmem_req             (core0_dmem_req          ),
-          .core0_dmem_cmd             (core0_dmem_cmd          ),
-          .core0_dmem_width           (core0_dmem_width        ),
-          .core0_dmem_addr            (core0_dmem_addr         ),
-          .core0_dmem_bl              (core0_dmem_bl           ),
-          .core0_dmem_wdata           (core0_dmem_wdata        ),
-          .core0_dmem_rdata           (core0_dmem_rdata_p4     ),
-          .core0_dmem_resp            (core0_dmem_resp_p4      ),
-
-    // core1-imem interface
-          .core1_imem_tid             (core1_imem_tid          ),
-          .core1_imem_req_ack         (core1_imem_req_ack_p4   ),
-          .core1_imem_lack            (core1_imem_lack_p4      ),
-          .core1_imem_req             (core1_imem_req          ),
-          .core1_imem_cmd             (core1_imem_cmd          ),
-          .core1_imem_width           (core1_imem_width        ),
-          .core1_imem_addr            (core1_imem_addr         ),
-          .core1_imem_bl              (core1_imem_bl           ),
-          .core1_imem_wdata           (core1_imem_wdata        ),
-          .core1_imem_rdata           (core1_imem_rdata_p4     ),
-          .core1_imem_resp            (core1_imem_resp_p4      ),
-
-    // core1-dmem interface
-          .core1_dmem_tid             (core1_dmem_tid          ),
-          .core1_dmem_req_ack         (core1_dmem_req_ack_p4   ),
-          .core1_dmem_lack            (core1_dmem_lack_p4      ),
-          .core1_dmem_req             (core1_dmem_req          ),
-          .core1_dmem_cmd             (core1_dmem_cmd          ),
-          .core1_dmem_width           (core1_dmem_width        ),
-          .core1_dmem_addr            (core1_dmem_addr         ),
-          .core1_dmem_bl              (core1_dmem_bl           ),
-          .core1_dmem_wdata           (core1_dmem_wdata        ),
-          .core1_dmem_rdata           (core1_dmem_rdata_p4     ),
-          .core1_dmem_resp            (core1_dmem_resp_p4      ),
-
-    // core2-imem interface
-          .core2_imem_tid             (core2_imem_tid          ),
-          .core2_imem_req_ack         (core2_imem_req_ack_p4   ),
-          .core2_imem_lack            (core2_imem_lack_p4      ),
-          .core2_imem_req             (core2_imem_req          ),
-          .core2_imem_cmd             (core2_imem_cmd          ),
-          .core2_imem_width           (core2_imem_width        ),
-          .core2_imem_addr            (core2_imem_addr         ),
-          .core2_imem_bl              (core2_imem_bl           ),
-          .core2_imem_wdata           (core2_imem_wdata        ),
-          .core2_imem_rdata           (core2_imem_rdata_p4     ),
-          .core2_imem_resp            (core2_imem_resp_p4      ),
-
-    // core2-dmem interface
-          .core2_dmem_tid             (core2_dmem_tid          ),
-          .core2_dmem_req_ack         (core2_dmem_req_ack_p4   ),
-          .core2_dmem_lack            (core2_dmem_lack_p4      ),
-          .core2_dmem_req             (core2_dmem_req          ),
-          .core2_dmem_cmd             (core2_dmem_cmd          ),
-          .core2_dmem_width           (core2_dmem_width        ),
-          .core2_dmem_addr            (core2_dmem_addr         ),
-          .core2_dmem_bl              (core2_dmem_bl           ),
-          .core2_dmem_wdata           (core2_dmem_wdata        ),
-          .core2_dmem_rdata           (core2_dmem_rdata_p4     ),
-          .core2_dmem_resp            (core2_dmem_resp_p4      ),
-
-    // core3-imem interface
-          .core3_imem_tid             (core3_imem_tid          ),
-          .core3_imem_req_ack         (core3_imem_req_ack_p4   ),
-          .core3_imem_lack            (core3_imem_lack_p4      ),
-          .core3_imem_req             (core3_imem_req          ),
-          .core3_imem_cmd             (core3_imem_cmd          ),
-          .core3_imem_width           (core3_imem_width        ),
-          .core3_imem_addr            (core3_imem_addr         ),
-          .core3_imem_bl              (core3_imem_bl           ),
-          .core3_imem_wdata           (core3_imem_wdata        ),
-          .core3_imem_rdata           (core3_imem_rdata_p4     ),
-          .core3_imem_resp            (core3_imem_resp_p4      ),
-
-    // core3-dmem interface
-          .core3_dmem_tid             (core3_dmem_tid          ),
-          .core3_dmem_req_ack         (core3_dmem_req_ack_p4   ),
-          .core3_dmem_lack            (core3_dmem_lack_p4      ),
-          .core3_dmem_req             (core3_dmem_req          ),
-          .core3_dmem_cmd             (core3_dmem_cmd          ),
-          .core3_dmem_width           (core3_dmem_width        ),
-          .core3_dmem_addr            (core3_dmem_addr         ),
-          .core3_dmem_bl              (core3_dmem_bl           ),
-          .core3_dmem_wdata           (core3_dmem_wdata        ),
-          .core3_dmem_rdata           (core3_dmem_rdata_p4     ),
-          .core3_dmem_resp            (core3_dmem_resp_p4      ),
-
-    // core interface
-          .core_req_ack               (port4_req_ack            ),
-          .core_req                   (port4_req                ),
-          .core_cmd                   (port4_cmd                ),
-          .core_width                 (port4_width              ),
-          .core_addr                  (port4_addr               ),
-          .core_bl                    (port4_bl                 ),
-          .core_wdata                 (port4_wdata              ),
-          .core_rdata                 (port4_rdata              ),
-          .core_resp                  (port4_resp               )   
-
-);
 
 //---------------------------------------------
 // Select the taget id based on address
@@ -1446,14 +1087,8 @@ function type_ycr_sel_e      func_taget_id;
 input [`YCR_DMEM_AWIDTH-1:0] mem_addr;
 begin
    func_taget_id    = YCR_SEL_PORT0;
-   if ((mem_addr & YCR_PORT1_ADDR_MASK) == YCR_PORT1_ADDR_PATTERN) begin
+   if ((mem_addr & YCR_ICACHE_ADDR_MASK) == YCR_ICACHE_ADDR_PATTERN) begin
        func_taget_id    = YCR_SEL_PORT1;
-   end else if ((mem_addr & YCR_PORT2_ADDR_MASK) == YCR_PORT2_ADDR_PATTERN) begin
-       func_taget_id    = YCR_SEL_PORT2;
-   end else if ((mem_addr & YCR_PORT3_ADDR_MASK) == YCR_PORT3_ADDR_PATTERN) begin
-       func_taget_id    = YCR_SEL_PORT3;
-   end else if ((mem_addr & YCR_PORT4_ADDR_MASK) == YCR_PORT4_ADDR_PATTERN) begin
-       func_taget_id    = YCR_SEL_PORT4;
    end
 end
 endfunction

@@ -357,46 +357,8 @@ assign riscv_debug = (core_debug_sel == 2'b00) ? riscv_debug0 :
 	             (core_debug_sel == 2'b01) ? riscv_debug1 : 
 	             (core_debug_sel == 2'b10) ? riscv_debug2 : riscv_debug3;
 
-//-------------------------------------------------------------------------
-// Burst is only support in icache and rest of the interface support only
-// single burst, as cross-bar expect last burst access to exit the grant,
-// we are generting LOK for dcache, tcm,timer,dmem interface
-// ------------------------------------------------------------------------
-               
-wire [1:0] core_dmem_resp_t   = (core_dmem_resp == YCR_MEM_RESP_RDY_OK) ?  YCR_MEM_RESP_RDY_LOK : 2'b0;
-wire [1:0] core_dcache_resp_t = (core_dcache_resp == YCR_MEM_RESP_RDY_OK) ?  YCR_MEM_RESP_RDY_LOK : 2'b0;
-wire [1:0] tcm_dmem_resp_t    = (tcm_dmem_resp == YCR_MEM_RESP_RDY_OK) ?  YCR_MEM_RESP_RDY_LOK : 2'b0;
-wire [1:0] timer_dmem_resp_t  = (timer_dmem_resp == YCR_MEM_RESP_RDY_OK) ?  YCR_MEM_RESP_RDY_LOK : 2'b0;
 
-ycr4_cross_bar 
-#(
-    `ifdef YCR_ICACHE_EN
-        .YCR_PORT1_ADDR_MASK       (YCR_ICACHE_ADDR_MASK),
-        .YCR_PORT1_ADDR_PATTERN    (YCR_ICACHE_ADDR_PATTERN),
-    `else // YCR_ICACHE_EN
-        .YCR_PORT1_ADDR_MASK       (32'h00000000),
-        .YCR_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
-    `endif // YCR_ICACHE_EN
-    
-    `ifdef YCR_DCACHE_EN
-        .YCR_PORT2_ADDR_MASK       (YCR_DCACHE_ADDR_MASK),
-        .YCR_PORT2_ADDR_PATTERN    (YCR_DCACHE_ADDR_PATTERN),
-    `else // YCR_DCACHE_EN
-        .YCR_PORT2_ADDR_MASK       (32'h00000000),
-        .YCR_PORT2_ADDR_PATTERN    (32'hFFFFFFFF),
-    `endif // YCR_DCACHE_EN
-    
-    `ifdef YCR_TCM_EN
-        .YCR_PORT3_ADDR_MASK       (YCR_TCM_ADDR_MASK),
-        .YCR_PORT3_ADDR_PATTERN    (YCR_TCM_ADDR_PATTERN),
-    `else // YCR_TCM_EN
-        .YCR_PORT3_ADDR_MASK       (32'h00000000),
-        .YCR_PORT3_ADDR_PATTERN    (32'hFFFFFFFF),
-    `endif // YCR_TCM_EN
-    
-        .YCR_PORT4_ADDR_MASK       (YCR_TIMER_ADDR_MASK),
-        .YCR_PORT4_ADDR_PATTERN    (YCR_TIMER_ADDR_PATTERN)
-) u_crossbar (
+ycr4_cross_bar u_crossbar (
     
     .rst_n                 (cpu_intf_rst_n_sync        ),
     .clk                   (core_clk                   ),
@@ -490,92 +452,92 @@ ycr4_cross_bar
     .core3_dmem_resp       (core3_dmem_resp            ),
 
     // Interface to WB bridge
-    .port0_req_ack  (core_dmem_req_ack    ),
-    .port0_req      (core_dmem_req        ),
-    .port0_cmd      (core_dmem_cmd        ),
-    .port0_width    (core_dmem_width      ),
-    .port0_addr     (core_dmem_addr       ),
-    .port0_bl       (                     ), // Not Supported
-    .port0_wdata    (core_dmem_wdata      ),
-    .port0_rdata    (core_dmem_rdata      ),
-    .port0_resp     (core_dmem_resp_t     ),
+    .port0_req_ack         (core_dmem_req_ack          ),
+    .port0_req             (core_dmem_req              ),
+    .port0_cmd             (core_dmem_cmd              ),
+    .port0_width           (core_dmem_width            ),
+    .port0_addr            (core_dmem_addr             ),
+    .port0_bl              (                           ), // Not Supported
+    .port0_wdata           (core_dmem_wdata            ),
+    .port0_rdata           (core_dmem_rdata            ),
+    .port0_resp            (core_dmem_resp             ),
     
 `ifdef YCR_ICACHE_EN
     // Interface to TCM
-    .port1_req_ack  (core_icache_req_ack  ),
-    .port1_req      (core_icache_req      ),
-    .port1_cmd      (core_icache_cmd      ),
-    .port1_width    (core_icache_width    ),
-    .port1_addr     (core_icache_addr     ),
-    .port1_bl       (core_icache_bl       ),
-    .port1_wdata    (                     ),
-    .port1_rdata    (core_icache_rdata    ),
-    .port1_resp     (core_icache_resp     ),
+    .port1_req_ack         (core_icache_req_ack        ),
+    .port1_req             (core_icache_req            ),
+    .port1_cmd             (core_icache_cmd            ),
+    .port1_width           (core_icache_width          ),
+    .port1_addr            (core_icache_addr           ),
+    .port1_bl              (core_icache_bl             ),
+    .port1_wdata           (                           ),
+    .port1_rdata           (core_icache_rdata          ),
+    .port1_resp            (core_icache_resp           ),
 `else // YCR_ICACHE_EN
-    .port1_req_ack  (1'b0),
-    .port1_req      (                    ),
-    .port1_cmd      (                    ),
-    .port1_width    (                    ),
-    .port1_addr     (                    ),
-    .port1_wdata    (                    ),
-    .port1_rdata    (32'h0               ),
-    .port1_resp     (YCR_MEM_RESP_RDY_ER),
+    .port1_req_ack         (1'b0                       ),
+    .port1_req             (                           ),
+    .port1_cmd             (                           ),
+    .port1_width           (                           ),
+    .port1_addr            (                           ),
+    .port1_wdata           (                           ),
+    .port1_rdata           (32'h0                      ),
+    .port1_resp            (YCR_MEM_RESP_RDY_ER        ),
 `endif // YCR_ICACHE_EN
 
 `ifdef YCR_DCACHE_EN
     // Interface to TCM
-    .port2_req_ack  (core_dcache_req_ack    ),
-    .port2_req      (core_dcache_req        ),
-    .port2_cmd      (core_dcache_cmd        ),
-    .port2_width    (core_dcache_width      ),
-    .port2_addr     (core_dcache_addr       ),
-    .port2_bl       (                       ), // bl not supported in dcache
-    .port2_wdata    (core_dcache_wdata      ),
-    .port2_rdata    (core_dcache_rdata      ),
-    .port2_resp     (core_dcache_resp_t     ),
+    .port2_req_ack         (core_dcache_req_ack        ),
+    .port2_req             (core_dcache_req            ),
+    .port2_cmd             (core_dcache_cmd            ),
+    .port2_width           (core_dcache_width          ),
+    .port2_addr            (core_dcache_addr           ),
+    .port2_bl              (                           ), // bl not supported in dcache
+    .port2_wdata           (core_dcache_wdata          ),
+    .port2_rdata           (core_dcache_rdata          ),
+    .port2_resp            (core_dcache_resp           ),
 `else // YCR_ICACHE_EN
-    .port2_req_ack  (1'b0),
-    .port2_req      (                    ),
-    .port2_cmd      (                    ),
-    .port2_width    (                    ),
-    .port2_addr     (                    ),
-    .port2_wdata    (                    ),
-    .port2_rdata    (32'h0               ),
-    .port2_resp     (YCR_MEM_RESP_RDY_ER),
+    .port2_req_ack         (1'b0                       ),
+    .port2_req             (                           ),
+    .port2_cmd             (                           ),
+    .port2_width           (                           ),
+    .port2_addr            (                           ),
+    .port2_wdata           (                           ),
+    .port2_rdata           (32'h0                      ),
+    .port2_resp            (YCR_MEM_RESP_RDY_ER        ),
 `endif // YCR_ICACHE_EN
 
 `ifdef YCR_TCM_EN
     // Interface to TCM
-    .port3_req_ack  (tcm_dmem_req_ack    ),
-    .port3_req      (tcm_dmem_req        ),
-    .port3_cmd      (tcm_dmem_cmd        ),
-    .port3_width    (tcm_dmem_width      ),
-    .port3_addr     (tcm_dmem_addr       ),
-    .port3_bl       (                    ), // Not Supported
-    .port3_wdata    (tcm_dmem_wdata      ),
-    .port3_rdata    (tcm_dmem_rdata      ),
-    .port3_resp     (tcm_dmem_resp_t     ),
+    .port3_req_ack         (tcm_dmem_req_ack           ),
+    .port3_req             (tcm_dmem_req               ),
+    .port3_cmd             (tcm_dmem_cmd               ),
+    .port3_width           (tcm_dmem_width             ),
+    .port3_addr            (tcm_dmem_addr              ),
+    .port3_bl              (                           ), // Not Supported
+    .port3_wdata           (tcm_dmem_wdata             ),
+    .port3_rdata           (tcm_dmem_rdata             ),
+    .port3_resp            (tcm_dmem_resp              ),
 `else // YCR_TCM_EN
-    .port3_req_ack  (1'b0),
-    .port3_req      (                    ),
-    .port3_cmd      (                    ),
-    .port3_width    (                    ),
-    .port3_addr     (                    ),
-    .port3_wdata    (                    ),
-    .port3_rdata    (32'h0               ),
-    .port3_resp     (YCR_MEM_RESP_RDY_ER),
+    .port3_req_ack         (1'b0                       ),
+    .port3_req             (                           ),
+    .port3_cmd             (                           ),
+    .port3_width           (                           ),
+    .port3_addr            (                           ),
+    .port3_wdata           (                           ),
+    .port3_rdata           (32'h0                      ),
+    .port3_resp            (YCR_MEM_RESP_RDY_ER        ),
 `endif // YCR_TCM_EN
 
     // Interface to memory-mapped timer
-    .port4_req_ack  (timer_dmem_req_ack  ),
-    .port4_req      (timer_dmem_req      ),
-    .port4_cmd      (timer_dmem_cmd      ),
-    .port4_width    (timer_dmem_width    ),
-    .port4_addr     (timer_dmem_addr     ),
-    .port4_bl       (                    ), // Not Supported
-    .port4_wdata    (timer_dmem_wdata    ),
-    .port4_rdata    (timer_dmem_rdata    ),
-    .port4_resp     (timer_dmem_resp_t   )
+    .port4_req_ack         (timer_dmem_req_ack         ),
+    .port4_req             (timer_dmem_req             ),
+    .port4_cmd             (timer_dmem_cmd             ),
+    .port4_width           (timer_dmem_width           ),
+    .port4_addr            (timer_dmem_addr            ),
+    .port4_bl              (                           ), // Not Supported
+    .port4_wdata           (timer_dmem_wdata           ),
+    .port4_rdata           (timer_dmem_rdata           ),
+    .port4_resp            (timer_dmem_resp            )
 
 );
 

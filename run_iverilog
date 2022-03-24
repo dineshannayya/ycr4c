@@ -5,6 +5,8 @@
 cd build/iverilog_wf_WB_MAX_imc_IPIC_1_TCM_0_VIRQ_1_TRACE_0
 
 # 2. Run the iverilog compile command, add waveform dump with "-D WFDUMP"
+export IVERILOG_DUMPER=fst
+
 
 iverilog -g2012 \
 -D WFDUMP     \

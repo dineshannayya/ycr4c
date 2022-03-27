@@ -61,6 +61,8 @@ module ycr4_iconnect (
     input   logic                        pwrup_rst_n,            // Power-Up Reset
     input   logic                        cpu_intf_rst_n,        // CPU interface reset
 
+    input   logic [YCR_IRQ_LINES_NUM-1:0] core_irq_lines_i,     // External interrupt request lines
+    input   logic                         core_irq_soft_i,         // Software generated interrupt request
 
     input   logic [1:0]                  core_debug_sel,
     output  logic [63:0]                 riscv_debug,
@@ -70,6 +72,8 @@ module ycr4_iconnect (
     output   logic     [1:0]                core0_uid                 ,
     output   logic [63:0]                   core0_timer_val           , // Machine timer value
     output   logic                          core0_timer_irq           ,
+    output   logic [YCR_IRQ_LINES_NUM-1:0]  core0_irq_lines           , // External interrupt request lines
+    output   logic                          core0_irq_soft            , // Software generated interrupt request
     // Instruction Memory Interface
     output   logic                          core0_imem_req_ack        , // IMEM request acknowledge
     input    logic                          core0_imem_req            , // IMEM request
@@ -95,6 +99,8 @@ module ycr4_iconnect (
     output   logic     [1:0]                core1_uid                 ,
     output   logic [63:0]                   core1_timer_val           , // Machine timer value
     output   logic                          core1_timer_irq           ,
+    output   logic [YCR_IRQ_LINES_NUM-1:0]  core1_irq_lines           , // External interrupt request lines
+    output   logic                          core1_irq_soft            , // Software generated interrupt request
     // Instruction Memory Interface
     output   logic                          core1_imem_req_ack,        // IMEM request acknowledge
     input    logic                          core1_imem_req,            // IMEM request
@@ -120,6 +126,8 @@ module ycr4_iconnect (
     output   logic     [1:0]                core2_uid                 ,
     output   logic [63:0]                   core2_timer_val           , // Machine timer value
     output   logic                          core2_timer_irq           ,
+    output   logic [YCR_IRQ_LINES_NUM-1:0]  core2_irq_lines           , // External interrupt request lines
+    output   logic                          core2_irq_soft            , // Software generated interrupt request
     // Instruction Memory Interface
     output   logic                          core2_imem_req_ack,        // IMEM request acknowledge
     input    logic                          core2_imem_req,            // IMEM request
@@ -145,6 +153,8 @@ module ycr4_iconnect (
     output   logic     [1:0]                core3_uid                 ,
     output   logic [63:0]                   core3_timer_val           , // Machine timer value
     output   logic                          core3_timer_irq           ,
+    output   logic [YCR_IRQ_LINES_NUM-1:0]  core3_irq_lines           , // External interrupt request lines
+    output   logic                          core3_irq_soft            , // Software generated interrupt request
     // Instruction Memory Interface
     output   logic                          core3_imem_req_ack,        // IMEM request acknowledge
     input    logic                          core3_imem_req,            // IMEM request
@@ -284,6 +294,19 @@ logic [1:0]                                        timer_dmem_resp;
 logic [31:0]                                       riscv_glbl_cfg          ;   
 logic [63:0]                                       timer_val               ;                // Machine timer value
 logic                                              timer_irq               ;
+
+
+//---------------------------------------------------------------------------------
+// To improve the physical routing irq signal are buffer inside the block
+// --------------------------------------------------------------------------------
+assign core0_irq_lines  =  core_irq_lines_i         ; // External interrupt request lines
+assign core0_irq_soft   =  core_irq_soft_i          ; // Software generated interrupt request
+assign core1_irq_lines  =  core_irq_lines_i         ; // External interrupt request lines
+assign core1_irq_soft   =  core_irq_soft_i          ; // Software generated interrupt request
+assign core2_irq_lines  =  core_irq_lines_i         ; // External interrupt request lines
+assign core2_irq_soft   =  core_irq_soft_i          ; // Software generated interrupt request
+assign core3_irq_lines  =  core_irq_lines_i         ; // External interrupt request lines
+assign core3_irq_soft   =  core_irq_soft_i          ; // Software generated interrupt request
 //---------------------------------------------------------------------------------
 // To avoid core level power hook up, we have brought this signal inside, to
 // avoid any cell at digital core level

@@ -251,6 +251,8 @@ logic [48:0]                                       core0_debug;
 logic [1:0]                                        core0_uid;
 logic                                              core0_timer_irq;
 logic [63:0]                                       core0_timer_val;
+logic [YCR_IRQ_LINES_NUM-1:0]                      core0_irq_lines;  // IRQ lines to IPIC
+logic                                              core0_soft_irq;  // IRQ lines to IPIC
 
 // Instruction memory interface from core to router
 logic                                              core0_imem_req_ack;
@@ -277,6 +279,8 @@ logic [48:0]                                       core1_debug;
 logic [1:0]                                        core1_uid;
 logic                                              core1_timer_irq;
 logic [63:0]                                       core1_timer_val;
+logic [YCR_IRQ_LINES_NUM-1:0]                      core1_irq_lines;  // IRQ lines to IPIC
+logic                                              core1_soft_irq;  // IRQ lines to IPIC
 
 // Instruction memory interface from core to router
 logic                                              core1_imem_req_ack;
@@ -304,6 +308,8 @@ logic [48:0]                                       core2_debug;
 logic [1:0]                                        core2_uid;
 logic                                              core2_timer_irq;
 logic [63:0]                                       core2_timer_val;
+logic [YCR_IRQ_LINES_NUM-1:0]                      core2_irq_lines;  // IRQ lines to IPIC
+logic                                              core2_soft_irq;  // IRQ lines to IPIC
 // Instruction memory interface from core to router
 logic                                              core2_imem_req_ack;
 logic                                              core2_imem_req;
@@ -330,6 +336,8 @@ logic [48:0]                                       core3_debug;
 logic [1:0]                                        core3_uid;
 logic                                              core3_timer_irq;
 logic [63:0]                                       core3_timer_val;
+logic [YCR_IRQ_LINES_NUM-1:0]                      core3_irq_lines;  // IRQ lines to IPIC
+logic                                              core3_soft_irq;  // IRQ lines to IPIC
 // Instruction memory interface from core to router
 logic                                              core3_imem_req_ack;
 logic                                              core3_imem_req;
@@ -385,26 +393,31 @@ logic [`YCR_DMEM_DWIDTH-1:0]                       core_dcache_wdata;
 logic [`YCR_DMEM_DWIDTH-1:0]                       core_dcache_rdata;
 logic [1:0]                                        core_dcache_resp;
 
-
+logic [3:0]                                        core_clk_out;
 
 //-------------------------------------------------------------------------------
 // YCR Intf instance
 //-------------------------------------------------------------------------------
 ycr4_iconnect u_connect (
 
-          .core_clk                     (core_clk                     ), // Core clock
+          .core_clk                     (core_clk                     ), // Core clock to match clock latency
           .rtc_clk                      (rtc_clk                      ), // Core clock
 	  .pwrup_rst_n                  (pwrup_rst_n                  ),
           .cpu_intf_rst_n               (cpu_intf_rst_n_sync          ), // CPU reset
 
           .core_debug_sel               (core_debug_sel               ),
 	  .riscv_debug                  (riscv_debug                  ),
+          // Interrupt buffering      
+          .core_irq_lines_i             (irq_lines                    ),
+          .core_irq_soft_i              (soft_irq                     ),
 
     // CORE-0
           .core0_debug                  (core0_debug                  ),
           .core0_uid                    (core0_uid                    ),
           .core0_timer_val              (core0_timer_val              ), // Machine timer value
           .core0_timer_irq              (core0_timer_irq              ), // Machine timer value
+          .core0_irq_lines              (core0_irq_lines              ),
+          .core0_irq_soft               (core0_soft_irq               ),
     // Instruction Memory Interface
           .core0_imem_req_ack           (core0_imem_req_ack           ), // IMEM request acknowledge
           .core0_imem_req               (core0_imem_req               ), // IMEM request
@@ -429,6 +442,8 @@ ycr4_iconnect u_connect (
           .core1_uid                    (core1_uid                    ),
           .core1_timer_val              (core1_timer_val              ), // Machine timer value
           .core1_timer_irq              (core1_timer_irq              ), // Machine timer value
+          .core1_irq_lines              (core1_irq_lines              ),
+          .core1_irq_soft               (core1_soft_irq               ),
     // Instruction Memory Interface
           .core1_imem_req_ack           (core1_imem_req_ack           ), // IMEM request acknowledge
           .core1_imem_req               (core1_imem_req               ), // IMEM request
@@ -453,6 +468,8 @@ ycr4_iconnect u_connect (
           .core2_uid                    (core2_uid                    ),
           .core2_timer_val              (core2_timer_val              ), // Machine timer value
           .core2_timer_irq              (core2_timer_irq              ), // Machine timer value
+          .core2_irq_lines              (core2_irq_lines              ),
+          .core2_irq_soft               (core2_soft_irq               ),
     // Instruction Memory Interface
           .core2_imem_req_ack           (core2_imem_req_ack           ), // IMEM request acknowledge
           .core2_imem_req               (core2_imem_req               ), // IMEM request
@@ -477,6 +494,8 @@ ycr4_iconnect u_connect (
           .core3_uid                    (core3_uid                    ),
           .core3_timer_val              (core3_timer_val              ), // Machine timer value
           .core3_timer_irq              (core3_timer_irq              ), // Machine timer value
+          .core3_irq_lines              (core3_irq_lines              ),
+          .core3_irq_soft               (core3_soft_irq               ),
     // Instruction Memory Interface
           .core3_imem_req_ack           (core3_imem_req_ack           ), // IMEM request acknowledge
           .core3_imem_req               (core3_imem_req               ), // IMEM request
@@ -700,6 +719,7 @@ ycr_core_top i_core_top_0 (
           .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[0]            ),
           .clk                          (core_clk                     ),
+          .clk_o                        (core_clk_out[0]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),
 `ifdef YCR_DBG_EN
@@ -713,11 +733,11 @@ ycr_core_top i_core_top_0 (
 
     // IRQ
 `ifdef YCR_IPIC_EN
-          .core_irq_lines_i             (irq_lines                    ),
+          .core_irq_lines_i             (core0_irq_lines              ),
 `else // YCR_IPIC_EN
           .core_irq_ext_i               (ext_irq                      ),
 `endif // YCR_IPIC_EN
-          .core_irq_soft_i              (soft_irq                     ),
+          .core_irq_soft_i              (core0_soft_irq               ),
 `ifdef YCR_DBG_EN
     // Debug interface
           .tapc_trst_n                  (tapc_trst_n                  ),
@@ -765,6 +785,7 @@ ycr_core_top i_core_top_1 (
           .rst_n                        (rst_n_sync                   ),
           .cpu_rst_n                    (cpu_core_rst_n[1]            ),
           .clk                          (core_clk                     ),
+          .clk_o                        (core_clk_out[1]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),
 `ifdef YCR_DBG_EN
@@ -778,11 +799,11 @@ ycr_core_top i_core_top_1 (
 
     // IRQ
 `ifdef YCR_IPIC_EN
-          .core_irq_lines_i             (irq_lines                    ),
+          .core_irq_lines_i             (core1_irq_lines              ),
 `else // YCR_IPIC_EN
           .core_irq_ext_i               (ext_irq                      ),
 `endif // YCR_IPIC_EN
-          .core_irq_soft_i              (soft_irq                     ),
+          .core_irq_soft_i              (core1_soft_irq               ),
 
 
 `ifdef YCR_DBG_EN
@@ -829,6 +850,7 @@ ycr_core_top i_core_top_2 (
           .rst_n                        (rst_n_sync                   ),
           .cpu_rst_n                    (cpu_core_rst_n[2]            ),
           .clk                          (core_clk                     ),
+          .clk_o                        (core_clk_out[2]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),
 `ifdef YCR_DBG_EN
@@ -843,11 +865,11 @@ ycr_core_top i_core_top_2 (
 
     // IRQ
 `ifdef YCR_IPIC_EN
-          .core_irq_lines_i             (irq_lines                    ),
+          .core_irq_lines_i             (core2_irq_lines              ),
 `else // YCR_IPIC_EN
           .core_irq_ext_i               (ext_irq                      ),
 `endif // YCR_IPIC_EN
-          .core_irq_soft_i              (soft_irq                     ),
+          .core_irq_soft_i              (core2_soft_irq               ),
 
 
 `ifdef YCR_DBG_EN
@@ -894,6 +916,7 @@ ycr_core_top i_core_top_3 (
           .rst_n                        (rst_n_sync                   ),
           .cpu_rst_n                    (cpu_core_rst_n[3]            ),
           .clk                          (core_clk                     ),
+          .clk_o                        (core_clk_out[3]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),
 `ifdef YCR_DBG_EN
@@ -908,11 +931,11 @@ ycr_core_top i_core_top_3 (
 
     // IRQ
 `ifdef YCR_IPIC_EN
-          .core_irq_lines_i             (irq_lines                    ),
+          .core_irq_lines_i             (core3_irq_lines              ),
 `else // YCR_IPIC_EN
           .core_irq_ext_i               (ext_irq                      ),
 `endif // YCR_IPIC_EN
-          .core_irq_soft_i              (soft_irq                     ),
+          .core_irq_soft_i              (core3_soft_irq               ),
 
 `ifdef YCR_DBG_EN
     // Debug interface

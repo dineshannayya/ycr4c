@@ -58,6 +58,7 @@ module ycr_core_top (
     input   logic                                   rst_n,                      // Regular reset
     input   logic                                   cpu_rst_n,                  // CPU reset
     input   logic                                   clk,                        // Core clock
+    output  logic                                   clk_o,                      // Core clock
     output  logic                                   core_rst_n_o,               // Core reset
     output  logic                                   core_rdc_qlfy_o,            // Core RDC qualifier
     output  logic   [48:0]                          core_debug  ,
@@ -229,7 +230,7 @@ wire logic [`YCR_XLEN-1:0]        core_fuse_mhartid_i = {30'h0,core_uid}; // Fus
 
 wire  test_mode = 1'b0;
 wire  test_rst_n = 1'b0;
-
+assign clk_o = clk;
 //-------------------------------------------------------------------------------
 // Reset Logic
 //-------------------------------------------------------------------------------

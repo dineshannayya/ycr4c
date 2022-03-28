@@ -68,6 +68,12 @@
 ////            fuse_mhartid is internally tied                           ////
 ////     1.7:   Mar 19, 2022, Dinesh A                                    ////
 ////            four core is integrated                                   ////
+////     1.8:   Mar 28, 2022, Dinesh A                                    ////
+////            Pipe line imem request generation is removed in           ////
+////            ycr_pipe_ifu.sv and when ever there there is clash between////
+////            current request and new change of addres request, new     ////
+////            address will be holded and updated only at the end of     ////
+////            pending transaction                                       ////
 //////////////////////////////////////////////////////////////////////////////
 
 `include "ycr_arch_description.svh"
@@ -237,7 +243,6 @@ localparam int unsigned YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM            = 2;
 //-------------------------------------------------------------------------------
 // Reset logic
 logic                                               pwrup_rst_n_sync;
-logic                                               rst_n_sync;
 logic                                               cpu_rst_n_sync;
 `ifdef YCR_DBG_EN
 logic                                               tapc_trst_n;
@@ -403,7 +408,7 @@ ycr4_iconnect u_connect (
           .core_clk                     (core_clk                     ), // Core clock to match clock latency
           .rtc_clk                      (rtc_clk                      ), // Core clock
 	  .pwrup_rst_n                  (pwrup_rst_n                  ),
-          .cpu_intf_rst_n               (cpu_intf_rst_n_sync          ), // CPU reset
+          .cpu_intf_rst_n               (cpu_intf_rst_n               ), // CPU reset
 
           .core_debug_sel               (core_debug_sel               ),
 	  .riscv_debug                  (riscv_debug                  ),
@@ -782,7 +787,7 @@ ycr_core_top i_core_top_0 (
 ycr_core_top i_core_top_1 (
     // Common
           .pwrup_rst_n                  (pwrup_rst_n                  ),
-          .rst_n                        (rst_n_sync                   ),
+          .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[1]            ),
           .clk                          (core_clk                     ),
           .clk_o                        (core_clk_out[1]              ),
@@ -847,7 +852,7 @@ ycr_core_top i_core_top_1 (
 ycr_core_top i_core_top_2 (
     // Common
           .pwrup_rst_n                  (pwrup_rst_n                  ),
-          .rst_n                        (rst_n_sync                   ),
+          .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[2]            ),
           .clk                          (core_clk                     ),
           .clk_o                        (core_clk_out[2]              ),
@@ -913,7 +918,7 @@ ycr_core_top i_core_top_2 (
 ycr_core_top i_core_top_3 (
     // Common
           .pwrup_rst_n                  (pwrup_rst_n                  ),
-          .rst_n                        (rst_n_sync                   ),
+          .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[3]            ),
           .clk                          (core_clk                     ),
           .clk_o                        (core_clk_out[3]              ),

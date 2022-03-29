@@ -24,40 +24,50 @@ set ::env(DESIGN_DIR) ../
 set ::env(PROJ_DIR) ../../../../
 
 # User config
-set ::env(DESIGN_NAME) ycr1_top_wb
+set ::env(DESIGN_NAME) ycr4_top_wb
 
 # Change if needed
 set ::env(VERILOG_FILES) [glob  \
-	../src/core/pipeline/ycr1_pipe_top.sv  \
-	../src/core/ycr1_core_top.sv  \
-	../src/core/ycr1_dm.sv  \
-	../src/core/ycr1_tapc_synchronizer.sv  \
-	../src/core/ycr1_clk_ctrl.sv  \
-	../src/core/ycr1_scu.sv  \
-	../src/core/ycr1_tapc.sv  \
-	../src/core/ycr1_tapc_shift_reg.sv  \
-	../src/core/ycr1_dmi.sv  \
-	../src/core/primitives/ycr1_reset_cells.sv  \
-	../src/core/pipeline/ycr1_pipe_ifu.sv  \
-	../src/core/pipeline/ycr1_pipe_idu.sv  \
-	../src/core/pipeline/ycr1_pipe_exu.sv  \
-	../src/core/pipeline/ycr1_pipe_mprf.sv  \
-	../src/core/pipeline/ycr1_pipe_csr.sv  \
-	../src/core/pipeline/ycr1_pipe_ialu.sv  \
-	../src/core/pipeline/ycr1_pipe_mul.sv  \
-	../src/core/pipeline/ycr1_pipe_div.sv  \
-	../src/core/pipeline/ycr1_pipe_lsu.sv  \
-	../src/core/pipeline/ycr1_pipe_hdu.sv  \
-	../src/core/pipeline/ycr1_pipe_tdu.sv  \
-	../src/core/pipeline/ycr1_ipic.sv   \
-	../src/top/ycr1_dmem_router.sv   \
-	../src/top/ycr1_imem_router.sv   \
-	../src/top/ycr1_tcm.sv   \
-	../src/top/ycr1_timer.sv   \
-	../src/top/ycr1_intf.sv   \
-	../src/top/ycr1_top_wb.sv   \
-	../src/top/ycr1_dmem_wb.sv   \
-	../src/top/ycr1_imem_wb.sv   \
+	../src/core/pipeline/ycr_pipe_top.sv  \
+	../src/core/ycr_core_top.sv  \
+	../src/core/ycr_dm.sv  \
+	../src/core/ycr_tapc_synchronizer.sv  \
+	../src/core/ycr_clk_ctrl.sv  \
+	../src/core/ycr_scu.sv  \
+	../src/core/ycr_tapc.sv  \
+	../src/core/ycr_tapc_shift_reg.sv  \
+	../src/core/ycr_dmi.sv  \
+	../src/core/primitives/ycr_reset_cells.sv  \
+	../src/core/pipeline/ycr_pipe_ifu.sv  \
+	../src/core/pipeline/ycr_pipe_idu.sv  \
+	../src/core/pipeline/ycr_pipe_exu.sv  \
+	../src/core/pipeline/ycr_pipe_mprf.sv  \
+	../src/core/pipeline/ycr_pipe_csr.sv  \
+	../src/core/pipeline/ycr_pipe_ialu.sv  \
+	../src/core/pipeline/ycr_pipe_mul.sv  \
+	../src/core/pipeline/ycr_pipe_div.sv  \
+	../src/core/pipeline/ycr_pipe_lsu.sv  \
+	../src/core/pipeline/ycr_pipe_hdu.sv  \
+	../src/core/pipeline/ycr_pipe_tdu.sv  \
+	../src/core/pipeline/ycr_ipic.sv   \
+	../src/top/ycr_dmem_router.sv   \
+	../src/top/ycr_imem_router.sv   \
+	../src/top/ycr_tcm.sv   \
+	../src/top/ycr_timer.sv   \
+	../src/top/ycr_intf.sv   \
+	../src/top/ycr4_top_wb.sv   \
+	../src/top/ycr4_iconnect.sv   \
+	../src/top/ycr4_cross_bar.sv   \
+	../src/top/ycr4_router.sv   \
+	../src/top/ycr_dmem_wb.sv   \
+	../src/top/ycr_imem_wb.sv   \
+	../src/lib/ycr_arb.sv \
+        ../src/cache/src/core/dcache_top.sv             \
+        ../src/cache/src/core/dcache_tag_fifo.sv        \
+        ../src/cache/src/core/icache_tag_fifo.sv        \
+        ../src/cache/src/core/icache_top.sv             \
+        ../src/cache/src/core/icache_app_fsm.sv         \
+	../src/lib/\ycr_async_wbb.sv \
 	../src/lib/clk_skew_adjust.gv \
 	../src/lib/ctech_cells.sv     \
 	../src/lib/async_fifo.sv  ]

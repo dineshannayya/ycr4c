@@ -74,6 +74,17 @@
 ////            current request and new change of addres request, new     ////
 ////            address will be holded and updated only at the end of     ////
 ////            pending transaction                                       ////
+////     1.9:   Mar 29, 2022, Dinesh A                                    ////
+////            To break the timing path, once cycle gap assumed between  ////
+////            core request to slave ack, following files are modified   ////
+////     	    src/cache/src/core/dcache_top.sv                      ////
+////     	    src/cache/src/core/icache_top.sv                      ////
+////     	    src/core/pipeline/ycr_pipe_ifu.sv                     ////
+////     	    src/top/ycr_dmem_router.sv                            ////
+////     	    src/top/ycr_dmem_wb.sv                                ////
+////     	    src/top/ycr_tcm.sv                                    ////
+////            Synth and sta script are clean-up                         ////
+////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
 `include "ycr_arch_description.svh"

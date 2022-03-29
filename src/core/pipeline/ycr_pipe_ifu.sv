@@ -224,8 +224,8 @@ logic                               q_has_1_ocpd_hw;
 logic                               q_head_is_rvc;
 logic                               q_head_is_rvi;
 logic [YCR_IFU_Q_FREE_H_W-1:0]     q_ocpd_h;
-logic [YCR_IFU_Q_FREE_H_W-1:0]     q_free_h_next;
-logic [YCR_IFU_Q_FREE_W_W-1:0]     q_free_w_next;
+logic [YCR_IFU_Q_FREE_H_W-1:0]     q_free_h;
+logic [YCR_IFU_Q_FREE_W_W-1:0]     q_free_w;
 logic [YCR_IFU_Q_FREE_W_W-1:0]     q_free_slots;
 
 // IFU FSM signals
@@ -274,9 +274,7 @@ logic                               imem_resp_discard_cnt_upd;
 logic [YCR_TXN_CNT_W-1:0]          imem_resp_discard_cnt;
 logic [YCR_TXN_CNT_W-1:0]          imem_resp_discard_cnt_next;
 
-`ifdef YCR_NEW_PC_REG
 logic                               new_pc_req_ff;
-`endif // YCR_NEW_PC_REG
 
 // Instruction bypass signals
 `ifdef YCR_NO_DEC_STAGE
@@ -491,13 +489,13 @@ assign q_err_next  = q_err  [YCR_IFU_QUEUE_ADR_W'(q_rptr + 1'b1)];
 //------------------------------------------------------------------------------
 
 assign q_ocpd_h         = YCR_IFU_Q_FREE_H_W'(q_wptr - q_rptr);
-assign q_free_h_next    = YCR_IFU_Q_FREE_H_W'(YCR_IFU_Q_SIZE_HALF - (q_wptr - q_rptr_next));
-assign q_free_w_next    = YCR_IFU_Q_FREE_W_W'(q_free_h_next >> 1'b1);
+assign q_free_h    = YCR_IFU_Q_FREE_H_W'(YCR_IFU_Q_SIZE_HALF - (q_wptr - q_rptr));
+assign q_free_w    = YCR_IFU_Q_FREE_W_W'(q_free_h >> 1'b1);
 
 assign q_is_empty       = (q_rptr == q_wptr);
-assign q_has_free_slots = (YCR_TXN_CNT_W'(q_free_w_next) > imem_vd_pnd_txns_cnt);
+assign q_has_free_slots = (YCR_TXN_CNT_W'(q_free_w) > imem_vd_pnd_txns_cnt);
 assign q_has_1_ocpd_hw  = (q_ocpd_h == YCR_IFU_Q_FREE_H_W'(1));
-assign q_free_slots     = (q_has_free_slots) ? (YCR_TXN_CNT_W'(q_free_w_next) - YCR_TXN_CNT_W'(imem_vd_pnd_txns_cnt)) : 'h0;
+assign q_free_slots     = (q_has_free_slots) ? (YCR_TXN_CNT_W'(q_free_w) - YCR_TXN_CNT_W'(imem_vd_pnd_txns_cnt)) : 'h0;
 
 assign q_head_is_rvi    = &(q_data_head[1:0]);
 assign q_head_is_rvc    = ~q_head_is_rvi;
@@ -598,13 +596,8 @@ always_ff @(posedge clk, negedge rst_n) begin
     end
 end
 
-`ifndef YCR_NEW_PC_REG
-assign imem_addr_next = exu2ifu_pc_new_req_i ? exu2ifu_pc_new_i[`YCR_XLEN-1:2]  + imem_handshake_size
-                                             : {imem_addr_ff[`YCR_XLEN-1:2]     + imem_handshake_size};
-`else // YCR_NEW_PC_REG
 assign imem_addr_next = exu2ifu_pc_new_req_i ? exu2ifu_pc_new_i[`YCR_XLEN-1:2]
                                              : {imem_addr_ff[`YCR_XLEN-1:2] + imem_handshake_size};
-`endif // YCR_NEW_PC_REG
 
 // Pending IMEM transactions counter
 //------------------------------------------------------------------------------
@@ -648,15 +641,9 @@ always_ff @(posedge clk, negedge rst_n) begin
     end
 end
 
-`ifndef YCR_NEW_PC_REG
-assign imem_resp_discard_cnt_next = exu2ifu_pc_new_req_i     ? imem_pnd_txns_cnt_next - imem_handshake_done
-                                  : imem_resp_er_discard_pnd ? imem_pnd_txns_cnt_next
-                                                             : imem_resp_discard_cnt - 1'b1;
-`else // YCR_NEW_PC_REG
 assign imem_resp_discard_cnt_next = (exu2ifu_pc_new_req_i | imem_resp_er_discard_pnd | exu2ifu_pc_new_req_h)
                                   ? imem_pnd_txns_cnt_next
                                   : imem_resp_discard_cnt - 1'b1;
-`endif // YCR_NEW_PC_REG
 
 assign imem_vd_pnd_txns_cnt  = imem_pnd_txns_cnt - imem_resp_discard_cnt;
 assign imem_resp_discard_req = |imem_resp_discard_cnt;
@@ -664,19 +651,6 @@ assign imem_resp_discard_req = |imem_resp_discard_cnt;
 // IFU <-> IMEM interface output signals
 //------------------------------------------------------------------------------
 
-`ifndef YCR_NEW_PC_REG
-assign ifu2imem_req_o  = (exu2ifu_pc_new_req_i & ~imem_pnd_txns_q_full & ~pipe2ifu_stop_fetch_i)
-                       | (ifu_fsm_fetch        & ~imem_pnd_txns_q_full & q_has_free_slots);
-assign ifu2imem_addr_o = exu2ifu_pc_new_req_i
-                       ? {exu2ifu_pc_new_i[`YCR_XLEN-1:2], 2'b00}
-                       : {imem_addr_ff, 2'b00};
-
-// Currently only imem support burst access, rest of
-// the interface linke dmem,tcm,timer support single
-// access 
-assign ifu2imem_bl_o = (((ifu2imem_addr_o & YCR_DCACHE_ADDR_MASK) == YCR_ICACHE_ADDR_PATTERN) && (q_free_slots >= YCR_IFU_Q_BURST_SIZE)) ? YCR_IFU_Q_BURST_SIZE  :  'h1;
-
-`else // YCR_NEW_PC_REG
 
 // Check current request is map to non-volatile memory range
 wire  imem_addr_range = ((ifu2imem_addr_o & YCR_DCACHE_ADDR_MASK) == YCR_ICACHE_ADDR_PATTERN);
@@ -693,7 +667,6 @@ assign ifu2imem_addr_o = {imem_addr_ff, 2'b00};
 // the interface linke dmem,tcm,timer support single
 // access 
 assign ifu2imem_bl_o = (((ifu2imem_addr_o & YCR_DCACHE_ADDR_MASK) == YCR_ICACHE_ADDR_PATTERN) && (q_free_slots >= YCR_IFU_Q_BURST_SIZE)) ? YCR_IFU_Q_BURST_SIZE  :  'h1;
-`endif // YCR_NEW_PC_REG
 
 assign ifu2imem_cmd_o  = YCR_MEM_CMD_RD;
 

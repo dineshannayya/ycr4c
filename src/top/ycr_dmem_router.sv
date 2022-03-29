@@ -161,12 +161,7 @@ always_ff @(negedge rst_n, posedge clk) begin
             YCR_FSM_DATA : begin
                 case (sel_resp)
                     YCR_MEM_RESP_RDY_OK : begin
-                        if (dmem_req & sel_req_ack) begin
-                            fsm         <= YCR_FSM_DATA;
-                            port_sel_r  <= port_sel;
-                        end else begin
                             fsm <= YCR_FSM_ADDR;
-                        end
                     end
                     YCR_MEM_RESP_RDY_ER : begin
                         fsm <= YCR_FSM_ADDR;
@@ -181,19 +176,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end
 end
 
-always_comb begin
-    if ((fsm == YCR_FSM_ADDR) | ((fsm == YCR_FSM_DATA) & (sel_resp == YCR_MEM_RESP_RDY_OK))) begin
-        case (port_sel)
-            YCR_SEL_PORT0  : sel_req_ack   = port0_req_ack;
-            YCR_SEL_PORT1  : sel_req_ack   = port1_req_ack;
-            YCR_SEL_PORT2  : sel_req_ack   = port2_req_ack;
-            YCR_SEL_PORT3  : sel_req_ack   = port3_req_ack;
-            default         : sel_req_ack   = 1'b0;
-        endcase
-    end else begin
-        sel_req_ack = 1'b0;
-    end
-end
+assign sel_req_ack   = port0_req_ack | port1_req_ack | port2_req_ack | port3_req_ack;
 
 always_comb begin
     case (port_sel_r)

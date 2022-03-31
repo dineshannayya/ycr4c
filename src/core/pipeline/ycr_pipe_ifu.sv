@@ -567,12 +567,11 @@ assign imem_addr_upd = imem_handshake_done | exu2ifu_pc_new_req_i;
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
         imem_addr_ff <= '0;
-        imem_addr_h_ff <= '0;
 	exu2ifu_pc_new_req_h <= 1'b0;
     end else if (imem_addr_upd) begin
 	if(ifu2imem_req_o && exu2ifu_pc_new_req_i) begin // Clash case , Pending Req and New Req
-           imem_addr_h_ff       <= imem_addr_next;
 	   exu2ifu_pc_new_req_h <= 1'b1;
+           imem_addr_h_ff       <= exu2ifu_pc_new_i[`YCR_XLEN-1:2];
         end else if(exu2ifu_pc_new_req_h) begin // Wait for Req Done
            imem_addr_ff         <= imem_addr_h_ff;
 	   exu2ifu_pc_new_req_h <= 1'b0;

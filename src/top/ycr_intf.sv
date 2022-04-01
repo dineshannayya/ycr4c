@@ -69,6 +69,8 @@ module ycr_intf (
     input   logic                           cfg_dcache_pfet_dis       ,
     input   logic                           cfg_dcache_force_flush    ,
 
+    input   logic [1:0]                     cfg_sram_lphase           ,  // SRAM data lanuch phase selection
+
     // Instruction Memory Interface
     output   logic                          core_icache_req_ack       , // IMEM request acknowledge
     input    logic                          core_icache_req           , // IMEM request
@@ -222,6 +224,36 @@ logic                                              cpu_intf_rst_n_sync;
    logic                                           wb_dcache_cclk_err_i; // error
 `endif
 
+
+//-----------------------------------------------------------------------------------
+// Variable for sram mux for icache
+// ---------------------------------------------------------------------------------
+// CACHE SRAM Memory I/F
+logic                             icache_mem_csb0_int       ; // CS#
+logic                             icache_mem_web0_int       ; // WE#
+logic   [8:0]                     icache_mem_addr0_int      ; // Address
+logic   [3:0]                     icache_mem_wmask0_int     ; // WMASK#
+logic   [31:0]                    icache_mem_din0_int       ; // Write Data
+   
+// SRAM-0 PORT-1, IMEM I/F
+logic                             icache_mem_csb1_int       ; // CS#
+logic  [8:0]                      icache_mem_addr1_int      ; // Address
+
+//-----------------------------------------------------------------------------------
+// Variable for sram mux for dcache
+// ---------------------------------------------------------------------------------
+// CACHE SRAM Memory I/F
+logic                             dcache_mem_csb0_int       ; // CS#
+logic                             dcache_mem_web0_int       ; // WE#
+logic   [8:0]                     dcache_mem_addr0_int      ; // Address
+logic   [3:0]                     dcache_mem_wmask0_int     ; // WMASK#
+logic   [31:0]                    dcache_mem_din0_int       ; // Write Data
+   
+// SRAM-0 PORT-1, IMEM I/F
+logic                             dcache_mem_csb1_int       ; // CS#
+logic  [8:0]                      dcache_mem_addr1_int      ; // Address
+
+
 // riscv clock skew control
 clk_skew_adjust u_skew_riscv
        (
@@ -294,20 +326,52 @@ icache_top  #(.MEM_BL(`YCR_IMEM_BSIZE) )u_icache (
 
         // CACHE SRAM Memory I/F
         .cache_mem_clk0               (icache_mem_clk0        ), // CLK
-        .cache_mem_csb0               (icache_mem_csb0        ), // CS#
-        .cache_mem_web0               (icache_mem_web0        ), // WE#
-        .cache_mem_addr0              (icache_mem_addr0       ), // Address
-        .cache_mem_wmask0             (icache_mem_wmask0      ), // WMASK#
-        .cache_mem_din0               (icache_mem_din0        ), // Write Data
+        .cache_mem_csb0               (icache_mem_csb0_int    ), // CS#
+        .cache_mem_web0               (icache_mem_web0_int    ), // WE#
+        .cache_mem_addr0              (icache_mem_addr0_int   ), // Address
+        .cache_mem_wmask0             (icache_mem_wmask0_int  ), // WMASK#
+        .cache_mem_din0               (icache_mem_din0_int    ), // Write Data
         
         // SRAM-0 PORT-1, IMEM I/F
         .cache_mem_clk1               (icache_mem_clk1        ), // CLK
-        .cache_mem_csb1               (icache_mem_csb1        ), // CS#
-        .cache_mem_addr1              (icache_mem_addr1       ), // Address
+        .cache_mem_csb1               (icache_mem_csb1_int    ), // CS#
+        .cache_mem_addr1              (icache_mem_addr1_int   ), // Address
         .cache_mem_dout1              (icache_mem_dout1       ) // Read Data
 
-
 );
+
+//----------------------------------------------------------------
+// As there SRAM timing model is not correct. we have created
+// additional position drive data in negedge
+// ----------------------------------------------------------------
+ycr_sram_mux  u_icache_smux (
+   .rst_n                (cpu_intf_rst_n_sync    ),
+   .cfg_mem_lphase       (cfg_sram_lphase[0]     ), // 0 - Posedge (Default), 1 - Negedge
+   // SRAM Memory I/F, PORT-0
+   .mem_clk0_i           (icache_mem_clk0        ), // CLK
+   .mem_csb0_i           (icache_mem_csb0_int    ), // CS#
+   .mem_web0_i           (icache_mem_web0_int    ), // WE#
+   .mem_addr0_i          (icache_mem_addr0_int   ), // Address
+   .mem_wmask0_i         (icache_mem_wmask0_int  ), // WMASK#
+   .mem_din0_i           (icache_mem_din0_int    ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_clk1_i           (icache_mem_clk1        ), // CLK
+   .mem_csb1_i           (icache_mem_csb1_int    ), // CS#
+   .mem_addr1_i          (icache_mem_addr1_int   ), // Address
+
+   // SRAM Memory I/F, PORT-0
+   .mem_csb0_o           (icache_mem_csb0        ), // CS#
+   .mem_web0_o           (icache_mem_web0        ), // WE#
+   .mem_addr0_o          (icache_mem_addr0       ), // Address
+   .mem_wmask0_o         (icache_mem_wmask0      ), // WMASK#
+   .mem_din0_o           (icache_mem_din0        ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_csb1_o           (icache_mem_csb1        ), // CS#
+   .mem_addr1_o          (icache_mem_addr1       )  // Address
+);
+
 
 // Async Wishbone clock domain translation
 ycr_async_wbb u_async_icache(
@@ -385,19 +449,51 @@ dcache_top  u_dcache (
 
         // CACHE SRAM Memory I/F
         .cache_mem_clk0               (dcache_mem_clk0       ), // CLK
-        .cache_mem_csb0               (dcache_mem_csb0       ), // CS#
-        .cache_mem_web0               (dcache_mem_web0       ), // WE#
-        .cache_mem_addr0              (dcache_mem_addr0      ), // Address
-        .cache_mem_wmask0             (dcache_mem_wmask0     ), // WMASK#
-        .cache_mem_din0               (dcache_mem_din0       ), // Write Data
+        .cache_mem_csb0               (dcache_mem_csb0_int   ), // CS#
+        .cache_mem_web0               (dcache_mem_web0_int   ), // WE#
+        .cache_mem_addr0              (dcache_mem_addr0_int  ), // Address
+        .cache_mem_wmask0             (dcache_mem_wmask0_int ), // WMASK#
+        .cache_mem_din0               (dcache_mem_din0_int   ), // Write Data
         .cache_mem_dout0              (dcache_mem_dout0      ), // Read Data
         
         // SRAM-0 PORT-1, IMEM I/F
         .cache_mem_clk1               (dcache_mem_clk1       ), // CLK
-        .cache_mem_csb1               (dcache_mem_csb1       ), // CS#
-        .cache_mem_addr1              (dcache_mem_addr1      ), // Address
+        .cache_mem_csb1               (dcache_mem_csb1_int   ), // CS#
+        .cache_mem_addr1              (dcache_mem_addr1_int  ), // Address
         .cache_mem_dout1              (dcache_mem_dout1      )  // Read Data
 
+);
+
+//----------------------------------------------------------------
+// As there SRAM timing model is not correct. we have created
+// additional position drive data in negedge
+// ----------------------------------------------------------------
+ycr_sram_mux  u_dcache_smux (
+   .rst_n                (cpu_intf_rst_n_sync    ),
+   .cfg_mem_lphase       (cfg_sram_lphase[1]     ), // 0 - Posedge (Default), 1 - Negedge
+   // SRAM Memory I/F, PORT-0
+   .mem_clk0_i           (dcache_mem_clk0        ), // CLK
+   .mem_csb0_i           (dcache_mem_csb0_int    ), // CS#
+   .mem_web0_i           (dcache_mem_web0_int    ), // WE#
+   .mem_addr0_i          (dcache_mem_addr0_int   ), // Address
+   .mem_wmask0_i         (dcache_mem_wmask0_int  ), // WMASK#
+   .mem_din0_i           (dcache_mem_din0_int    ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_clk1_i           (dcache_mem_clk1        ), // CLK
+   .mem_csb1_i           (dcache_mem_csb1_int    ), // CS#
+   .mem_addr1_i          (dcache_mem_addr1_int   ), // Address
+
+   // SRAM Memory I/F, PORT-0
+   .mem_csb0_o           (dcache_mem_csb0        ), // CS#
+   .mem_web0_o           (dcache_mem_web0        ), // WE#
+   .mem_addr0_o          (dcache_mem_addr0       ), // Address
+   .mem_wmask0_o         (dcache_mem_wmask0      ), // WMASK#
+   .mem_din0_o           (dcache_mem_din0        ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_csb1_o           (dcache_mem_csb1        ), // CS#
+   .mem_addr1_o          (dcache_mem_addr1       )  // Address
 );
 
 // Async Wishbone clock domain translation

@@ -67,6 +67,9 @@ module ycr4_iconnect (
     input   logic [1:0]                  core_debug_sel,
     output  logic [63:0]                 riscv_debug,
 
+    output   logic                       cfg_dcache_force_flush,
+    input   logic [1:0]                  cfg_sram_lphase,
+
     // CORE-0
     input    logic   [48:0]                 core0_debug               ,
     output   logic     [1:0]                core0_uid                 ,
@@ -178,10 +181,6 @@ module ycr4_iconnect (
     //------------------------------------------------------------------
     // Toward ycr_intf
     // -----------------------------------------------------------------
-     output logic                           cfg_icache_pfet_dis      ,
-     output logic                           cfg_icache_ntag_pfet_dis ,
-     output logic                           cfg_dcache_pfet_dis      ,
-     output logic                           cfg_dcache_force_flush   ,
 
     // Instruction Memory Interface
     input    logic                          core_icache_req_ack       , // IMEM request acknowledge
@@ -295,6 +294,33 @@ logic [31:0]                                       riscv_glbl_cfg          ;
 logic [63:0]                                       timer_val               ;                // Machine timer value
 logic                                              timer_irq               ;
 
+//-----------------------------------------------------------------------------------
+// Variable for sram mux for sram0
+// ---------------------------------------------------------------------------------
+// PORT-0
+logic                             sram0_csb0_int       ; // CS#
+logic                             sram0_web0_int       ; // WE#
+logic   [8:0]                     sram0_addr0_int      ; // Address
+logic   [3:0]                     sram0_wmask0_int     ; // WMASK#
+logic   [31:0]                    sram0_din0_int       ; // Write Data
+   
+// SRAM-0 PORT-1
+logic                             sram0_csb1_int       ; // CS#
+logic  [8:0]                      sram0_addr1_int      ; // Address
+
+//-----------------------------------------------------------------------------------
+// Variable for sram mux for sram1
+// ---------------------------------------------------------------------------------
+// PORT-0
+logic                             sram1_csb0_int       ; // CS#
+logic                             sram1_web0_int       ; // WE#
+logic   [8:0]                     sram1_addr0_int      ; // Address
+logic   [3:0]                     sram1_wmask0_int     ; // WMASK#
+logic   [31:0]                    sram1_din0_int       ; // Write Data
+   
+// SRAM-0 PORT-1
+logic                             sram1_csb1_int       ; // CS#
+logic  [8:0]                      sram1_addr1_int      ; // Address
 
 //---------------------------------------------------------------------------------
 // To improve the physical routing irq signal are buffer inside the block
@@ -336,11 +362,7 @@ wire [63:0]  riscv_debug3 = {core3_imem_req,core3_imem_req_ack,core3_imem_resp[1
 		             core3_debug };
 
 
-assign cfg_icache_pfet_dis      = riscv_glbl_cfg[0];
-assign cfg_icache_ntag_pfet_dis = riscv_glbl_cfg[1];
-
-assign cfg_dcache_pfet_dis      = riscv_glbl_cfg[2];
-assign cfg_dcache_force_flush   = riscv_glbl_cfg[3];
+assign cfg_dcache_force_flush   = riscv_glbl_cfg[0];
 
 assign core0_timer_val          = timer_val     ;                // Machine timer value
 assign core0_timer_irq          = timer_irq     ;
@@ -578,32 +600,32 @@ ycr_tcm #(
 `ifndef YCR_TCM_MEM
     // SRAM-0 PORT-0
     .sram0_clk0      (sram0_clk0          ),
-    .sram0_csb0      (sram0_csb0          ),
-    .sram0_web0      (sram0_web0          ),
-    .sram0_addr0     (sram0_addr0         ),
-    .sram0_wmask0    (sram0_wmask0        ),
-    .sram0_din0      (sram0_din0          ),
+    .sram0_csb0      (sram0_csb0_int      ),
+    .sram0_web0      (sram0_web0_int      ),
+    .sram0_addr0     (sram0_addr0_int     ),
+    .sram0_wmask0    (sram0_wmask0_int    ),
+    .sram0_din0      (sram0_din0_int      ),
     .sram0_dout0     (sram0_dout0         ),
     
     // SRAM-0 PORT-1
     .sram0_clk1      (sram0_clk1          ),
-    .sram0_csb1      (sram0_csb1          ),
-    .sram0_addr1     (sram0_addr1         ),
+    .sram0_csb1      (sram0_csb1_int      ),
+    .sram0_addr1     (sram0_addr1_int     ),
     .sram0_dout1     (sram0_dout1         ),
 
     // SRAM-1 PORT-0
     .sram1_clk0      (sram1_clk0          ),
-    .sram1_csb0      (sram1_csb0          ),
-    .sram1_web0      (sram1_web0          ),
-    .sram1_addr0     (sram1_addr0         ),
-    .sram1_wmask0    (sram1_wmask0        ),
-    .sram1_din0      (sram1_din0          ),
+    .sram1_csb0      (sram1_csb0_int      ),
+    .sram1_web0      (sram1_web0_int      ),
+    .sram1_addr0     (sram1_addr0_int     ),
+    .sram1_wmask0    (sram1_wmask0_int    ),
+    .sram1_din0      (sram1_din0_int      ),
     .sram1_dout0     (sram1_dout0         ),
     
     // SRAM-1 PORT-1
     .sram1_clk1      (sram1_clk1          ),
-    .sram1_csb1      (sram1_csb1          ),
-    .sram1_addr1     (sram1_addr1         ),
+    .sram1_csb1      (sram1_csb1_int      ),
+    .sram1_addr1     (sram1_addr1_int     ),
     .sram1_dout1     (sram1_dout1         ),
 
 `endif
@@ -627,6 +649,67 @@ ycr_tcm #(
     .dmem_resp      (tcm_dmem_resp       )
 );
 `endif // YCR_TCM_EN
+
+//----------------------------------------------------------------
+// As there SRAM timing model is not correct. we have created
+// additional position drive data in negedge
+// ----------------------------------------------------------------
+ycr_sram_mux  u_sram0_smux (
+   .rst_n                (cpu_intf_rst_n_sync    ),
+   .cfg_mem_lphase       (cfg_sram_lphase[0]     ), // 0 - Posedge (Default), 1 - Negedge
+   // SRAM Memory I/F, PORT-0
+   .mem_clk0_i           (sram0_clk0        ), // CLK
+   .mem_csb0_i           (sram0_csb0_int    ), // CS#
+   .mem_web0_i           (sram0_web0_int    ), // WE#
+   .mem_addr0_i          (sram0_addr0_int   ), // Address
+   .mem_wmask0_i         (sram0_wmask0_int  ), // WMASK#
+   .mem_din0_i           (sram0_din0_int    ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_clk1_i           (sram0_clk1        ), // CLK
+   .mem_csb1_i           (sram0_csb1_int    ), // CS#
+   .mem_addr1_i          (sram0_addr1_int   ), // Address
+
+   // SRAM Memory I/F, PORT-0
+   .mem_csb0_o           (sram0_csb0        ), // CS#
+   .mem_web0_o           (sram0_web0        ), // WE#
+   .mem_addr0_o          (sram0_addr0       ), // Address
+   .mem_wmask0_o         (sram0_wmask0      ), // WMASK#
+   .mem_din0_o           (sram0_din0        ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_csb1_o           (sram0_csb1        ), // CS#
+   .mem_addr1_o          (sram0_addr1       )  // Address
+);
+
+ycr_sram_mux  u_sram1_smux (
+   .rst_n                (cpu_intf_rst_n_sync    ),
+   .cfg_mem_lphase       (cfg_sram_lphase[1]     ), // 0 - Posedge (Default), 1 - Negedge
+   // SRAM Memory I/F, PORT-0
+   .mem_clk0_i           (sram1_clk0        ), // CLK
+   .mem_csb0_i           (sram1_csb0_int    ), // CS#
+   .mem_web0_i           (sram1_web0_int    ), // WE#
+   .mem_addr0_i          (sram1_addr0_int   ), // Address
+   .mem_wmask0_i         (sram1_wmask0_int  ), // WMASK#
+   .mem_din0_i           (sram1_din0_int    ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_clk1_i           (sram1_clk1        ), // CLK
+   .mem_csb1_i           (sram1_csb1_int    ), // CS#
+   .mem_addr1_i          (sram1_addr1_int   ), // Address
+
+   // SRAM Memory I/F, PORT-0
+   .mem_csb0_o           (sram1_csb0        ), // CS#
+   .mem_web0_o           (sram1_web0        ), // WE#
+   .mem_addr0_o          (sram1_addr0       ), // Address
+   .mem_wmask0_o         (sram1_wmask0      ), // WMASK#
+   .mem_din0_o           (sram1_din0        ), // Write Data
+   
+   // SRAM-0 PORT-1, 
+   .mem_csb1_o           (sram1_csb1        ), // CS#
+   .mem_addr1_o          (sram1_addr1       )  // Address
+);
+
 //-------------------------------------------------------------------------------
 // Memory-mapped timer instance
 //-------------------------------------------------------------------------------

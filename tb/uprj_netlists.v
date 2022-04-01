@@ -40,6 +40,7 @@
      `include "top/ycr_imem_wb.sv"
      `include "top/ycr4_top_wb.sv"
      `include "top/ycr_intf.sv"
+     `include "top/ycr_sram_mux.sv"
      `include "top/ycr4_iconnect.sv"
      `include "top/ycr4_router.sv"
      `include "top/ycr4_cross_bar.sv"

@@ -84,6 +84,9 @@
 ////     	    src/top/ycr_dmem_wb.sv                                ////
 ////     	    src/top/ycr_tcm.sv                                    ////
 ////            Synth and sta script are clean-up                         ////
+////     2.0:  April 1, 2022, Dinesh A                                    ////
+////           As sky130 SRAM timining library are not accurate, added    ////
+////           Write interface lanuch phase selection                     ////  
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
@@ -114,6 +117,8 @@ module ycr4_top_wb                      (
     input   logic [`YCR_NUMCORES-1:0]         cpu_core_rst_n,         // CPReset (Core Reset )
     input   logic                             cpu_intf_rst_n,         // CPU interface reset
     input   logic [1:0]                       core_debug_sel,         // core debug selection
+    input   logic [3:0]                       cfg_sram_lphase,
+    input   logic [2:0]                       cfg_cache_ctrl,
     // input   logic                          test_mode,              // Test mode - unused
     // input   logic                          test_rst_n,             // Test mode's reset - unused
     input   logic                             core_clk,               // Core clock
@@ -411,6 +416,8 @@ logic [1:0]                                        core_dcache_resp;
 
 logic [3:0]                                        core_clk_out;
 
+
+logic                                              cfg_dcache_force_flush;
 //-------------------------------------------------------------------------------
 // YCR Intf instance
 //-------------------------------------------------------------------------------
@@ -423,6 +430,8 @@ ycr4_iconnect u_connect (
 
           .core_debug_sel               (core_debug_sel               ),
 	  .riscv_debug                  (riscv_debug                  ),
+          .cfg_sram_lphase              (cfg_sram_lphase[3:2]         ),
+
           // Interrupt buffering      
           .core_irq_lines_i             (irq_lines                    ),
           .core_irq_soft_i              (soft_irq                     ),
@@ -534,9 +543,6 @@ ycr4_iconnect u_connect (
     //------------------------------------------------------------------
     // Toward ycr_intf
     // -----------------------------------------------------------------
-          .cfg_icache_pfet_dis          (cfg_icache_pfet_dis          ),
-          .cfg_icache_ntag_pfet_dis     (cfg_icache_ntag_pfet_dis     ),
-          .cfg_dcache_pfet_dis          (cfg_dcache_pfet_dis          ),
           .cfg_dcache_force_flush       (cfg_dcache_force_flush       ),
 
     // Interface to dmem router
@@ -610,10 +616,11 @@ ycr_intf u_intf(
     .core_clk                  (core_clk                  ), // Core clock
     .cpu_intf_rst_n            (cpu_intf_rst_n            ), // CPU interface reset
 
-    .cfg_icache_pfet_dis       (cfg_icache_pfet_dis       ),
-    .cfg_icache_ntag_pfet_dis  (cfg_icache_ntag_pfet_dis  ),
-    .cfg_dcache_pfet_dis       (cfg_dcache_pfet_dis       ),
+    .cfg_icache_pfet_dis       (cfg_cache_ctrl[0]         ),
+    .cfg_icache_ntag_pfet_dis  (cfg_cache_ctrl[1]         ),
+    .cfg_dcache_pfet_dis       (cfg_cache_ctrl[2]         ),
     .cfg_dcache_force_flush    (cfg_dcache_force_flush    ),
+    .cfg_sram_lphase           (cfg_sram_lphase[1:0]      ),
 
     // Instruction Memory Interface
     .core_icache_req_ack       (core_icache_req_ack       ), // IMEM request acknowledge

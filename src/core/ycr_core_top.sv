@@ -53,6 +53,10 @@
 `endif // YCR_IPIC_EN
 
 module ycr_core_top (
+`ifdef USE_POWER_PINS
+    input logic                                     vccd1,    // User area 1 1.8V supply
+    input logic                                     vssd1,    // User area 1 digital ground
+`endif
     // Common
     input   logic                                   pwrup_rst_n,                // Power-Up reset
     input   logic                                   rst_n,                      // Regular reset

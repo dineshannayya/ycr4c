@@ -51,8 +51,8 @@
 
 module ycr4_iconnect (
 `ifdef USE_POWER_PINS
-    input logic                          vccd1,    // User area 1 1.8V supply
-    input logic                          vssd1,    // User area 1 digital ground
+    input logic                          VPWR,    // User area 1 1.8V supply
+    input logic                          VGND,    // User area 1 digital ground
 `endif
 
     // Control
@@ -69,6 +69,8 @@ module ycr4_iconnect (
 
     output   logic                       cfg_dcache_force_flush,
     input   logic [1:0]                  cfg_sram_lphase,
+    input   logic                        cfg_bypass_icache,  // Bypass ichache
+    input   logic                        cfg_bypass_dcache,  // bypass dchance
 
     // CORE-0
     input    logic   [48:0]                 core0_debug               ,
@@ -208,6 +210,7 @@ module ycr4_iconnect (
     output   logic                          core_dmem_cmd             ,
     output   logic [1:0]                    core_dmem_width           ,
     output   logic [`YCR_DMEM_AWIDTH-1:0]   core_dmem_addr            ,
+    output   logic [`YCR_IMEM_BSIZE-1:0]    core_dmem_bl              ,
     output   logic [`YCR_DMEM_DWIDTH-1:0]   core_dmem_wdata           ,
     input    logic [`YCR_DMEM_DWIDTH-1:0]   core_dmem_rdata           ,
     input    logic [1:0]                    core_dmem_resp            ,
@@ -408,7 +411,10 @@ ycr4_cross_bar u_crossbar (
     .rst_n                 (cpu_intf_rst_n_sync        ),
     .clk                   (core_clk                   ),
 
-    
+   
+    .cfg_bypass_icache     (cfg_bypass_icache          ),
+    .cfg_bypass_dcache     (cfg_bypass_dcache          ),
+
     .core0_imem_req_ack    (core0_imem_req_ack         ),
     .core0_imem_req        (core0_imem_req             ),
     .core0_imem_cmd        (core0_imem_cmd             ),
@@ -502,7 +508,7 @@ ycr4_cross_bar u_crossbar (
     .port0_cmd             (core_dmem_cmd              ),
     .port0_width           (core_dmem_width            ),
     .port0_addr            (core_dmem_addr             ),
-    .port0_bl              (                           ), // Not Supported
+    .port0_bl              (core_dmem_bl               ), 
     .port0_wdata           (core_dmem_wdata            ),
     .port0_rdata           (core_dmem_rdata            ),
     .port0_resp            (core_dmem_resp             ),

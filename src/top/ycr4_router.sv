@@ -184,7 +184,7 @@ wire core3_dmem_req_t = (core3_dmem_req & core3_dmem_tid == taget_id);
 // Arbitor to select between external wb vs uart wb
 wire [3:0] grnt;
 
-ycr_arb u_arb(
+ycr_arb #(.TREQ(8)) u_arb(
 	.clk      (clk                ), 
 	.rstn     (rst_n              ), 
 	.req      ({

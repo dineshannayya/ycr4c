@@ -59,6 +59,7 @@ module ycr_dmem_router
     output  logic                           dmem_req_ack,
     input   logic                           dmem_req,
     input   logic                           dmem_cmd,
+    input   logic [`YCR_IMEM_BSIZE-1:0]     dmem_bl,
     input   logic [1:0]                     dmem_width,
     input   logic [`YCR_DMEM_AWIDTH-1:0]   dmem_addr,
     input   logic [`YCR_DMEM_DWIDTH-1:0]   dmem_wdata,
@@ -69,10 +70,11 @@ module ycr_dmem_router
     input   logic                           port0_req_ack,
     output  logic                           port0_req,
     output  logic                           port0_cmd,
+    output  logic [`YCR_IMEM_BSIZE-1:0]     port0_bl,
     output  logic [1:0]                     port0_width,
-    output  logic [`YCR_DMEM_AWIDTH-1:0]   port0_addr,
-    output  logic [`YCR_DMEM_DWIDTH-1:0]   port0_wdata,
-    input   logic [`YCR_DMEM_DWIDTH-1:0]   port0_rdata,
+    output  logic [`YCR_DMEM_AWIDTH-1:0]    port0_addr,
+    output  logic [`YCR_DMEM_DWIDTH-1:0]    port0_wdata,
+    input   logic [`YCR_DMEM_DWIDTH-1:0]    port0_rdata,
     input   logic [1:0]                     port0_resp,
 
     // PORT1 interface
@@ -160,7 +162,7 @@ always_ff @(negedge rst_n, posedge clk) begin
             end
             YCR_FSM_DATA : begin
                 case (sel_resp)
-                    YCR_MEM_RESP_RDY_OK : begin
+                    YCR_MEM_RESP_RDY_LOK : begin
                             fsm <= YCR_FSM_ADDR;
                     end
                     YCR_MEM_RESP_RDY_ER : begin
@@ -186,15 +188,15 @@ always_comb begin
         end
         YCR_SEL_PORT1  : begin
             sel_rdata   = port1_rdata;
-            sel_resp    = port1_resp;
+            sel_resp    = {port1_resp[0],port1_resp[0]}; // Last Ack Not supported at port1
         end
         YCR_SEL_PORT2  : begin
             sel_rdata   = port2_rdata;
-            sel_resp    = port2_resp;
+            sel_resp    = {port2_resp[0],port2_resp[0]}; // Last Ack Not supported at port1
 	end
         YCR_SEL_PORT3  : begin
             sel_rdata   = port3_rdata;
-            sel_resp    = port3_resp;
+            sel_resp    = {port3_resp[0],port3_resp[0]}; // Last Ack Not supported at port1
         end
         default         : begin
             sel_rdata   = '0;
@@ -231,11 +233,13 @@ end
 
 `ifdef YCR_XPROP_EN
 assign port0_cmd    = (port_sel == YCR_SEL_PORT0) ? dmem_cmd   : YCR_MEM_CMD_ERROR;
+assign port0_bl     = (port_sel == YCR_SEL_PORT0) ? dmem_bl   : YCR_MEM_CMD_ERROR;
 assign port0_width  = (port_sel == YCR_SEL_PORT0) ? dmem_width : YCR_MEM_WIDTH_ERROR;
 assign port0_addr   = (port_sel == YCR_SEL_PORT0) ? dmem_addr  : 'x;
 assign port0_wdata  = (port_sel == YCR_SEL_PORT0) ? dmem_wdata : 'x;
 `else // YCR_XPROP_EN
 assign port0_cmd    = dmem_cmd  ;
+assign port0_bl     = dmem_bl  ;
 assign port0_width  = dmem_width;
 assign port0_addr   = dmem_addr ;
 assign port0_wdata  = dmem_wdata;

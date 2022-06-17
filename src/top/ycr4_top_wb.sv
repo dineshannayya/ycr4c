@@ -91,6 +91,8 @@
 ////           To improve the timing, request re-timing are added at      ////
 ////           iconnect block, In MPW-6 shows Riscv core meeting timing   ////
 ////           for 100Mhz                                                 ////
+////     2.4:  June 12, 2022, Dinesh A                                    ////
+////           icache and dcache bypass config added                      ////
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
@@ -123,6 +125,8 @@ module ycr4_top_wb                      (
     input   logic [1:0]                       core_debug_sel,         // core debug selection
     input   logic [3:0]                       cfg_sram_lphase,
     input   logic [2:0]                       cfg_cache_ctrl,
+    input   logic                             cfg_bypass_icache,  // 1 => Bypass icache
+    input   logic                             cfg_bypass_dcache,  // 1 => Bypass dcache
     // input   logic                          test_mode,              // Test mode - unused
     // input   logic                          test_rst_n,             // Test mode's reset - unused
     input   logic                             core_clk,               // Core clock
@@ -248,8 +252,11 @@ module ycr4_top_wb                      (
     output  logic                        wbd_dmem_we_o,  // write
     output  logic   [YCR_WB_WIDTH-1:0]   wbd_dmem_dat_o, // data output
     output  logic   [3:0]                wbd_dmem_sel_o, // byte enable
+    output  logic   [YCR_WB_BL_DMEM-1:0] wbd_dmem_bl_o, // byte enable
+    output  logic                        wbd_dmem_bry_o, // bursty ready
     input   logic   [YCR_WB_WIDTH-1:0]   wbd_dmem_dat_i, // data input
     input   logic                        wbd_dmem_ack_i, // acknowlegement
+    input   logic                        wbd_dmem_lack_i, // acknowlegement
     input   logic                        wbd_dmem_err_i  // error
 );
 
@@ -390,6 +397,7 @@ logic                                              core_dmem_req;
 logic                                              core_dmem_cmd;
 logic [1:0]                                        core_dmem_width;
 logic [`YCR_DMEM_AWIDTH-1:0]                       core_dmem_addr;
+logic [`YCR_IMEM_BSIZE-1:0]                        core_dmem_bl;
 logic [`YCR_DMEM_DWIDTH-1:0]                       core_dmem_wdata;
 logic [`YCR_DMEM_DWIDTH-1:0]                       core_dmem_rdata;
 logic [1:0]                                        core_dmem_resp;
@@ -426,6 +434,12 @@ logic                                              cfg_dcache_force_flush;
 // YCR Intf instance
 //-------------------------------------------------------------------------------
 ycr4_iconnect u_connect (
+`ifdef USE_POWER_PINS
+          .VPWR                         (vccd1                        ), // User area 1 1.8V supply
+          .VGND                         (vssd1                        ), // User area 1 digital ground
+`endif
+          .cfg_bypass_icache            (cfg_bypass_icache            ), // 1 -> Bypass icache
+          .cfg_bypass_dcache            (cfg_bypass_dcache            ), // 1 -> Bypass dcache
 
           .core_clk                     (core_clk                     ), // Core clock to match clock latency
           .rtc_clk                      (rtc_clk                      ), // Core clock
@@ -555,6 +569,7 @@ ycr4_iconnect u_connect (
           .core_dmem_cmd                (core_dmem_cmd                ),
           .core_dmem_width              (core_dmem_width              ),
           .core_dmem_addr               (core_dmem_addr               ),
+          .core_dmem_bl                 (core_dmem_bl                 ),
           .core_dmem_wdata              (core_dmem_wdata              ),
           .core_dmem_rdata              (core_dmem_rdata              ),
           .core_dmem_resp               (core_dmem_resp               ),
@@ -625,6 +640,8 @@ ycr_intf u_intf(
     .cfg_dcache_pfet_dis       (cfg_cache_ctrl[2]         ),
     .cfg_dcache_force_flush    (cfg_dcache_force_flush    ),
     .cfg_sram_lphase           (cfg_sram_lphase[1:0]      ),
+    .cfg_bypass_icache         (cfg_bypass_icache         ), // 1 -> Bypass icache
+    .cfg_bypass_dcache         (cfg_bypass_dcache         ), // 1 -> Bypass dcache
 
     // Instruction Memory Interface
     .core_icache_req_ack       (core_icache_req_ack       ), // IMEM request acknowledge
@@ -652,6 +669,7 @@ ycr_intf u_intf(
     .core_dmem_cmd             (core_dmem_cmd             ),
     .core_dmem_width           (core_dmem_width           ),
     .core_dmem_addr            (core_dmem_addr            ),
+    .core_dmem_bl              (core_dmem_bl              ),
     .core_dmem_wdata           (core_dmem_wdata           ),
     .core_dmem_rdata           (core_dmem_rdata           ),
     .core_dmem_resp            (core_dmem_resp            ),
@@ -668,8 +686,11 @@ ycr_intf u_intf(
     .wbd_dmem_we_o             (wbd_dmem_we_o             ), // write
     .wbd_dmem_dat_o            (wbd_dmem_dat_o            ), // data output
     .wbd_dmem_sel_o            (wbd_dmem_sel_o            ), // byte enable
+    .wbd_dmem_bl_o             (wbd_dmem_bl_o             ), // byte enable
+    .wbd_dmem_bry_o            (wbd_dmem_bry_o            ), // burst ready
     .wbd_dmem_dat_i            (wbd_dmem_dat_i            ), // data input
     .wbd_dmem_ack_i            (wbd_dmem_ack_i            ), // acknowlegement
+    .wbd_dmem_lack_i           (wbd_dmem_lack_i           ), // acknowlegement
     .wbd_dmem_err_i            (wbd_dmem_err_i            ), // error
 
    `ifdef YCR_ICACHE_EN
@@ -741,6 +762,10 @@ ycr_intf u_intf(
 // YCR core_0 instance
 //-------------------------------------------------------------------------------
 ycr_core_top i_core_top_0 (
+`ifdef USE_POWER_PINS
+          .vccd1                        (vccd1), // User area 1 1.8V supply
+          .vssd1                        (vssd1), // User area 1 digital ground
+`endif
     // Common
           .pwrup_rst_n                  (pwrup_rst_n                  ),
           .rst_n                        (rst_n                        ),

@@ -45,6 +45,9 @@ module ycr4_cross_bar (
     input   logic                           rst_n,
     input   logic                           clk,
 
+    input   logic                           cfg_bypass_icache,  // 1 => Bypass icache
+    input   logic                           cfg_bypass_dcache,  // 1 => Bypass dcache
+
     // Core-0 imem interface
     output  logic                          core0_imem_req_ack,
     input   logic                          core0_imem_req,
@@ -728,7 +731,7 @@ assign core3_dmem_resp  =
 // we are generting LOK for dcache, tcm,timer,dmem interface
 // ------------------------------------------------------------------------
                
-wire [1:0] core_dmem_resp_t   = {2{core_dmem_resp[0]}};
+wire [1:0] core_dmem_resp_t   = core_dmem_resp;
 
 
 ycr4_router  u_router_p0 (
@@ -1010,6 +1013,7 @@ ycr_dmem_router #(
     .dmem_req_ack   (core_dmem_req_ack   ),
     .dmem_req       (core_dmem_req       ),
     .dmem_cmd       (core_dmem_cmd       ),
+    .dmem_bl        (core_dmem_bl        ),
     .dmem_width     (core_dmem_width     ),
     .dmem_addr      (core_dmem_addr      ),
     .dmem_wdata     (core_dmem_wdata     ),
@@ -1071,6 +1075,7 @@ ycr_dmem_router #(
     .port0_req_ack  (port0_req_ack    ),
     .port0_req      (port0_req        ),
     .port0_cmd      (port0_cmd        ),
+    .port0_bl       (port0_bl         ),
     .port0_width    (port0_width      ),
     .port0_addr     (port0_addr       ),
     .port0_wdata    (port0_wdata      ),
@@ -1087,7 +1092,7 @@ function type_ycr_sel_e      func_taget_id;
 input [`YCR_DMEM_AWIDTH-1:0] mem_addr;
 begin
    func_taget_id    = YCR_SEL_PORT0;
-   if ((mem_addr & YCR_ICACHE_ADDR_MASK) == YCR_ICACHE_ADDR_PATTERN) begin
+   if (((mem_addr & YCR_ICACHE_ADDR_MASK) == YCR_ICACHE_ADDR_PATTERN) && (cfg_bypass_icache == 1'b0)) begin
        func_taget_id    = YCR_SEL_PORT1;
    end
 end

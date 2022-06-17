@@ -55,6 +55,8 @@ end
  end
 **/
 
+  logic [31:0] pc_count;
+  logic [31:0] instr_count;
  `define RISC_CORE  i_top.i_core_top_0
  `define RISC_EXU  i_top.i_core_top_0.i_pipe_top.i_pipe_exu
  `define RISC_IFU  i_top.i_core_top_0.i_pipe_top.i_pipe_ifu
@@ -63,7 +65,8 @@ end
 	 pc_count    = 0;
 	 instr_count = 0;
  end
-/***
+
+ /**
  always@(posedge `RISC_CORE.clk) begin
 	 if(rst_init) begin
 	     pc_count = 0;
@@ -72,7 +75,8 @@ end
              pc_count = pc_count+1;
 	  end
  end
-**/ 
+ ***/
+ 
  always@(posedge `RISC_CORE.clk) begin
 	 if(rst_init) begin
 	     instr_count = 0;

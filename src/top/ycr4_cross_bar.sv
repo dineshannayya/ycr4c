@@ -560,7 +560,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else if(core3_dmem_req && core3_dmem_req_ack) begin
         core3_dmem_lock  <= 1'b1;
         core3_dmem_tid_h <= core3_dmem_tid;
-     end else if(core0_dmem_lack) begin
+     end else if(core3_dmem_lack) begin
         core3_dmem_lock  <= 1'b0;
     end
 end

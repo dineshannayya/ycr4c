@@ -343,22 +343,22 @@ assign core3_irq_soft   =  core_irq_soft_i          ; // Software generated inte
 assign test_mode = 1'b0;
 assign test_rst_n = 1'b0;
 
-wire [63:0]  riscv_debug0 = {core0_imem_req,core0_imem_req_ack,core0_imem_resp[1:0],
-	                     core0_dmem_req,core0_dmem_req_ack,core0_dmem_resp[1:0],
-	                     core_dmem_req,core_dmem_req_ack, core_icache_req,core_icache_req_ack,
-	                     core_dcache_req,core_dcache_req_ack, tcm_dmem_req, 
-		             core0_debug };
-wire [63:0]  riscv_debug1 = {core1_imem_req,core1_imem_req_ack,core1_imem_resp[1:0],
-	                     core1_dmem_req,core1_dmem_req_ack,core1_dmem_resp[1:0],
-	                     core_dmem_req,core_dmem_req_ack, core_icache_req,core_icache_req_ack,
-	                     core_dcache_req,core_dcache_req_ack, tcm_dmem_req, 
-		             core1_debug };
-wire [63:0]  riscv_debug2 = {core2_imem_req,core2_imem_req_ack,core2_imem_resp[1:0],
-	                     core2_dmem_req,core2_dmem_req_ack,core2_dmem_resp[1:0],
-	                     core_dmem_req,core_dmem_req_ack, core_icache_req,core_icache_req_ack,
-	                     core_dcache_req,core_dcache_req_ack, tcm_dmem_req, 
-		             core2_debug };
-wire [63:0]  riscv_debug3 = {core3_imem_req,core3_imem_req_ack,core3_imem_resp[1:0],
+assign   riscv_debug0 = {core0_imem_req,core0_imem_req_ack,core0_imem_resp[1:0],
+	               core0_dmem_req,core0_dmem_req_ack,core0_dmem_resp[1:0],
+	               core_dmem_req,core_dmem_req_ack, core_icache_req,core_icache_req_ack,
+	               core_dcache_req,core_dcache_req_ack, tcm_dmem_req, 
+	           core0_debug };
+assign   riscv_debug1 = {core1_imem_req,core1_imem_req_ack,core1_imem_resp[1:0],
+	               core1_dmem_req,core1_dmem_req_ack,core1_dmem_resp[1:0],
+	               core_dmem_req,core_dmem_req_ack, core_icache_req,core_icache_req_ack,
+	               core_dcache_req,core_dcache_req_ack, tcm_dmem_req, 
+	           core1_debug };
+assign   riscv_debug2 = {core2_imem_req,core2_imem_req_ack,core2_imem_resp[1:0],
+	               core2_dmem_req,core2_dmem_req_ack,core2_dmem_resp[1:0],
+	               core_dmem_req,core_dmem_req_ack, core_icache_req,core_icache_req_ack,
+	               core_dcache_req,core_dcache_req_ack, tcm_dmem_req, 
+	           core2_debug };
+assign   riscv_debug3 = {core3_imem_req,core3_imem_req_ack,core3_imem_resp[1:0],
 	                     core3_dmem_req,core3_dmem_req_ack,core3_dmem_resp[1:0],
 	                     core_dmem_req,core_dmem_req_ack, core_icache_req,core_icache_req_ack,
 	                     core_dcache_req,core_dcache_req_ack, tcm_dmem_req, 
@@ -401,9 +401,26 @@ assign core1_uid = 2'b01;
 assign core2_uid = 2'b10;
 assign core3_uid = 2'b11;
 
-assign riscv_debug = (core_debug_sel == 2'b00) ? riscv_debug0 : 
-	             (core_debug_sel == 2'b01) ? riscv_debug1 : 
-	             (core_debug_sel == 2'b10) ? riscv_debug2 : riscv_debug3;
+logic [1:0]    core_debug_sel_l;
+logic [63:0]   riscv_debug0;
+logic [63:0]   riscv_debug1;
+logic [63:0]   riscv_debug2;
+logic [63:0]   riscv_debug3;
+logic [63:0]   riscv_debug0_l;
+logic [63:0]   riscv_debug1_l;
+logic [63:0]   riscv_debug2_l;
+logic [63:0]   riscv_debug3_l;
+always_ff @ (posedge core_clk) begin
+    core_debug_sel_l <= core_debug_sel;
+    riscv_debug0_l   <= riscv_debug0;
+    riscv_debug1_l   <= riscv_debug1;
+    riscv_debug2_l   <= riscv_debug2;
+    riscv_debug3_l   <= riscv_debug3;
+
+    riscv_debug <= (core_debug_sel_l== 2'b00) ? riscv_debug0_l : 
+	               (core_debug_sel_l== 2'b01) ? riscv_debug1_l : 
+	               (core_debug_sel_l== 2'b10) ? riscv_debug2_l : riscv_debug3_l;
+end
 
 
 ycr4_cross_bar u_crossbar (

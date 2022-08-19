@@ -93,6 +93,9 @@
 ////           for 100Mhz                                                 ////
 ////     2.4:  June 12, 2022, Dinesh A                                    ////
 ////           icache and dcache bypass config added                      ////
+////     2.5:  Aug 19, 2022, Dinesh A                                     ////
+////           A. Bug fix in core3 dem req handing in ycr4_cross_bar.sv   ////
+////           B. Debug are register due to unknown LVS issue             ////
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 

@@ -32,7 +32,7 @@
 ////      Dinesh Annayya, dinesha@opencores.org                           ////
 ////                                                                      ////
 ////  CPU Memory Map:                                                     ////
-////            0x0000_0000 to 0x07FF_FF(128MB) - ICACHE                  ////
+////            0x0000_0000 to 0x07FF_FFFF (128MB) - ICACHE               ////
 ////            0x0800_0000 to 0x0BFF_FFFF (64MB)  - DCACHE               ////
 ////            0x0C48_0000 to 0x0C48_FFFF (64K)   - TCM SRAM             ////
 ////            0x0C49_0000 to 0x0C49_000F (16)    - TIMER                ////

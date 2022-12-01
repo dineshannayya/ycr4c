@@ -96,6 +96,9 @@
 ////     2.5:  Aug 19, 2022, Dinesh A                                     ////
 ////           A. Bug fix in core3 dem req handing in ycr4_cross_bar.sv   ////
 ////           B. Debug are register due to unknown LVS issue             ////
+////     2.6:  Nov 29, 2022, Dinesh A                                     ////
+////           For Better Physical routing core clock are feed through    ////
+////           interconnect block                                         ////
 ////                                                                      ////
 //////////////////////////////////////////////////////////////////////////////
 
@@ -116,9 +119,19 @@ module ycr4_top_wb                      (
          input logic                          vccd1,    // User area 1 1.8V supply
          input logic                          vssd1,    // User area 1 digital ground
 `endif
-         input  logic   [3:0]                 cfg_cska_riscv,
-         input  logic                         wbd_clk_int,
-         output logic                         wbd_clk_riscv,
+    // WB Clock Skew Control
+    input  logic   [3:0]                      cfg_wcska_riscv_intf,
+    input  logic                              wbd_clk_int,
+    output logic                              wbd_clk_skew ,
+
+    // RISCV Clock Skew Control
+    input  logic   [3:0]                      cfg_ccska_riscv_intf,
+    input  logic   [3:0]                      cfg_ccska_riscv_icon,
+    input  logic   [3:0]                      cfg_ccska_riscv_core0,
+    input  logic   [3:0]                      cfg_ccska_riscv_core1,
+    input  logic   [3:0]                      cfg_ccska_riscv_core2,
+    input  logic   [3:0]                      cfg_ccska_riscv_core3,
+    input  logic   [1:0]                      core_clk_int,
 
     // Control
     input   logic                             pwrup_rst_n,            // Power-Up Reset
@@ -132,7 +145,6 @@ module ycr4_top_wb                      (
     input   logic                             cfg_bypass_dcache,  // 1 => Bypass dcache
     // input   logic                          test_mode,              // Test mode - unused
     // input   logic                          test_rst_n,             // Test mode's reset - unused
-    input   logic                             core_clk,               // Core clock
     input   logic                             rtc_clk,                // Real-time clock
     output  logic [63:0]                      riscv_debug,
 `ifdef YCR_DBG_EN
@@ -282,6 +294,7 @@ logic [`YCR_NUMCORES-1:0]                           cpu_core_rst_n_sync;        
 //----------------------------------------------------------------
 // CORE-0 Specific Signals
 // ---------------------------------------------------------------
+logic                                              core0_clk;
 logic [48:0]                                       core0_debug;
 logic [1:0]                                        core0_uid;
 logic                                              core0_timer_irq;
@@ -310,6 +323,7 @@ logic [1:0]                                        core0_dmem_resp;
 //----------------------------------------------------------------
 // CORE-1 Specific Signals
 // ---------------------------------------------------------------
+logic                                              core1_clk;
 logic [48:0]                                       core1_debug;
 logic [1:0]                                        core1_uid;
 logic                                              core1_timer_irq;
@@ -339,6 +353,7 @@ logic [1:0]                                        core1_dmem_resp;
 //----------------------------------------------------------------
 // CORE-2 Specific Signals
 // ---------------------------------------------------------------
+logic                                              core2_clk;
 logic [48:0]                                       core2_debug;
 logic [1:0]                                        core2_uid;
 logic                                              core2_timer_irq;
@@ -367,6 +382,7 @@ logic [1:0]                                        core2_dmem_resp;
 //----------------------------------------------------------------
 // CORE-3 Specific Signals
 // ---------------------------------------------------------------
+logic                                              core3_clk;
 logic [48:0]                                       core3_debug;
 logic [1:0]                                        core3_uid;
 logic                                              core3_timer_irq;
@@ -433,6 +449,13 @@ logic [3:0]                                        core_clk_out;
 
 
 logic                                              cfg_dcache_force_flush;
+
+logic                                              core_clk_intf_skew;
+logic                                              core_clk_icon_skew;
+logic                                              core_clk_core0_skew;
+logic                                              core_clk_core1_skew;
+logic                                              core_clk_core2_skew;
+logic                                              core_clk_core3_skew;
 //-------------------------------------------------------------------------------
 // YCR Intf instance
 //-------------------------------------------------------------------------------
@@ -444,13 +467,18 @@ ycr4_iconnect u_connect (
           .cfg_bypass_icache            (cfg_bypass_icache            ), // 1 -> Bypass icache
           .cfg_bypass_dcache            (cfg_bypass_dcache            ), // 1 -> Bypass dcache
 
-          .core_clk                     (core_clk                     ), // Core clock to match clock latency
+          // Core clock skew control
+          .cfg_ccska                    (cfg_ccska_riscv_icon         ),
+          .core_clk_int                 (core_clk_int[1]              ),
+          .core_clk_skew                (core_clk_icon_skew           ),
+          .core_clk                     (core_clk_icon_skew           ), // Core clock
+
           .rtc_clk                      (rtc_clk                      ), // Core clock
-	  .pwrup_rst_n                  (pwrup_rst_n                  ),
+	      .pwrup_rst_n                  (pwrup_rst_n                  ),
           .cpu_intf_rst_n               (cpu_intf_rst_n               ), // CPU reset
 
           .core_debug_sel               (core_debug_sel               ),
-	  .riscv_debug                  (riscv_debug                  ),
+	      .riscv_debug                  (riscv_debug                  ),
           .cfg_sram_lphase              (cfg_sram_lphase[3:2]         ),
 
           // Interrupt buffering      
@@ -458,6 +486,7 @@ ycr4_iconnect u_connect (
           .core_irq_soft_i              (soft_irq                     ),
 
     // CORE-0
+          .core0_clk                    (core0_clk                    ),
           .core0_debug                  (core0_debug                  ),
           .core0_uid                    (core0_uid                    ),
           .core0_timer_val              (core0_timer_val              ), // Machine timer value
@@ -484,6 +513,7 @@ ycr4_iconnect u_connect (
           .core0_dmem_resp              (core0_dmem_resp              ), // DMEM response
 
     // CORE-1
+          .core1_clk                    (core1_clk                    ),
           .core1_debug                  (core1_debug                  ),
           .core1_uid                    (core1_uid                    ),
           .core1_timer_val              (core1_timer_val              ), // Machine timer value
@@ -510,6 +540,7 @@ ycr4_iconnect u_connect (
           .core1_dmem_resp              (core1_dmem_resp              ), // DMEM response
 
     // CORE-2
+          .core2_clk                    (core2_clk                    ),
           .core2_debug                  (core2_debug                  ),
           .core2_uid                    (core2_uid                    ),
           .core2_timer_val              (core2_timer_val              ), // Machine timer value
@@ -536,6 +567,7 @@ ycr4_iconnect u_connect (
           .core2_dmem_resp              (core2_dmem_resp              ), // DMEM response
     
     // CORE-3
+          .core3_clk                    (core3_clk                    ),
           .core3_debug                  (core3_debug                  ),
           .core3_uid                    (core3_uid                    ),
           .core3_timer_val              (core3_timer_val              ), // Machine timer value
@@ -629,13 +661,20 @@ ycr_intf u_intf(
     .vssd1                     (vssd1), // User area 1 digital ground
 `endif
 
-    .cfg_cska_riscv            (cfg_cska_riscv            ),
-    .wbd_clk_int               (wbd_clk_int               ),
-    .wbd_clk_riscv             (wbd_clk_riscv             ),
+     // Core clock skew control
+    .cfg_ccska                (cfg_ccska_riscv_intf      ),
+    .core_clk_int             (core_clk_int[0]              ),
+    .core_clk_skew            (core_clk_intf_skew        ),
+    .core_clk                 (core_clk_intf_skew        ), // Core clock
+
+
+     // WB  clock skew control
+    .cfg_wcska                (cfg_wcska_riscv_intf      ),
+    .wbd_clk_int              (wbd_clk_int               ),
+    .wbd_clk_skew             (wbd_clk_skew              ),
 
     // Control
     .pwrup_rst_n               (pwrup_rst_n               ), // Power-Up Reset
-    .core_clk                  (core_clk                  ), // Core clock
     .cpu_intf_rst_n            (cpu_intf_rst_n            ), // CPU interface reset
 
     .cfg_icache_pfet_dis       (cfg_cache_ctrl[0]         ),
@@ -773,7 +812,13 @@ ycr_core_top i_core_top_0 (
           .pwrup_rst_n                  (pwrup_rst_n                  ),
           .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[0]            ),
-          .clk                          (core_clk                     ),
+          // Core clock skew control
+          .cfg_ccska                    (cfg_ccska_riscv_core0        ),
+          .core_clk_int                 (core0_clk                    ),
+          .core_clk_skew                (core_clk_core0_skew          ),
+          .clk                          (core_clk_core0_skew          ),
+
+
           .clk_o                        (core_clk_out[0]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),
@@ -835,11 +880,20 @@ ycr_core_top i_core_top_0 (
 // YCR core_1 instance
 //-------------------------------------------------------------------------------
 ycr_core_top i_core_top_1 (
+`ifdef USE_POWER_PINS
+          .vccd1                        (vccd1), // User area 1 1.8V supply
+          .vssd1                        (vssd1), // User area 1 digital ground
+`endif
     // Common
           .pwrup_rst_n                  (pwrup_rst_n                  ),
           .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[1]            ),
-          .clk                          (core_clk                     ),
+          // Core clock skew control
+          .cfg_ccska                    (cfg_ccska_riscv_core1        ),
+          .core_clk_int                 (core1_clk                    ),
+          .core_clk_skew                (core_clk_core1_skew          ),
+          .clk                          (core_clk_core1_skew          ),
+
           .clk_o                        (core_clk_out[1]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),
@@ -904,7 +958,14 @@ ycr_core_top i_core_top_2 (
           .pwrup_rst_n                  (pwrup_rst_n                  ),
           .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[2]            ),
-          .clk                          (core_clk                     ),
+
+          // Core clock skew control
+          .cfg_ccska                    (cfg_ccska_riscv_core2        ),
+          .core_clk_int                 (core2_clk                    ),
+          .core_clk_skew                (core_clk_core2_skew          ),
+          .clk                          (core_clk_core2_skew          ),
+
+
           .clk_o                        (core_clk_out[2]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),
@@ -970,7 +1031,14 @@ ycr_core_top i_core_top_3 (
           .pwrup_rst_n                  (pwrup_rst_n                  ),
           .rst_n                        (rst_n                        ),
           .cpu_rst_n                    (cpu_core_rst_n[3]            ),
-          .clk                          (core_clk                     ),
+
+
+          // Core clock skew control
+          .cfg_ccska                    (cfg_ccska_riscv_core3        ),
+          .core_clk_int                 (core3_clk                    ),
+          .core_clk_skew                (core_clk_core3_skew          ),
+          .clk                          (core_clk_core3_skew          ),
+
           .clk_o                        (core_clk_out[3]              ),
           .core_rst_n_o                 (                             ),
           .core_rdc_qlfy_o              (                             ),

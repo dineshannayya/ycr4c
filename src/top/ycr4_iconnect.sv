@@ -56,6 +56,10 @@ module ycr4_iconnect (
 `endif
 
     // Control
+    input   logic [3:0]                  cfg_ccska     ,
+    input   logic                        core_clk_int  ,
+    output  logic                        core_clk_skew ,
+
     input   logic                        core_clk,               // Core clock
     input   logic                        rtc_clk,                // Real-time clock
     input   logic                        pwrup_rst_n,            // Power-Up Reset
@@ -73,6 +77,7 @@ module ycr4_iconnect (
     input   logic                        cfg_bypass_dcache,  // bypass dchance
 
     // CORE-0
+    output   logic                          core0_clk                 , // core clock
     input    logic   [48:0]                 core0_debug               ,
     output   logic     [1:0]                core0_uid                 ,
     output   logic [63:0]                   core0_timer_val           , // Machine timer value
@@ -100,6 +105,7 @@ module ycr4_iconnect (
     output   logic [1:0]                    core0_dmem_resp,           // DMEM response
 
     // CORE-1
+    output   logic                          core1_clk                 , // core clock
     input    logic   [48:0]                 core1_debug               ,
     output   logic     [1:0]                core1_uid                 ,
     output   logic [63:0]                   core1_timer_val           , // Machine timer value
@@ -127,6 +133,7 @@ module ycr4_iconnect (
     output   logic [1:0]                    core1_dmem_resp,           // DMEM response
     
     // CORE-2
+    output   logic                          core2_clk                 , // core clock
     input    logic   [48:0]                 core2_debug               ,
     output   logic     [1:0]                core2_uid                 ,
     output   logic [63:0]                   core2_timer_val           , // Machine timer value
@@ -154,6 +161,7 @@ module ycr4_iconnect (
     output   logic [1:0]                    core2_dmem_resp,           // DMEM response
 
     // CORE-3
+    output   logic                          core3_clk                 , // core clock
     input    logic   [48:0]                 core3_debug               ,
     output   logic     [1:0]                core3_uid                 ,
     output   logic [63:0]                   core3_timer_val           , // Machine timer value
@@ -378,6 +386,32 @@ assign core2_timer_irq          = timer_irq     ;
 
 assign core3_timer_val          = timer_val     ;                // Machine timer value
 assign core3_timer_irq          = timer_irq     ;
+
+// OpenSource CTS tool does not work with buffer as source point
+// changed buf to max with select tied=0
+//ctech_clk_buf u_lineclk_buf  (.A(line_clk_16x_in),  .X(line_clk_16x));
+logic core_clk_cts;
+ctech_mux2x1 u_cclk_cts  (.A0(core_clk), .A1(1'b0), .S(1'b0), .X(core_clk_cts));
+
+// Routing clock to core  for better Physical connectivity
+assign core0_clk = core_clk_int;
+assign core1_clk = core_clk_int;
+assign core2_clk = core_clk_int;
+assign core3_clk = core_clk_int;
+
+//--------------------------------------------
+// RISCV clock skew control
+//--------------------------------------------
+clk_skew_adjust u_skew_core_clk
+       (
+`ifdef USE_POWER_PINS
+     .vccd1                   (vccd1                   ),// User area 1 1.8V supply
+     .vssd1                   (vssd1                   ),// User area 1 digital ground
+`endif
+	    .clk_in               (core_clk_int            ), 
+	    .sel                  (cfg_ccska               ), 
+	    .clk_out              (core_clk_skew           ) 
+       );
 //-------------------------------------------------------------------------------
 // Reset logic
 //-------------------------------------------------------------------------------
@@ -388,7 +422,7 @@ ycr_reset_sync_cell #(
     .STAGES_AMOUNT       (YCR_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
 ) i_cpu_intf_rstn_reset_sync (
     .rst_n          (pwrup_rst_n          ),
-    .clk            (core_clk             ),
+    .clk            (core_clk_cts         ),
     .test_rst_n     (test_rst_n           ),
     .test_mode      (test_mode            ),
     .rst_n_in       (cpu_intf_rst_n       ),
@@ -410,7 +444,7 @@ logic [63:0]   riscv_debug0_l;
 logic [63:0]   riscv_debug1_l;
 logic [63:0]   riscv_debug2_l;
 logic [63:0]   riscv_debug3_l;
-always_ff @ (posedge core_clk) begin
+always_ff @ (posedge core_clk_cts) begin
     core_debug_sel_l <= core_debug_sel;
     riscv_debug0_l   <= riscv_debug0;
     riscv_debug1_l   <= riscv_debug1;
@@ -426,7 +460,7 @@ end
 ycr4_cross_bar u_crossbar (
     
     .rst_n                 (cpu_intf_rst_n_sync        ),
-    .clk                   (core_clk                   ),
+    .clk                   (core_clk_cts               ),
 
    
     .cfg_bypass_icache     (cfg_bypass_icache          ),
@@ -617,7 +651,8 @@ ycr4_cross_bar u_crossbar (
 ycr_tcm #(
     .YCR_TCM_SIZE  (`YCR_DMEM_AWIDTH'(~YCR_TCM_ADDR_MASK + 1'b1))
 ) i_tcm (
-    .clk            (core_clk             ),
+    .clk            (core_clk_cts         ), // core clock with cts
+    .clk_src        (core_clk             ), // core clk without cts
     .rst_n          (cpu_intf_rst_n_sync  ),
 
 `ifndef YCR_TCM_MEM
@@ -739,8 +774,8 @@ ycr_sram_mux  u_sram1_smux (
 ycr_timer i_timer (
     // Common
     .rst_n          (cpu_intf_rst_n_sync  ),
-    .clk            (core_clk          ),
-    .rtc_clk        (rtc_clk           ),
+    .clk            (core_clk_cts         ),
+    .rtc_clk        (rtc_clk              ),
 
     // Memory interface
     .dmem_req       (timer_dmem_req    ),
